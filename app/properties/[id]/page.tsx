@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { properties } from '../../../data/properties';
+import { properties } from '@/lib/data/properties';
 
 interface PropertyDetailPageProps {
   params: {

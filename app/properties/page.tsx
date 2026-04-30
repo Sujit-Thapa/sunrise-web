@@ -1,6 +1,6 @@
-import PropertyCard from '../../components/PropertyCard';
-import SearchBar from '../../components/SearchBar';
-import { properties } from '../../data/properties';
+import PropertyCard from '@/components/PropertyCard';
+import SearchBar from '@/components/SearchBar';
+import { properties } from '@/lib/data/properties';
 
 export default function Properties() {
   return (

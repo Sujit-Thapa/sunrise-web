@@ -1,6 +1,6 @@
-import HeroSection from '../components/HeroSection';
-import PropertyCard from '../components/PropertyCard';
-import { properties } from '../data/properties';
+import HeroSection from '@/components/HeroSection';
+import PropertyCard from '@/components/PropertyCard';
+import { properties } from '@/lib/data/properties';
 
 export default function Home() {
   const featuredProperties = properties.slice(0, 3); // Show first 3 properties
