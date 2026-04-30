@@ -9,13 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'gold-primary':   '#D4920A',
+        'gold-primary': '#D4920A',
         'gold-highlight': '#F5B931',
-        'gold-deep':      '#A8720A',
-        'midnight':       '#0D1B2A',
-        'ink':            '#1A1A1A',
-        'stone':          '#777777',
-        'blush':          '#FDF3DC',
+        'gold-deep': '#A8720A',
+        'midnight': '#0D1B2A',
+        'ink': '#1A1A1A',
+        'stone': '#777777',
+        'blush': '#FDF3DC',
       },
       fontFamily: {
         sans: ['Radikal', 'sans-serif'],
@@ -29,7 +29,7 @@ const config: Config = {
         'brand-sm': '0 1px 3px rgba(13, 27, 42, 0.12)',
         'brand-md': '0 4px 16px rgba(13, 27, 42, 0.16)',
         'brand-lg': '0 8px 32px rgba(13, 27, 42, 0.20)',
-        'gold':     '0 4px 20px rgba(212, 146, 10, 0.25)',
+        'gold': '0 4px 20px rgba(212, 146, 10, 0.25)',
       },
       transitionDuration: {
         '150': '150ms',
@@ -37,7 +37,7 @@ const config: Config = {
         '400': '400ms',
       },
       maxWidth: {
-        'container': '1280px',
+        'container': '1540px',
       },
     },
   },

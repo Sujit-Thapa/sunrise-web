@@ -1,23 +1,61 @@
+'use client';
+
+import { useState } from 'react';
+
 export default function SearchBar() {
+  const [location, setLocation] = useState('');
+
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 max-w-2xl w-full">
-      <div className="flex flex-col sm:flex-row gap-3">
+    <div className="search-bar-wrap">
+      {/* Location */}
+      <div className="search-field">
+        <label className="search-field-label">Location</label>
         <input
           type="text"
-          placeholder="Search location..."
-          className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          placeholder="Where are you looking?"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          className="search-field-input"
         />
-        <select className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-          <option value="">Price</option>
-          <option value="0-300000">$0 - $300K</option>
-          <option value="300000-600000">$300K - $600K</option>
-          <option value="600000-1000000">$600K - $1M</option>
-          <option value="1000000+">$1M+</option>
-        </select>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-all hover:shadow-lg active:scale-95">
-          Search
-        </button>
       </div>
+
+      <div className="search-divider" />
+
+      {/* Property Type */}
+      <div className="search-field">
+        <label className="search-field-label">Property Type</label>
+        <select className="search-field-input search-field-select">
+          <option value="">All Types</option>
+          <option value="apartment">Apartment</option>
+          <option value="house">House</option>
+          <option value="villa">Villa</option>
+          <option value="land">Land</option>
+          <option value="commercial">Commercial</option>
+        </select>
+      </div>
+
+      <div className="search-divider" />
+
+      {/* Price Range */}
+      <div className="search-field">
+        <label className="search-field-label">Price Range</label>
+        <select className="search-field-input search-field-select">
+          <option value="">Any Price</option>
+          <option value="0-5000000">Under Rs 50 L</option>
+          <option value="5000000-10000000">Rs 50 L – 1 Cr</option>
+          <option value="10000000-20000000">Rs 1 Cr – 2 Cr</option>
+          <option value="20000000+">Rs 2 Cr+</option>
+        </select>
+      </div>
+
+      {/* Search button */}
+      <button className="search-btn" aria-label="Search properties">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="17" y1="17" x2="22" y2="22" />
+        </svg>
+      </button>
     </div>
   );
 }
