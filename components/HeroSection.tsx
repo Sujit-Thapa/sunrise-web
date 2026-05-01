@@ -39,10 +39,10 @@ export default function HeroSection() {
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/outdoors-v12',
         center: [85.324, 27.5],
-        zoom: 1.5,
+        zoom: 1.7,
         pitch: 45,
         bearing: -20,
-        scrollZoom: false,   // enabled per-scroll via onWheel
+        scrollZoom: false,
         attributionControl: false,
       });
 
@@ -50,19 +50,22 @@ export default function HeroSection() {
 
       const onWheel = (e: WheelEvent) => {
         if (e.ctrlKey || e.metaKey) {
-          // Ctrl+scroll: zoom the map, hide hero UI
           e.preventDefault();
-          // Pass the event directly to mapbox internals
-          (map as any).scrollZoom._onWheel(e);
+          const rect = map.getContainer().getBoundingClientRect();
+          const cursorLngLat = map.unproject([e.clientX - rect.left, e.clientY - rect.top]);
+          const delta = e.deltaMode === WheelEvent.DOM_DELTA_LINE
+            ? e.deltaY * 16
+            : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
+              ? e.deltaY * window.innerHeight
+              : e.deltaY;
+          const nextZoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), map.getZoom() - delta / 450));
+          map.easeTo({ zoom: nextZoom, around: cursorLngLat, duration: 0 });
+
           setIsZooming(true);
           setCtrlHint(false);
           if (zoomEndTimer.current) clearTimeout(zoomEndTimer.current);
-          // Restore UI 1s after scrolling stops
-          zoomEndTimer.current = setTimeout(() => {
-            setIsZooming(false);
-          }, 1000);
+          zoomEndTimer.current = setTimeout(() => setIsZooming(false), 1000);
         } else {
-          // Normal scroll: don't zoom, show hint
           e.stopPropagation();
           setCtrlHint(true);
           if (hintTimer.current) clearTimeout(hintTimer.current);
@@ -74,20 +77,18 @@ export default function HeroSection() {
 
       map.on('load', () => {
         map.resize();
-
         map.flyTo({
           center: [85.324, 27.7172],
-          zoom: 12.5,
+          zoom: 13,
           pitch: 30,
           bearing: 0,
-          duration: 6000,
+          duration: 5000,
           easing: (t) => 1 - Math.pow(1 - t, 2),
         });
 
         PROPERTIES.forEach((prop, i) => {
           setTimeout(() => {
             const el = createPinElement(prop.price, prop.type);
-
             const popup = new mapboxgl.Popup({
               offset: 20,
               closeButton: false,
@@ -101,12 +102,10 @@ export default function HeroSection() {
                 <p style="font-size:11px;color:#777;margin:0;">${prop.label}, Kathmandu</p>
               </div>
             `);
-
             const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
               .setLngLat(prop.lngLat)
               .setPopup(popup)
               .addTo(map);
-
             el.style.opacity = '0';
             el.style.transform = 'scale(0.4) translateY(12px)';
             requestAnimationFrame(() => {
@@ -114,7 +113,6 @@ export default function HeroSection() {
               el.style.opacity = '1';
               el.style.transform = 'scale(1) translateY(0)';
             });
-
             markersRef.current.push(marker);
           }, 2600 + i * 180);
         });
@@ -132,54 +130,164 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <div className="hero-wrap">
+    <div className="relative w-full h-screen min-h-[580px] overflow-hidden">
 
-      {/* Map — full background */}
-      <div ref={mapContainer} className="hero-map" />
+      {/* Map */}
+      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
 
-      {/* Centered column: title + subtitle + search */}
-      <div className={`hero-text-block${isZooming ? ' zooming' : ''}`}>
-        <h1 className="hero-h1">
+      {/* Hero content — pointer-events-none so scroll reaches map, re-enabled on children */}
+      <div
+        className={[
+          'absolute inset-0 z-10',
+          'flex flex-col items-center justify-center',
+          'px-4 pb-20',
+          'pointer-events-none',
+          'transition-all duration-300',
+          isZooming ? 'opacity-0 scale-[0.97]' : 'opacity-100 scale-100',
+        ].join(' ')}
+      >
+        {/* Label */}
+        <div className="flex items-center gap-3 mb-5">
+          <span className="block w-9 h-px bg-gold-primary opacity-70" />
+          <p className="text-[9px] uppercase tracking-[0.28em] text-gold-primary">
+            Real Estate Nepal
+          </p>
+          <span className="block w-9 h-px bg-gold-primary opacity-70" />
+        </div>
+
+        {/* Headline */}
+        <h1
+          className="text-5xl md:text-6xl font-bold text-midnight text-center leading-[1.08] tracking-tight mb-3"
+          style={{ textShadow: '0 1px 12px rgba(253,243,220,0.9), 0 0 40px rgba(253,243,220,0.6)' }}
+        >
           The Simplest Way to<br />
-          <em>Find Property</em>
+          <em className="not-italic text-gold-primary">Find Property</em>
         </h1>
-        <p className="hero-sub">
+
+        {/* Subtitle */}
+        <p
+          className="text-sm text-ink text-center leading-relaxed mb-8 max-w-md"
+          style={{ textShadow: '0 1px 8px rgba(253,243,220,0.95), 0 0 24px rgba(253,243,220,0.7)' }}
+        >
           Discover your perfect home across Kathmandu Valley
           on an interactive map. Every listing verified.
         </p>
-        <div className="hero-search-float">
+
+        {/* Search bar — re-enable pointer events */}
+        <div className="w-full max-w-3xl pointer-events-auto">
           <SearchBar />
         </div>
       </div>
 
-      <button className="circle-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      {/* Scroll / down cue */}
+      <button
+        className={[
+          'absolute bottom-8 left-1/2 -translate-x-1/2 z-20',
+          'flex items-center justify-center',
+          'w-11 h-11 rounded-full',
+          'bg-gold-primary hover:bg-gold-deep shadow-gold',
+          'transition-all duration-250 hover:scale-110 animate-bounce',
+          isZooming ? 'opacity-0' : 'opacity-100',
+        ].join(' ')}
+        aria-label="Scroll down"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
 
-
-      {/* Ctrl hint toast */}
+      {/* Ctrl-scroll hint toast */}
       {ctrlHint && (
-        <div className="ctrl-hint">
-          <div className="ctrl-hint-inner">
-            <kbd className="ctrl-kbd">Ctrl</kbd>
+        <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+          <div className="flex items-center gap-3 bg-midnight/90 backdrop-blur-sm border border-gold-primary/40 rounded-brand-md px-6 py-3 text-blush text-sm">
+            <kbd className="bg-gold-primary/20 border border-gold-primary/50 rounded-brand-sm px-2 py-0.5 text-gold-highlight text-xs font-mono">
+              Ctrl
+            </kbd>
             <span>+ scroll to zoom the map</span>
           </div>
         </div>
       )}
 
+      {/* Mapbox popup + pin styles — must stay in JSX, target dynamically created DOM */}
+      <style>{`
+        .sunrise-pin {
+          cursor: pointer;
+          transform-origin: bottom center;
+          filter: drop-shadow(0 4px 12px rgba(13,27,42,0.22));
+        }
+        .sunrise-pin:hover .pin-pill {
+          background: #FDF3DC;
+          transform: scale(1.06) translateY(-2px);
+        }
+        .pin-wrap {
+          position: relative;
+          padding-bottom: 7px;
+        }
+        .pin-pill {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          background: white;
+          border: 1px solid rgba(13,27,42,0.08);
+          border-radius: 9999px;
+          padding: 5px 12px 5px 8px;
+          white-space: nowrap;
+          transition: background 0.15s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .pin-icon {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+        }
+        .pin-price {
+          font-size: 12px;
+          font-weight: 700;
+          color: #1A1A1A;
+          letter-spacing: -0.01em;
+          font-family: system-ui, sans-serif;
+        }
+        .pin-tail {
+          position: absolute;
+          bottom: 1px;
+          left: 50%;
+          transform: translateX(-50%) rotate(45deg);
+          width: 8px;
+          height: 8px;
+          background: white;
+          border-right: 1px solid rgba(13,27,42,0.08);
+          border-bottom: 1px solid rgba(13,27,42,0.08);
+        }
+        .sunrise-popup .mapboxgl-popup-content {
+          padding: 0;
+          border-radius: 8px;
+          border: 0.5px solid rgba(13,27,42,0.1);
+          box-shadow: 0 8px 32px rgba(13,27,42,0.16);
+          overflow: hidden;
+        }
+        .sunrise-popup .mapboxgl-popup-tip { border-top-color: white !important; }
+      `}</style>
+
     </div>
   );
 }
 
-function createPinElement(price: string, type: string): HTMLDivElement {
+function createPinElement(price: string, _type: string): HTMLDivElement {
   const el = document.createElement('div');
   el.className = 'sunrise-pin';
   el.innerHTML = `
-    <div class="pin-bubble">
-      <span class="pin-type">${type}</span>
-      ${price}
+    <div class="pin-wrap">
+      <div class="pin-pill">
+        <span class="pin-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+            stroke="#D4920A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            <circle cx="12" cy="9" r="2.5" fill="#D4920A" stroke="none"/>
+          </svg>
+        </span>
+        <span class="pin-price">${price}</span>
+      </div>
+      <div class="pin-tail"></div>
     </div>
   `;
   return el;

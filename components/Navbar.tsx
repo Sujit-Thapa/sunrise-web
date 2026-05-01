@@ -10,7 +10,7 @@ export default function Navbar() {
   const pathname = usePathname()
 
   return (
-    <nav className="px-8 md:px-12 relative">
+    <nav className="px-8 md:px-12 absolute top-0 z-10 w-full bg-white">
       {/* Gold gradient rule */}
       <div
         className="absolute bottom-0 left-0 right-0 h-px opacity-50"
@@ -37,15 +37,15 @@ export default function Navbar() {
                 <Link
                   href={href}
                   className={cn(
-                    // layout
+
                     'relative py-1',
-                    // typography
+
                     'text-[14px] font-normal uppercase ',
-                    // color
+
                     isActive ? 'text-gold-primary' : 'text-stone',
-                    // interaction
+
                     'hover:text-gold-highlight transition-colors duration-150',
-                    // underline animation via pseudo (handled with group)
+
                     'after:absolute after:bottom-[-2px] after:left-0 after:h-px after:bg-gold-primary',
                     'after:transition-[right] after:duration-250',
                     isActive ? 'after:right-0' : 'after:right-full hover:after:right-0'

@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <HeroSection
+      {/* <HeroSection
 
-      />
+      /> */}
       <AboutSection />
     </>
   )
