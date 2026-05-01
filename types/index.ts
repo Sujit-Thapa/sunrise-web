@@ -3,7 +3,9 @@ export interface Property {
   title: string;
   price: number;
   location: string;
+  coordinates?: [number, number];
   image: string;
+  badge?: string;
   description: string;
   bedrooms: number;
   bathrooms: number;

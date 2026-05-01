@@ -24,7 +24,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center  gap-3 group">
           {/* Diamond mark */}
-          <Image src="/images/logo/sunrise1.png" alt="Logo" width={500} height={500} className='w-20 object-contain' />
+          {/* <Image src="/images/logo/sunrise1.png" alt="Logo" width={500} height={500} className='w-20 object-contain' /> */}
           <Image src="/images/logo/sunrise.png" alt="Logo" width={500} height={500} className='w-50 h-auto' />
         </Link>
 

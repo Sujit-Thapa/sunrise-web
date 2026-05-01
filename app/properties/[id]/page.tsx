@@ -3,13 +3,14 @@ import { notFound } from 'next/navigation';
 import { properties } from '@/lib/data/properties';
 
 interface PropertyDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function PropertyDetailPage({ params }: PropertyDetailPageProps) {
-  const property = properties.find((p) => p.id === params.id);
+export default async function PropertyDetailPage({ params }: PropertyDetailPageProps) {
+  const { id } = await params;
+  const property = properties.find((p) => p.id === id);
 
   if (!property) {
     notFound();
@@ -24,6 +25,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               src={property.image}
               alt={property.title}
               fill
+              sizes="(min-width: 768px) 1280px, 100vw"
               className="object-cover"
               priority
             />
@@ -33,7 +35,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               {property.title}
             </h1>
             <p className="text-xl text-gray-600 mb-4">{property.location}</p>
-            <p className="text-4xl font-bold text-blue-600 mb-6">
+            <p className="text-4xl font-bold text-pink-500 mb-6">
               ${property.price.toLocaleString()}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -55,7 +57,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               <p className="text-gray-700 leading-relaxed">{property.description}</p>
             </div>
             <div className="mt-8">
-              <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors text-lg font-semibold">
+              <button className="bg-pink-500 text-white px-8 py-3 rounded-lg hover:bg-pink-600 transition-colors text-lg font-semibold">
                 Contact Agent
               </button>
             </div>
