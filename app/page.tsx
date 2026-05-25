@@ -1,5 +1,4 @@
 import HeroSection from '@/components/sections/HeroSection';
-import ChooseUsSection from '@/components/sections/chooseUsSection';
 import PropertyCard from '@/components/ui/PropertyCard';
 import { properties } from '@/lib/data/properties';
 import Link from 'next/link';
@@ -12,7 +11,6 @@ export default function Home() {
       <HeroSection />
       <section className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ChooseUsSection />
           <div className="mb-16 mt-20 text-center">
             <div className="mb-5 flex items-center justify-center gap-8">
               <span className="h-px w-14 bg-gold-primary" />
