@@ -21,7 +21,6 @@ export default function HeroSection() {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const zoomEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // ✅ Track all per-property stagger timers so we can cancel them on unmount
   const markerTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const [ctrlHint, setCtrlHint] = useState(false);
