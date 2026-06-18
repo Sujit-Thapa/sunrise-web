@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import AuthModal from '../../modals/AuthModal';
+import Image from 'next/image';
+import { Menu, X } from 'lucide-react';
 
 const NAV_LINKS = [
   { label: 'Properties', href: '/properties' },
@@ -13,245 +14,141 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
-  const [authOpen, setAuthOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  const handleNavClick = () => {
+    setIsOpen(false);
+  };
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap');
+      {/* Navbar */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? 'bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm'
+            : 'bg-transparent'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            {/* Logo */}
+            <Link
+              href="/"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+                <Image
+                  src="/images/logo/sunrise.png"
+                  alt="Sunrise Realty"
+                  fill
+                  className="w-full h-full object-contain"
+                  priority
+                />
+              </div>
+              
+            </Link>
 
-        .nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 50;
-          transition: background 0.3s, border-color 0.3s, padding 0.3s;
-          border-bottom: 1px solid transparent;
-          background: transparent;
-          padding: 1.4rem 0;
-        }
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-8">
+              <ul className="flex items-center gap-8">
+                {NAV_LINKS.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors relative group"
+                    >
+                      {link.label}
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 group-hover:w-full transition-all duration-300" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
 
-        .nav.scrolled {
-          background: rgba(247, 245, 240, 0.96);
-          border-bottom-color: #E0DAD0;
-          padding: 0.9rem 0;
-          backdrop-filter: blur(8px);
-        }
+              {/* Sign In Button */}
+              <button
+                onClick={() => {
+                  /* Auth modal trigger */
+                }}
+                className="px-6 py-2 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200 whitespace-nowrap"
+              >
+                Sign In
+              </button>
+            </div>
 
-        .nav-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 2.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 2rem;
-        }
-
-        /* Logo */
-        .nav-logo {
-          font-family: 'Cormorant Garamond', serif;
-          font-weight: 300;
-          font-size: 1.3rem;
-          letter-spacing: 0.05em;
-          color: #1A1814;
-          text-decoration: none;
-          white-space: nowrap;
-        }
-        .nav-logo span { font-style: italic; color: #5C5040; }
-
-        /* Links */
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 2.25rem;
-          list-style: none;
-          margin: 0;
-          padding: 0;
-        }
-
-        .nav-links a {
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 300;
-          font-size: 0.8rem;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #6E6455;
-          text-decoration: none;
-          transition: color 0.2s;
-          position: relative;
-        }
-
-        .nav-links a::after {
-          content: '';
-          position: absolute;
-          bottom: -3px;
-          left: 0;
-          right: 100%;
-          height: 1px;
-          background: #1A1814;
-          transition: right 0.25s ease;
-        }
-
-        .nav-links a:hover { color: #1A1814; }
-        .nav-links a:hover::after { right: 0; }
-
-        /* Auth button */
-        .nav-auth-btn {
-          background: #1A1814;
-          color: #F7F5F0;
-          border: none;
-          padding: 0.6rem 1.4rem;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 300;
-          font-size: 0.72rem;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: background 0.2s;
-          white-space: nowrap;
-        }
-        .nav-auth-btn:hover { background: #3A3428; }
-
-        /* Mobile menu toggle */
-        .nav-menu-btn {
-          display: none;
-          background: none;
-          border: none;
-          color: #1A1814;
-          cursor: pointer;
-          padding: 0.25rem;
-        }
-
-        /* Mobile drawer */
-        .nav-drawer {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: #F7F5F0;
-          z-index: 49;
-          flex-direction: column;
-          padding: 6rem 2.5rem 3rem;
-        }
-        .nav-drawer.open { display: flex; }
-
-        .nav-drawer-links {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-        }
-
-        .nav-drawer-links li { border-bottom: 1px solid #E8E3D8; }
-
-        .nav-drawer-links a {
-          display: block;
-          font-family: 'Cormorant Garamond', serif;
-          font-weight: 300;
-          font-size: 1.8rem;
-          color: #1A1814;
-          text-decoration: none;
-          padding: 0.85rem 0;
-          letter-spacing: 0.02em;
-          transition: color 0.2s;
-        }
-        .nav-drawer-links a:hover { color: #5C5040; }
-
-        .nav-drawer-auth {
-          margin-top: 2.5rem;
-          background: #1A1814;
-          color: #F7F5F0;
-          border: none;
-          padding: 1rem;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 300;
-          font-size: 0.75rem;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          cursor: pointer;
-          width: 100%;
-          transition: background 0.2s;
-        }
-        .nav-drawer-auth:hover { background: #3A3428; }
-
-        @media (max-width: 820px) {
-          .nav-links { display: none; }
-          .nav-auth-btn { display: none; }
-          .nav-menu-btn { display: flex; }
-        }
-      `}</style>
-
-      <nav className={`nav ${scrolled ? 'scrolled' : ''}`}>
-        <div className="nav-container">
-
-          {/* Logo */}
-          <Link href="/" className="nav-logo">
-            Sunrise <span>Realty</span>
-          </Link>
-
-          {/* Desktop links */}
-          <ul className="nav-links">
-            {NAV_LINKS.map((l) => (
-              <li key={l.label}>
-                <Link href={l.href}>{l.label}</Link>
-              </li>
-            ))}
-          </ul>
-
-          {/* Desktop auth button */}
-          <button className="nav-auth-btn" onClick={() => setAuthOpen(true)}>
-            Sign In
-          </button>
-
-          {/* Mobile hamburger */}
-          <button
-            className="nav-menu-btn"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          >
-            {menuOpen ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/>
-              </svg>
-            )}
-          </button>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label={isOpen ? 'Close menu' : 'Open menu'}
+            >
+              {isOpen ? (
+                <X className="w-6 h-6 text-gray-900" />
+              ) : (
+                <Menu className="w-6 h-6 text-gray-900" />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* Mobile drawer */}
-      <div className={`nav-drawer ${menuOpen ? 'open' : ''}`}>
-        <ul className="nav-drawer-links">
-          {NAV_LINKS.map((l) => (
-            <li key={l.label}>
-              <Link href={l.href} onClick={() => setMenuOpen(false)}>{l.label}</Link>
-            </li>
-          ))}
-        </ul>
-        <button className="nav-drawer-auth" onClick={() => { setMenuOpen(false); setAuthOpen(true); }}>
-          Sign In / Create Account
-        </button>
-      </div>
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="fixed inset-0 z-40 pt-20 bg-white lg:hidden">
+          <div className="flex flex-col h-full">
+            {/* Navigation Links */}
+            <div className="flex-1 overflow-y-auto">
+              <ul className="flex flex-col">
+                {NAV_LINKS.map((link) => (
+                  <li key={link.label} className="border-b border-gray-200">
+                    <Link
+                      href={link.href}
+                      className="block px-6 py-4 text-base font-medium text-gray-900 hover:bg-gray-50 transition-colors"
+                      onClick={handleNavClick}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-      {/* Auth Modal */}
-      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+            {/* Sign In Button for Mobile */}
+            <div className="border-t border-gray-200 p-4 sm:p-6">
+              <button
+                onClick={() => {
+                  handleNavClick();
+                  /* Auth modal trigger */
+                }}
+                className="w-full px-6 py-3 rounded-full bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors duration-200"
+              >
+                Sign In / Create Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

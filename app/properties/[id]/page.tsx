@@ -1,16 +1,30 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { properties } from '@/lib/data/properties';
+import { properties as fallbackProperties } from '@/lib/data/properties';
+import type { Property } from '@/types';
 
 interface PropertyDetailPageProps {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 export default async function PropertyDetailPage({ params }: PropertyDetailPageProps) {
-  const { id } = await params;
-  const property = properties.find((p) => p.id === id);
+  const { id } = params;
+  let property: Property | null = null;
+
+  try {
+    const response = await fetch(`/api/properties/${id}`, { cache: 'no-store' });
+    if (response.ok) {
+      property = await response.json();
+    }
+  } catch {
+    // ignore and fallback to local static data below
+  }
+
+  if (!property) {
+    property = fallbackProperties.find((p) => p.id === id) ?? null;
+  }
 
   if (!property) {
     notFound();
