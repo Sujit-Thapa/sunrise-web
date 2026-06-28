@@ -62,257 +62,53 @@ export default function Contact() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap');
-
-        .contact-page {
-          min-height: 100vh;
-          background-color: #F7F5F0;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 300;
-          color: #1A1814;
-        }
-
-        .contact-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 7rem 2.5rem 6rem;
-        }
-
-        /* ── Header ── */
-        .contact-header {
-          margin-bottom: 5rem;
-        }
-
-        .contact-eyebrow {
-          font-size: 0.68rem;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          color: #8A8070;
-          margin-bottom: 1.1rem;
-        }
-
-        .contact-headline {
-          font-family: 'Cormorant Garamond', serif;
-          font-weight: 300;
-          font-size: clamp(2.6rem, 4.5vw, 3.8rem);
-          line-height: 1.08;
-          color: #1A1814;
-          margin: 0 0 1.25rem;
-          letter-spacing: -0.01em;
-        }
-
-        .contact-headline em {
-          font-style: italic;
-          color: #5C5040;
-        }
-
-        .contact-subhead {
-          font-size: 0.95rem;
-          line-height: 1.8;
-          color: #6E6455;
-          max-width: 420px;
-        }
-
-        /* ── Layout ── */
-        .contact-body {
-          display: grid;
-          grid-template-columns: 1fr 1.6fr;
-          gap: 5rem;
-          align-items: start;
-        }
-
-        /* ── Info column ── */
-        .contact-info {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-        }
-
-        .contact-info-item {
-          display: flex;
-          gap: 1.1rem;
-          padding: 1.5rem 0;
-          border-bottom: 1px solid #E0DAD0;
-        }
-        .contact-info-item:first-child { border-top: 1px solid #E0DAD0; }
-
-        .contact-info-icon {
-          color: #B0A890;
-          margin-top: 2px;
-          flex-shrink: 0;
-        }
-
-        .contact-info-label {
-          font-size: 0.65rem;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: #B0A890;
-          margin-bottom: 0.35rem;
-        }
-
-        .contact-info-value {
-          font-size: 0.9rem;
-          line-height: 1.7;
-          color: #3A3428;
-          white-space: pre-line;
-        }
-
-        a.contact-info-value {
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-        a.contact-info-value:hover { color: #1A1814; }
-
-        /* ── Form card ── */
-        .contact-form-card {
-          background: #FFFFFF;
-          border: 1px solid #E0DAD0;
-          padding: 3rem;
-        }
-
-        .contact-form-heading {
-          font-family: 'Cormorant Garamond', serif;
-          font-weight: 400;
-          font-size: 1.6rem;
-          color: #1A1814;
-          margin: 0 0 2rem;
-          letter-spacing: 0.01em;
-        }
-
-        .contact-form-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
-          margin-bottom: 1.25rem;
-        }
-
-        .contact-field {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-          margin-bottom: 1.25rem;
-        }
-
-        .contact-field-row {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .contact-label {
-          font-size: 0.65rem;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: #8A8070;
-        }
-
-        .contact-input,
-        .contact-textarea,
-        .contact-select {
-          background: #F7F5F0;
-          border: 1px solid #E0DAD0;
-          border-radius: 0;
-          padding: 0.85rem 1rem;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 300;
-          font-size: 0.9rem;
-          color: #1A1814;
-          outline: none;
-          transition: border-color 0.2s;
-          width: 100%;
-          box-sizing: border-box;
-          -webkit-appearance: none;
-        }
-
-        .contact-input::placeholder,
-        .contact-textarea::placeholder {
-          color: #C0B8A8;
-        }
-
-        .contact-input:focus,
-        .contact-textarea:focus,
-        .contact-select:focus {
-          border-color: #8A8070;
-          background: #FFFFFF;
-        }
-
-        .contact-textarea {
-          resize: none;
-          min-height: 130px;
-        }
-
-        .contact-submit {
-          width: 100%;
-          background: #1A1814;
-          color: #F7F5F0;
-          border: none;
-          padding: 1rem;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 300;
-          font-size: 0.75rem;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: background 0.25s;
-          margin-top: 0.5rem;
-        }
-        .contact-submit:hover { background: #3A3428; }
-
-        /* ── Success ── */
-        .contact-success {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          background: #F0EDE6;
-          border: 1px solid #D8D0C0;
-          padding: 1rem 1.25rem;
-          margin-bottom: 1.5rem;
-          font-size: 0.85rem;
-          color: #5C5040;
-        }
-
-        .contact-success-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #8A8070;
-          flex-shrink: 0;
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 860px) {
-          .contact-body { grid-template-columns: 1fr; gap: 3rem; }
-          .contact-form-card { padding: 2rem; }
-          .contact-form-row { grid-template-columns: 1fr; }
-        }
+        .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+        .font-dm { font-family: 'DM Sans', sans-serif; }
       `}</style>
 
-      <div className="contact-page">
-        <div className="contact-container">
+      <div className="font-dm min-h-screen bg-white text-stone-900">
+        <div className="max-w-6xl mx-auto px-10 py-28">
 
           {/* Header */}
-          <div className="contact-header">
-            <p className="contact-eyebrow">Sunrise Realty · Get in Touch</p>
-            <h1 className="contact-headline">
-              Let's find your<br /><em>next chapter.</em>
+          <div className="mb-20">
+            <p className="text-[0.68rem] tracking-[0.22em] uppercase text-stone-400 mb-4">
+              Sunrise Realty · Get in Touch
+            </p>
+            <h1 className="font-cormorant font-light text-[clamp(2.6rem,4.5vw,3.8rem)] leading-[1.08] text-stone-900 mb-5 tracking-tight">
+              Let's find your<br />
+              <em className="italic text-stone-500">next chapter.</em>
             </h1>
-            <p className="contact-subhead">
+            <p className="text-[0.95rem] leading-relaxed text-stone-500 max-w-md font-light">
               Whether you're buying, selling, or simply exploring — our team is here to guide you with clarity and care.
             </p>
           </div>
 
-          <div className="contact-body">
+          {/* Body */}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-12 md:gap-20 items-start">
 
             {/* Info */}
-            <div className="contact-info">
-              {contactDetails.map((item) => (
-                <div className="contact-info-item" key={item.label}>
-                  <span className="contact-info-icon">{item.icon}</span>
+            <div className="flex flex-col">
+              {contactDetails.map((item, i) => (
+                <div
+                  key={item.label}
+                  className={`flex gap-4 py-6 border-b border-stone-200 ${i === 0 ? 'border-t border-stone-200' : ''}`}
+                >
+                  <span className="text-stone-300 mt-0.5 shrink-0">{item.icon}</span>
                   <div>
-                    <p className="contact-info-label">{item.label}</p>
+                    <p className="text-[0.65rem] tracking-[0.18em] uppercase text-stone-400 mb-1.5">
+                      {item.label}
+                    </p>
                     {item.href ? (
-                      <a href={item.href} className="contact-info-value">{item.value}</a>
+                      <a
+                        href={item.href}
+                        className="text-[0.9rem] leading-relaxed text-stone-700 whitespace-pre-line hover:text-stone-900 transition-colors no-underline"
+                      >
+                        {item.value}
+                      </a>
                     ) : (
-                      <p className="contact-info-value">{item.value}</p>
+                      <p className="text-[0.9rem] leading-relaxed text-stone-700 whitespace-pre-line">
+                        {item.value}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -320,22 +116,25 @@ export default function Contact() {
             </div>
 
             {/* Form */}
-            <div className="contact-form-card">
-              <h2 className="contact-form-heading">Send a message</h2>
+            <div className="bg-white border border-stone-200 p-10">
+              <h2 className="font-cormorant font-normal text-[1.6rem] text-stone-900 mb-8 tracking-wide">
+                Send a message
+              </h2>
 
               {submitted && (
-                <div className="contact-success">
-                  <span className="contact-success-dot" />
+                <div className="flex items-center gap-3 bg-stone-50 border border-stone-200 px-5 py-4 mb-6 text-[0.85rem] text-stone-600">
+                  <span className="w-1.5 h-1.5 rounded-full bg-stone-400 shrink-0" />
                   Thank you — we'll be in touch shortly.
                 </div>
               )}
 
               <form onSubmit={handleSubmit}>
-                <div className="contact-form-row">
-                  <div className="contact-field-row">
-                    <label htmlFor="name" className="contact-label">Full Name</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="name" className="text-[0.65rem] tracking-[0.16em] uppercase text-stone-400">
+                      Full Name
+                    </label>
                     <input
-                      className="contact-input"
                       type="text"
                       id="name"
                       name="name"
@@ -343,26 +142,30 @@ export default function Contact() {
                       value={formData.name}
                       onChange={handleChange}
                       required
+                      className="bg-stone-50 border border-stone-200 rounded-none px-4 py-3 font-dm font-light text-[0.9rem] text-stone-900 outline-none transition-colors placeholder:text-stone-300 focus:border-stone-400 focus:bg-white w-full"
                     />
                   </div>
-                  <div className="contact-field-row">
-                    <label htmlFor="phone" className="contact-label">Phone</label>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="phone" className="text-[0.65rem] tracking-[0.16em] uppercase text-stone-400">
+                      Phone
+                    </label>
                     <input
-                      className="contact-input"
                       type="tel"
                       id="phone"
                       name="phone"
                       placeholder="(555) 000-0000"
                       value={formData.phone}
                       onChange={handleChange}
+                      className="bg-stone-50 border border-stone-200 rounded-none px-4 py-3 font-dm font-light text-[0.9rem] text-stone-900 outline-none transition-colors placeholder:text-stone-300 focus:border-stone-400 focus:bg-white w-full"
                     />
                   </div>
                 </div>
 
-                <div className="contact-field">
-                  <label htmlFor="email" className="contact-label">Email Address</label>
+                <div className="flex flex-col gap-2 mb-5">
+                  <label htmlFor="email" className="text-[0.65rem] tracking-[0.16em] uppercase text-stone-400">
+                    Email Address
+                  </label>
                   <input
-                    className="contact-input"
                     type="email"
                     id="email"
                     name="email"
@@ -370,23 +173,29 @@ export default function Contact() {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    className="bg-stone-50 border border-stone-200 rounded-none px-4 py-3 font-dm font-light text-[0.9rem] text-stone-900 outline-none transition-colors placeholder:text-stone-300 focus:border-stone-400 focus:bg-white w-full"
                   />
                 </div>
 
-                <div className="contact-field">
-                  <label htmlFor="message" className="contact-label">Message</label>
+                <div className="flex flex-col gap-2 mb-5">
+                  <label htmlFor="message" className="text-[0.65rem] tracking-[0.16em] uppercase text-stone-400">
+                    Message
+                  </label>
                   <textarea
-                    className="contact-textarea"
                     id="message"
                     name="message"
                     placeholder="Tell us about the property you're looking for, or how we can help…"
                     value={formData.message}
                     onChange={handleChange}
                     required
+                    className="bg-stone-50 border border-stone-200 rounded-none px-4 py-3 font-dm font-light text-[0.9rem] text-stone-900 outline-none transition-colors placeholder:text-stone-300 focus:border-stone-400 focus:bg-white w-full resize-none min-h-[130px]"
                   />
                 </div>
 
-                <button type="submit" className="contact-submit">
+                <button
+                  type="submit"
+                  className="w-full bg-stone-900 text-stone-100 border-none py-4 font-dm font-light text-[0.75rem] tracking-[0.2em] uppercase cursor-pointer transition-colors hover:bg-stone-700 mt-2"
+                >
                   Send Message →
                 </button>
               </form>
