@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 
 type BookingStep = 1 | 2 | 3;
+
+type FilterType = 'all' | 'house' | 'land';
+type PaymentMethod = 'bank' | 'card' | 'escrow';
 
 interface Property {
   id: string;
@@ -16,6 +19,16 @@ interface Property {
   ref: string;
 }
 
+interface FormState {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  date: string;
+  notes: string;
+  payMethod: PaymentMethod;
+}
+
 const PROPERTIES: Property[] = [
   { id: '1', title: 'The Harlow Estate', location: 'Maplewood, NJ', price: 1250000, type: 'house', size: '4,800 sq ft', beds: 5, baths: 4, ref: 'SR-001' },
   { id: '2', title: 'Meridian Townhouse', location: 'Austin, TX', price: 620000, type: 'house', size: '2,200 sq ft', beds: 3, baths: 2, ref: 'SR-002' },
@@ -26,370 +39,272 @@ const PROPERTIES: Property[] = [
 ];
 
 const DEPOSIT_PERCENT = 0.05;
+const filterOptions: FilterType[] = ['all', 'house', 'land'];
+const paymentOptions: { value: PaymentMethod; label: string }[] = [
+  { value: 'bank', label: 'Bank Transfer' },
+  { value: 'card', label: 'Credit Card' },
+  { value: 'escrow', label: 'Escrow' },
+];
+const inputClass = 'w-full border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none transition placeholder:text-stone-400 focus:border-stone-500 focus:bg-stone-50';
+const buttonClass = 'border border-stone-300 bg-white px-4 py-2.5 text-[0.72rem] uppercase tracking-[0.16em] text-stone-600 transition hover:bg-stone-100';
+const primaryButtonClass = 'bg-stone-900 px-5 py-3 text-[0.72rem] uppercase tracking-[0.18em] text-stone-50 transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:bg-stone-400';
 
 export default function Booking() {
   const [step, setStep] = useState<BookingStep>(1);
-  const [selectedId, setSelectedId] = useState<string>('');
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', date: '', notes: '', payMethod: 'bank' });
+  const [selectedId, setSelectedId] = useState('');
+  const [form, setForm] = useState<FormState>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    date: '',
+    notes: '',
+    payMethod: 'bank',
+  });
   const [confirmed, setConfirmed] = useState(false);
-  const [filterType, setFilterType] = useState<'all' | 'house' | 'land'>('all');
+  const [filterType, setFilterType] = useState<FilterType>('all');
 
   const selected = PROPERTIES.find((p) => p.id === selectedId);
   const deposit = selected ? Math.round(selected.price * DEPOSIT_PERCENT) : 0;
-
   const filteredProps = PROPERTIES.filter((p) => filterType === 'all' || p.type === filterType);
+  const bookingId = `BK-${selected?.ref?.slice(-3) ?? '000'}`;
 
-  const handleConfirm = (e: React.FormEvent) => {
+  const handleConfirm = (e: FormEvent) => {
     e.preventDefault();
     setConfirmed(true);
   };
 
+  const resetBooking = () => {
+    setConfirmed(false);
+    setStep(1);
+    setSelectedId('');
+    setForm({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      date: '',
+      notes: '',
+      payMethod: 'bank',
+    });
+  };
+
   if (confirmed && selected) {
     return (
-      <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap');
-          .bk { min-height: 100vh; background: #F7F5F0; font-family: 'DM Sans', sans-serif; font-weight: 300; color: #1A1814; display: flex; align-items: center; justify-content: center; padding: 4rem 2rem; }
-          .bk-success { max-width: 520px; width: 100%; text-align: center; }
-          .bk-tick { width: 52px; height: 52px; border: 1px solid #C0D8B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: #4A7040; }
-          .bk-success-eyebrow { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: #8A8070; margin-bottom: 0.75rem; }
-          .bk-success-title { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 2.4rem; color: #1A1814; margin: 0 0 1rem; }
-          .bk-success-title em { font-style: italic; color: #5C5040; }
-          .bk-success-body { font-size: 0.88rem; line-height: 1.8; color: #6E6455; margin-bottom: 2.5rem; }
-          .bk-summary-box { background: #fff; border: 1px solid #E0DAD0; padding: 1.5rem; text-align: left; margin-bottom: 2rem; }
-          .bk-summary-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #F0EBE4; font-size: 0.85rem; }
-          .bk-summary-row:last-child { border-bottom: none; font-weight: 400; }
-          .bk-summary-label { color: #8A8070; }
-          .bk-summary-val { color: #1A1814; }
-          .bk-ref { font-size: 0.68rem; letter-spacing: 0.16em; color: #B0A890; text-transform: uppercase; }
-          .bk-restart { background: none; border: 1px solid #E0DAD0; padding: 0.8rem 2rem; font-family: 'DM Sans', sans-serif; font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8070; cursor: pointer; transition: all 0.2s; }
-          .bk-restart:hover { background: #EFECE5; }
-        `}</style>
-        <div className="bk">
-          <div className="bk-success">
-            <div className="bk-tick">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <p className="bk-success-eyebrow">Booking Confirmed</p>
-            <h1 className="bk-success-title">You're one step<br /><em>closer to home.</em></h1>
-            <p className="bk-success-body">
-              Your advance booking has been received. Our team will contact you at <strong>{form.email}</strong> within 24 hours to confirm your deposit and walk you through the next steps.
-            </p>
-            <div className="bk-summary-box">
-              {[
-                ['Property', selected.title],
-                ['Reference', selected.ref],
-                ['Purchase Price', `$${selected.price.toLocaleString()}`],
-                ['Deposit Due (5%)', `$${deposit.toLocaleString()}`],
-                ['Appointment', form.date],
-                ['Contact', `${form.firstName} ${form.lastName}`],
-              ].map(([label, val]) => (
-                <div className="bk-summary-row" key={label}>
-                  <span className="bk-summary-label">{label}</span>
-                  <span className="bk-summary-val">{val}</span>
-                </div>
-              ))}
-            </div>
-            <p className="bk-ref">Booking ID · BK-{Date.now().toString().slice(-6)}</p>
-            <br /><br />
-            <button className="bk-restart" onClick={() => { setConfirmed(false); setStep(1); setSelectedId(''); setForm({ firstName: '', lastName: '', email: '', phone: '', date: '', notes: '', payMethod: 'bank' }); }}>
-              Make Another Booking
-            </button>
+      <div className="flex min-h-screen items-center justify-center bg-white px-6 py-16 text-stone-800 sm:px-8" style={{ fontFamily: '"DM Sans", sans-serif' }}>
+        <div className="w-full max-w-[520px] text-center">
+          <div className="mx-auto mb-8 flex h-14 w-14 items-center justify-center rounded-full border border-[#C0D8B0] text-[#4A7040]">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
           </div>
+          <p className="mb-3 text-[0.65rem] uppercase tracking-[0.2em] text-stone-500">Booking Confirmed</p>
+          <h1 className="mb-4 font-serif text-4xl leading-tight text-stone-900 sm:text-[2.4rem]" style={{ fontFamily: '"Cormorant Garamond", serif' }}>
+            You&apos;re one step<br />
+            <em className="italic text-stone-600">closer to home.</em>
+          </h1>
+          <p className="mx-auto mb-10 max-w-[420px] text-sm leading-7 text-stone-600">
+            Your advance booking has been received. Our team will contact you at <strong>{form.email}</strong> within 24 hours to confirm your deposit and walk you through the next steps.
+          </p>
+          <div className="mb-8 border border-stone-300 bg-white p-6 text-left">
+            {[
+              ['Property', selected.title],
+              ['Reference', selected.ref],
+              ['Purchase Price', `$${selected.price.toLocaleString()}`],
+              ['Deposit Due (5%)', `$${deposit.toLocaleString()}`],
+              ['Appointment', form.date],
+              ['Contact', `${form.firstName} ${form.lastName}`],
+            ].map(([label, value]) => (
+              <div key={label} className="flex justify-between border-b border-stone-100 py-2 text-sm last:border-b-0 last:font-medium">
+                <span className="text-stone-500">{label}</span>
+                <span className="text-stone-800">{value}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[0.68rem] uppercase tracking-[0.16em] text-stone-400">Booking ID · BK-{Date.now().toString().slice(-6)}</p>
+          <button className="mt-8 border border-stone-300 bg-transparent px-8 py-3 text-[0.72rem] uppercase tracking-[0.16em] text-stone-600 transition hover:bg-stone-100" onClick={resetBooking}>
+            Make Another Booking
+          </button>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap');
+    <div className="min-h-screen bg-white text-stone-800" style={{ fontFamily: '"DM Sans", sans-serif' }}>
+      <div className="mx-auto max-w-6xl px-6 py-24 sm:px-8 lg:px-10">
+        <p className="mb-4 text-[0.68rem] uppercase tracking-[0.22em] text-stone-500">Sunrise Realty · Advance Booking</p>
+        <h1 className="mb-3 max-w-[460px] font-serif text-4xl leading-[1.05] text-stone-900 sm:text-[clamp(2.4rem,4vw,3.4rem)]" style={{ fontFamily: '"Cormorant Garamond", serif' }}>
+          Reserve your property<br />
+          <em className="italic text-stone-600">before it&apos;s gone.</em>
+        </h1>
+        <p className="mb-14 max-w-[460px] text-[0.92rem] leading-8 text-stone-600">
+          Secure your chosen home or land with a 5% advance deposit. Our team will walk you through the full purchase process.
+        </p>
 
-        .bk { min-height: 100vh; background: #F7F5F0; font-family: 'DM Sans', sans-serif; font-weight: 300; color: #1A1814; }
-        .bk-container { max-width: 1100px; margin: 0 auto; padding: 6rem 2.5rem 5rem; }
-
-        /* Header */
-        .bk-eyebrow { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: #8A8070; margin-bottom: 1rem; }
-        .bk-headline { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(2.4rem, 4vw, 3.4rem); line-height: 1.08; color: #1A1814; margin: 0 0 0.9rem; letter-spacing: -0.01em; }
-        .bk-headline em { font-style: italic; color: #5C5040; }
-        .bk-subhead { font-size: 0.92rem; line-height: 1.8; color: #6E6455; max-width: 460px; margin-bottom: 3.5rem; }
-
-        /* Steps */
-        .bk-steps { display: flex; align-items: center; gap: 0; margin-bottom: 3.5rem; }
-        .bk-step { display: flex; align-items: center; gap: 0.65rem; }
-        .bk-step-num { width: 28px; height: 28px; border: 1px solid #E0DAD0; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; color: #B0A890; flex-shrink: 0; }
-        .bk-step-num.active { background: #1A1814; color: #F7F5F0; border-color: #1A1814; }
-        .bk-step-num.done { background: #EFECE5; color: #6E6455; border-color: #E0DAD0; }
-        .bk-step-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: #B0A890; }
-        .bk-step-label.active { color: #1A1814; }
-        .bk-step-sep { flex: 1; height: 1px; background: #E0DAD0; margin: 0 1rem; max-width: 60px; }
-
-        /* Body layout */
-        .bk-body { display: grid; grid-template-columns: 1fr 320px; gap: 3rem; align-items: start; }
-
-        /* Property grid */
-        .bk-prop-filters { display: flex; gap: 2px; margin-bottom: 1.5rem; }
-        .bk-filter-btn { background: #fff; border: 1px solid #E0DAD0; padding: 0.55rem 1rem; font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8A8070; cursor: pointer; transition: all 0.2s; }
-        .bk-filter-btn.active { background: #1A1814; color: #F7F5F0; border-color: #1A1814; }
-
-        .bk-prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
-        .bk-prop-card { background: #fff; border: 2px solid transparent; padding: 1.4rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-        .bk-prop-card:hover { background: #FDFCF9; border-color: #D8D0C0; }
-        .bk-prop-card.selected { border-color: #1A1814; background: #fff; }
-
-        .bk-prop-type { font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.75rem; }
-        .bk-prop-type.house { color: #3A5070; }
-        .bk-prop-type.land { color: #3A5830; }
-        .bk-prop-title { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 1.1rem; color: #1A1814; margin: 0 0 0.25rem; line-height: 1.2; }
-        .bk-prop-loc { font-size: 0.75rem; color: #9A9080; margin-bottom: 0.9rem; }
-        .bk-prop-price { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 1.3rem; color: #1A1814; }
-        .bk-prop-ref { font-size: 0.62rem; letter-spacing: 0.12em; color: #C0B8A8; text-transform: uppercase; }
-        .bk-prop-meta { display: flex; gap: 1rem; margin-bottom: 0.5rem; }
-        .bk-prop-meta-item { font-size: 0.72rem; color: #9A9080; }
-
-        .bk-next-btn { margin-top: 2rem; background: #1A1814; color: #F7F5F0; border: none; padding: 0.9rem 2rem; font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; transition: background 0.2s; }
-        .bk-next-btn:disabled { background: #C0B8A8; cursor: not-allowed; }
-        .bk-next-btn:not(:disabled):hover { background: #3A3428; }
-
-        /* Sidebar summary */
-        .bk-sidebar { position: sticky; top: 2rem; }
-        .bk-sidebar-card { background: #fff; border: 1px solid #E0DAD0; padding: 1.75rem; }
-        .bk-sidebar-heading { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: #B0A890; margin-bottom: 1.25rem; }
-        .bk-sidebar-empty { font-size: 0.85rem; color: #C0B8A8; font-style: italic; font-family: 'Cormorant Garamond', serif; }
-        .bk-sidebar-title { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 1.2rem; color: #1A1814; margin-bottom: 0.2rem; }
-        .bk-sidebar-loc { font-size: 0.78rem; color: #9A9080; margin-bottom: 1.25rem; }
-        .bk-sidebar-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 0.5rem 0; border-bottom: 1px solid #F0EBE4; }
-        .bk-sidebar-row:last-child { border-bottom: none; }
-        .bk-sidebar-key { color: #8A8070; }
-        .bk-sidebar-val { color: #1A1814; }
-        .bk-deposit-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 1rem 0 0; margin-top: 0.5rem; border-top: 1px solid #E0DAD0; }
-        .bk-deposit-key { color: #5C5040; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
-        .bk-deposit-val { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: #1A1814; }
-
-        /* Form */
-        .bk-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-        .bk-field { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1rem; }
-        .bk-label { font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8070; }
-        .bk-input, .bk-select, .bk-textarea { background: #fff; border: 1px solid #E0DAD0; padding: 0.8rem 0.9rem; font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.88rem; color: #1A1814; outline: none; transition: border-color 0.2s; width: 100%; box-sizing: border-box; -webkit-appearance: none; }
-        .bk-input:focus, .bk-select:focus, .bk-textarea:focus { border-color: #8A8070; background: #FDFCF9; }
-        .bk-input::placeholder, .bk-textarea::placeholder { color: #C0B8A8; }
-        .bk-textarea { resize: none; min-height: 90px; }
-
-        .bk-pay-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-bottom: 1rem; }
-        .bk-pay-opt { border: 1px solid #E0DAD0; padding: 0.9rem 0.75rem; cursor: pointer; text-align: center; transition: all 0.2s; }
-        .bk-pay-opt.selected { border-color: #1A1814; background: #EFECE5; }
-        .bk-pay-opt:hover:not(.selected) { background: #FDFCF9; }
-        .bk-pay-label { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8A8070; }
-        .bk-pay-label.selected { color: #1A1814; }
-
-        .bk-form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
-        .bk-back-btn { background: none; border: 1px solid #E0DAD0; padding: 0.9rem 1.5rem; font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: #8A8070; cursor: pointer; transition: all 0.2s; }
-        .bk-back-btn:hover { background: #EFECE5; }
-        .bk-submit-btn { flex: 1; background: #1A1814; color: #F7F5F0; border: none; padding: 0.9rem; font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; transition: background 0.2s; }
-        .bk-submit-btn:hover { background: #3A3428; }
-
-        .bk-notice { font-size: 0.75rem; color: #B0A890; line-height: 1.6; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E0DAD0; }
-
-        @media (max-width: 860px) {
-          .bk-body { grid-template-columns: 1fr; }
-          .bk-sidebar { position: static; }
-          .bk-prop-grid { grid-template-columns: 1fr; }
-          .bk-form-grid { grid-template-columns: 1fr; }
-          .bk-pay-options { grid-template-columns: 1fr 1fr; }
-        }
-        @media (max-width: 560px) {
-          .bk-container { padding: 4rem 1.5rem 4rem; }
-        }
-      `}</style>
-
-      <div className="bk">
-        <div className="bk-container">
-
-          {/* Header */}
-          <p className="bk-eyebrow">Sunrise Realty · Advance Booking</p>
-          <h1 className="bk-headline">Reserve your property<br /><em>before it's gone.</em></h1>
-          <p className="bk-subhead">
-            Secure your chosen home or land with a 5% advance deposit. Our team will walk you through the full purchase process.
-          </p>
-
-          {/* Steps */}
-          <div className="bk-steps">
-            {[{ n: 1, label: 'Choose Property' }, { n: 2, label: 'Your Details' }, { n: 3, label: 'Review' }].map((s, i, arr) => (
-              <div key={s.n} style={{ display: 'flex', alignItems: 'center', flex: i < arr.length - 1 ? '1' : 'none' }}>
-                <div className="bk-step">
-                  <div className={`bk-step-num ${step === s.n ? 'active' : step > s.n ? 'done' : ''}`}>
-                    {step > s.n ? '✓' : s.n}
-                  </div>
-                  <span className={`bk-step-label ${step === s.n ? 'active' : ''}`}>{s.label}</span>
-                </div>
-                {i < arr.length - 1 && <div className="bk-step-sep" />}
+        <div className="mb-14 flex flex-wrap items-center gap-0">
+          {[{ n: 1, label: 'Choose Property' }, { n: 2, label: 'Your Details' }, { n: 3, label: 'Review' }].map((s, i, arr) => (
+            <div key={s.n} className="flex flex-1 items-center gap-3">
+              <div className={`flex h-7 w-7 items-center justify-center border text-[0.72rem] ${step === s.n ? 'border-stone-900 bg-stone-900 text-stone-50' : step > s.n ? 'border-stone-300 bg-stone-100 text-stone-600' : 'border-stone-300 bg-white text-stone-400'}`}>
+                {step > s.n ? '✓' : s.n}
               </div>
-            ))}
-          </div>
+              <span className={`text-[0.72rem] uppercase tracking-[0.1em] ${step === s.n ? 'text-stone-900' : 'text-stone-400'}`}>{s.label}</span>
+              {i < arr.length - 1 && <div className="ml-3 hidden h-px flex-1 bg-stone-300 sm:block" />}
+            </div>
+          ))}
+        </div>
 
-          <div className="bk-body">
+        <div className="grid gap-12 lg:grid-cols-[1fr_320px] lg:items-start">
+          <div>
+            {step === 1 && (
+              <div>
+                <div className="mb-6 flex flex-wrap gap-2">
+                  {filterOptions.map((f) => (
+                    <button key={f} className={`${buttonClass} ${filterType === f ? 'border-stone-900 bg-stone-900 text-stone-50' : ''}`} onClick={() => setFilterType(f)}>
+                      {f === 'all' ? 'All' : f === 'house' ? 'Houses' : 'Land'}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {filteredProps.map((p) => (
+                    <button key={p.id} type="button" className={`border p-5 text-left transition ${selectedId === p.id ? 'border-stone-900 bg-white' : 'border-stone-200 bg-white hover:border-stone-400 hover:bg-stone-50'}`} onClick={() => setSelectedId(p.id)}>
+                      <p className={`mb-3 text-[0.58rem] uppercase tracking-[0.18em] ${p.type === 'house' ? 'text-[#3A5070]' : 'text-[#3A5830]'}`}>{p.type}</p>
+                      <h3 className="mb-1 font-serif text-lg text-stone-900" style={{ fontFamily: '"Cormorant Garamond", serif' }}>{p.title}</h3>
+                      <p className="mb-3 text-sm text-stone-500">{p.location}</p>
+                      {p.beds || p.baths ? (
+                        <div className="mb-2 flex flex-wrap gap-3 text-[0.72rem] text-stone-500">
+                          {p.beds && <span>{p.beds} bd</span>}
+                          {p.baths && <span>{p.baths} ba</span>}
+                          <span>{p.size}</span>
+                        </div>
+                      ) : (
+                        <p className="mb-2 text-[0.72rem] text-stone-500">{p.size}</p>
+                      )}
+                      <p className="font-serif text-[1.3rem] text-stone-900" style={{ fontFamily: '"Cormorant Garamond", serif' }}>${p.price.toLocaleString()}</p>
+                      <p className="mt-2 text-[0.62rem] uppercase tracking-[0.12em] text-stone-400">{p.ref}</p>
+                    </button>
+                  ))}
+                </div>
+                <button className={`${primaryButtonClass} mt-8`} disabled={!selectedId} onClick={() => setStep(2)}>
+                  Continue →
+                </button>
+              </div>
+            )}
 
-            {/* Main content */}
-            <div>
-
-              {/* Step 1 */}
-              {step === 1 && (
-                <div>
-                  <div className="bk-prop-filters">
-                    {(['all', 'house', 'land'] as const).map((f) => (
-                      <button key={f} className={`bk-filter-btn ${filterType === f ? 'active' : ''}`} onClick={() => setFilterType(f)}>
-                        {f === 'all' ? 'All' : f === 'house' ? 'Houses' : 'Land'}
+            {step === 2 && (
+              <form onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
+                <div className="mb-4 grid gap-4 md:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">First Name</label>
+                    <input className={inputClass} placeholder="Jane" value={form.firstName} onChange={(e) => setForm((prev) => ({ ...prev, firstName: e.target.value }))} required />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Last Name</label>
+                    <input className={inputClass} placeholder="Smith" value={form.lastName} onChange={(e) => setForm((prev) => ({ ...prev, lastName: e.target.value }))} required />
+                  </div>
+                </div>
+                <div className="mb-4 grid gap-4 md:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Email Address</label>
+                    <input className={inputClass} type="email" placeholder="jane@example.com" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} required />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Phone Number</label>
+                    <input className={inputClass} type="tel" placeholder="(555) 000-0000" value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} required />
+                  </div>
+                </div>
+                <div className="mb-4 flex flex-col gap-2">
+                  <label className="text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Preferred Appointment Date</label>
+                  <input className={inputClass} type="date" value={form.date} onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))} required />
+                </div>
+                <div className="mb-4 flex flex-col gap-2">
+                  <label className="text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Notes (optional)</label>
+                  <textarea className={`${inputClass} min-h-[90px] resize-none`} placeholder="Any questions or special requests…" value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} />
+                </div>
+                <div className="mb-4 flex flex-col gap-2">
+                  <label className="mb-2 text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Deposit Payment Method</label>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {paymentOptions.map((opt) => (
+                      <button key={opt.value} type="button" className={`border px-3 py-3 text-center transition ${form.payMethod === opt.value ? 'border-stone-900 bg-stone-100' : 'border-stone-300 bg-white hover:bg-stone-50'}`} onClick={() => setForm((prev) => ({ ...prev, payMethod: opt.value }))}>
+                        <p className={`text-[0.68rem] uppercase tracking-[0.12em] ${form.payMethod === opt.value ? 'text-stone-900' : 'text-stone-500'}`}>{opt.label}</p>
                       </button>
                     ))}
                   </div>
-                  <div className="bk-prop-grid">
-                    {filteredProps.map((p) => (
-                      <div key={p.id} className={`bk-prop-card ${selectedId === p.id ? 'selected' : ''}`} onClick={() => setSelectedId(p.id)}>
-                        <p className={`bk-prop-type ${p.type}`}>{p.type}</p>
-                        <h3 className="bk-prop-title">{p.title}</h3>
-                        <p className="bk-prop-loc">{p.location}</p>
-                        {(p.beds || p.baths) && (
-                          <div className="bk-prop-meta">
-                            {p.beds && <span className="bk-prop-meta-item">{p.beds} bd</span>}
-                            {p.baths && <span className="bk-prop-meta-item">{p.baths} ba</span>}
-                            <span className="bk-prop-meta-item">{p.size}</span>
-                          </div>
-                        )}
-                        {p.type === 'land' && <p className="bk-prop-meta-item" style={{ marginBottom: '0.5rem', fontSize: '0.72rem', color: '#9A9080' }}>{p.size}</p>}
-                        <p className="bk-prop-price">${p.price.toLocaleString()}</p>
-                        <p className="bk-prop-ref">{p.ref}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <button className="bk-next-btn" disabled={!selectedId} onClick={() => setStep(2)}>
-                    Continue →
-                  </button>
                 </div>
-              )}
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button type="button" className={buttonClass} onClick={() => setStep(1)}>← Back</button>
+                  <button type="submit" className={`${primaryButtonClass} flex-1`}>Review Booking →</button>
+                </div>
+              </form>
+            )}
 
-              {/* Step 2 */}
-              {step === 2 && (
-                <form onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
-                  <div className="bk-form-grid">
-                    <div className="bk-field">
-                      <label className="bk-label">First Name</label>
-                      <input className="bk-input" placeholder="Jane" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} required />
+            {step === 3 && selected && (
+              <form onSubmit={handleConfirm}>
+                <div className="mb-6 border border-stone-300 bg-white p-8">
+                  <p className="mb-5 text-[0.62rem] uppercase tracking-[0.18em] text-stone-400">Booking Summary</p>
+                  {[
+                    ['Property', selected.title],
+                    ['Location', selected.location],
+                    ['Reference', selected.ref],
+                    ['Purchase Price', `$${selected.price.toLocaleString()}`],
+                    ['Deposit (5%)', `$${deposit.toLocaleString()}`],
+                    ['Payment Method', form.payMethod === 'bank' ? 'Bank Transfer' : form.payMethod === 'card' ? 'Credit Card' : 'Escrow'],
+                    ['Appointment', form.date],
+                    ['Name', `${form.firstName} ${form.lastName}`],
+                    ['Email', form.email],
+                    ['Phone', form.phone],
+                  ].map(([key, value]) => (
+                    <div key={key} className="flex justify-between border-b border-stone-100 py-2 text-sm last:border-b-0">
+                      <span className="text-stone-500">{key}</span>
+                      <span className="text-stone-800">{value}</span>
                     </div>
-                    <div className="bk-field">
-                      <label className="bk-label">Last Name</label>
-                      <input className="bk-input" placeholder="Smith" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} required />
+                  ))}
+                  {form.notes && (
+                    <div className="pt-3 text-sm">
+                      <span className="mb-1 block text-stone-500">Notes</span>
+                      <span className="text-stone-800">{form.notes}</span>
                     </div>
-                  </div>
-                  <div className="bk-form-grid">
-                    <div className="bk-field">
-                      <label className="bk-label">Email Address</label>
-                      <input className="bk-input" type="email" placeholder="jane@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-                    </div>
-                    <div className="bk-field">
-                      <label className="bk-label">Phone Number</label>
-                      <input className="bk-input" type="tel" placeholder="(555) 000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
-                    </div>
-                  </div>
-                  <div className="bk-field">
-                    <label className="bk-label">Preferred Appointment Date</label>
-                    <input className="bk-input" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
-                  </div>
-                  <div className="bk-field">
-                    <label className="bk-label">Notes (optional)</label>
-                    <textarea className="bk-textarea" placeholder="Any questions or special requests…" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-                  </div>
-                  <div className="bk-field">
-                    <label className="bk-label" style={{ marginBottom: '0.65rem' }}>Deposit Payment Method</label>
-                    <div className="bk-pay-options">
-                      {[{ val: 'bank', label: 'Bank Transfer' }, { val: 'card', label: 'Credit Card' }, { val: 'escrow', label: 'Escrow' }].map((opt) => (
-                        <div key={opt.val} className={`bk-pay-opt ${form.payMethod === opt.val ? 'selected' : ''}`} onClick={() => setForm({ ...form, payMethod: opt.val })}>
-                          <p className={`bk-pay-label ${form.payMethod === opt.val ? 'selected' : ''}`}>{opt.label}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bk-form-actions">
-                    <button type="button" className="bk-back-btn" onClick={() => setStep(1)}>← Back</button>
-                    <button type="submit" className="bk-submit-btn">Review Booking →</button>
-                  </div>
-                </form>
-              )}
-
-              {/* Step 3 */}
-              {step === 3 && selected && (
-                <form onSubmit={handleConfirm}>
-                  <div style={{ background: '#fff', border: '1px solid #E0DAD0', padding: '2rem', marginBottom: '1.5rem' }}>
-                    <p style={{ fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#B0A890', marginBottom: '1.25rem' }}>Booking Summary</p>
-                    {[
-                      ['Property', selected.title],
-                      ['Location', selected.location],
-                      ['Reference', selected.ref],
-                      ['Purchase Price', `$${selected.price.toLocaleString()}`],
-                      ['Deposit (5%)', `$${deposit.toLocaleString()}`],
-                      ['Payment Method', form.payMethod === 'bank' ? 'Bank Transfer' : form.payMethod === 'card' ? 'Credit Card' : 'Escrow'],
-                      ['Appointment', form.date],
-                      ['Name', `${form.firstName} ${form.lastName}`],
-                      ['Email', form.email],
-                      ['Phone', form.phone],
-                    ].map(([k, v]) => (
-                      <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.55rem 0', borderBottom: '1px solid #F0EBE4', fontSize: '0.85rem' }}>
-                        <span style={{ color: '#8A8070' }}>{k}</span>
-                        <span style={{ color: '#1A1814' }}>{v}</span>
-                      </div>
-                    ))}
-                    {form.notes && (
-                      <div style={{ padding: '0.55rem 0', fontSize: '0.85rem' }}>
-                        <span style={{ color: '#8A8070', display: 'block', marginBottom: '0.25rem' }}>Notes</span>
-                        <span style={{ color: '#1A1814' }}>{form.notes}</span>
-                      </div>
-                    )}
-                  </div>
-                  <p className="bk-notice">
-                    By confirming this booking, you agree to pay a 5% advance deposit of <strong>${deposit.toLocaleString()}</strong>. This reserves the property exclusively for you for 30 days while the full purchase agreement is prepared. The deposit is fully refundable within 7 days.
-                  </p>
-                  <div className="bk-form-actions">
-                    <button type="button" className="bk-back-btn" onClick={() => setStep(2)}>← Edit Details</button>
-                    <button type="submit" className="bk-submit-btn">Confirm Booking →</button>
-                  </div>
-                </form>
-              )}
-
-            </div>
-
-            {/* Sidebar */}
-            <div className="bk-sidebar">
-              <div className="bk-sidebar-card">
-                <p className="bk-sidebar-heading">Selected Property</p>
-                {!selected ? (
-                  <p className="bk-sidebar-empty">No property chosen yet.</p>
-                ) : (
-                  <>
-                    <p className="bk-sidebar-title">{selected.title}</p>
-                    <p className="bk-sidebar-loc">{selected.location}</p>
-                    {[
-                      ['Type', selected.type.charAt(0).toUpperCase() + selected.type.slice(1)],
-                      ['Size', selected.size],
-                      ...(selected.beds ? [['Beds / Baths', `${selected.beds} / ${selected.baths}`]] : []),
-                      ['Ref', selected.ref],
-                    ].map(([k, v]) => (
-                      <div className="bk-sidebar-row" key={k}>
-                        <span className="bk-sidebar-key">{k}</span>
-                        <span className="bk-sidebar-val">{v}</span>
-                      </div>
-                    ))}
-                    <div className="bk-deposit-row">
-                      <span className="bk-deposit-key">Deposit Due</span>
-                      <span className="bk-deposit-val">${deposit.toLocaleString()}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
+                  )}
+                </div>
+                <p className="border-t border-stone-300 pt-4 text-[0.75rem] leading-6 text-stone-400">
+                  By confirming this booking, you agree to pay a 5% advance deposit of <strong className="text-stone-600">${deposit.toLocaleString()}</strong>. This reserves the property exclusively for you for 30 days while the full purchase agreement is prepared. The deposit is fully refundable within 7 days.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button type="button" className={buttonClass} onClick={() => setStep(2)}>← Edit Details</button>
+                  <button type="submit" className={`${primaryButtonClass} flex-1`}>Confirm Booking →</button>
+                </div>
+              </form>
+            )}
           </div>
+
+          <aside className="lg:sticky lg:top-8">
+            <div className="border border-stone-300 bg-white p-7">
+              <p className="mb-5 text-[0.62rem] uppercase tracking-[0.18em] text-stone-400">Selected Property</p>
+              {!selected ? (
+                <p className="font-serif text-sm italic text-stone-400" style={{ fontFamily: '"Cormorant Garamond", serif' }}>No property chosen yet.</p>
+              ) : (
+                <>
+                  <p className="font-serif text-xl text-stone-900" style={{ fontFamily: '"Cormorant Garamond", serif' }}>{selected.title}</p>
+                  <p className="mb-5 text-sm text-stone-500">{selected.location}</p>
+                  {[
+                    ['Type', selected.type.charAt(0).toUpperCase() + selected.type.slice(1)],
+                    ['Size', selected.size],
+                    ...(selected.beds ? [['Beds / Baths', `${selected.beds} / ${selected.baths}`]] : []),
+                    ['Ref', selected.ref],
+                  ].map(([key, value]) => (
+                    <div key={key} className="flex justify-between border-b border-stone-100 py-2 text-sm last:border-b-0">
+                      <span className="text-stone-500">{key}</span>
+                      <span className="text-stone-800">{value}</span>
+                    </div>
+                  ))}
+                  <div className="mt-4 flex items-center justify-between border-t border-stone-300 pt-4">
+                    <span className="text-[0.72rem] uppercase tracking-[0.1em] text-stone-500">Deposit Due</span>
+                    <span className="font-serif text-[1.3rem] text-stone-900" style={{ fontFamily: '"Cormorant Garamond", serif' }}>${deposit.toLocaleString()}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </aside>
         </div>
       </div>
-    </>
+    </div>
   );
 }
