@@ -87,7 +87,7 @@ export default function Marketplace() {
         h1, h2, h3 { font-family: 'Cormorant Garamond', serif; }
       `}</style>
 
-      <main className="min-h-screen bg-[#f7f5ef] text-stone-900">
+      <main className="min-h-screen bg-white text-stone-900">
         <div className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-10">
           <p className="mb-4 text-[0.68rem] uppercase tracking-[0.22em] text-stone-500">Sunrise Realty · Community Marketplace</p>
           <h1 className="mb-3 text-4xl font-light leading-tight sm:text-5xl">
@@ -215,7 +215,7 @@ export default function Marketplace() {
 
       {showForm ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 px-4 py-6" onClick={() => setShowForm(false)}>
-          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto border border-stone-300 bg-[#f7f5ef] p-8 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto border border-stone-300 bg-white p-8 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="mb-6 text-2xl font-light text-stone-900">List your property</h2>
             <form onSubmit={handleAdd} className="space-y-4">
               <div>
@@ -277,7 +277,7 @@ export default function Marketplace() {
 
       {deleteId ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 px-4" onClick={() => setDeleteId(null)}>
-          <div className="w-full max-w-sm border border-stone-300 bg-[#f7f5ef] p-7 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm border border-stone-300 bg-white p-7 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="mb-3 text-2xl font-light text-stone-900">Remove listing?</h3>
             <p className="mb-6 text-sm leading-7 text-stone-600">This listing will be permanently removed from the marketplace. This action cannot be undone.</p>
             <div className="flex gap-3">

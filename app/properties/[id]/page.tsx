@@ -31,7 +31,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="relative h-96 md:h-[500px]">
