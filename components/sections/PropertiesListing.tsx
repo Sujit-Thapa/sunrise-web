@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import type { Property } from '@/types';
 
-const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
 
 interface PropertiesListingProps {
   properties: Property[];
