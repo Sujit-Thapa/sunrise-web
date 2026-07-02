@@ -81,11 +81,6 @@ export default function Marketplace() {
 
   return (
     <>
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Sans:wght@300;400&display=swap');
-        body { font-family: 'DM Sans', sans-serif; }
-        h1, h2, h3 { font-family: 'Cormorant Garamond', serif; }
-      `}</style>
 
       <main className="min-h-screen bg-white text-stone-900">
         <div className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-10">
