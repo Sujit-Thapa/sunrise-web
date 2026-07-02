@@ -52,8 +52,12 @@ const SOCIALS = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#F7F5F0] text-[#2A2A28] border-t border-[#E3DFD4]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-14 pb-8">
+    <footer className="relative overflow-hidden bg-[#F7F5F0]/40 backdrop-blur-xl backdrop-saturate-150 text-[#2A2A28] border-t border-white/40">
+      {/* sheen — light glancing off the glass, consistent with navbar/modal */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent" />
+      <div className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-14 pb-8">
         {/* Top: Brand + CTA */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-8">
           <div>
@@ -75,7 +79,7 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-[#E3DFD4]" />
+        <div className="h-px bg-white/50" />
 
         {/* Main Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-8 py-8">
@@ -156,7 +160,7 @@ export default function Footer() {
                   <a
                     key={social.label}
                     href={social.href}
-                    className="w-7 h-7 flex items-center justify-center text-[#4A4A45] border border-[#E3DFD4] hover:text-[#D4920A] hover:border-[#D4920A] transition-colors duration-200"
+                    className="w-7 h-7 flex items-center justify-center text-[#4A4A45] bg-white/20 backdrop-blur-sm border border-white/50 hover:text-[#D4920A] hover:border-[#D4920A] hover:bg-white/40 transition-colors duration-200"
                     aria-label={social.label}
                   >
                     <Icon />
@@ -168,7 +172,7 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-[#E3DFD4]" />
+        <div className="h-px bg-white/50" />
 
         {/* Bottom Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-5">
