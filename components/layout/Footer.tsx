@@ -8,6 +8,13 @@ const NAV_LINKS = [
   { label: 'Contact', href: '/contact' },
 ];
 
+const SERVICES = [
+  { label: 'Buy a Property', href: '#' },
+  { label: 'Sell Your Home', href: '#' },
+  { label: 'Rental Listings', href: '#' },
+  { label: 'Market Reports', href: '#' },
+  { label: 'Valuations', href: '#' },
+];
 
 const SOCIALS = [
   {
