@@ -7,16 +7,8 @@ export default async function Properties() {
 
   try {
     const response = await fetch('/api/properties', { cache: 'no-store' });
-    if (response.ok) {
-      properties = await response.json();
-    }
-  } catch {
-    // Keep fallbackProperties if the internal API route is unavailable.
-  }
+    if (response.ok) properties = await response.json();
+  } catch {}
 
-  return (
-    <div className="min-h-screen bg-white pt-[68px]">
-      <PropertiesListing properties={properties} />
-    </div>
-  );
+  return <div className="min-h-screen bg-white pt-[68px]"><PropertiesListing properties={properties} /></div>;
 }
