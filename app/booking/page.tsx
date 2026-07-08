@@ -48,6 +48,7 @@ const paymentOptions: { value: PaymentMethod; label: string }[] = [
 const inputClass = 'w-full border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none transition placeholder:text-stone-400 focus:border-stone-500 focus:bg-stone-50';
 const buttonClass = 'border border-stone-300 bg-white px-4 py-2.5 text-[0.72rem] uppercase tracking-[0.16em] text-stone-600 transition hover:bg-stone-100';
 const primaryButtonClass = 'bg-stone-900 px-5 py-3 text-[0.72rem] uppercase tracking-[0.18em] text-stone-50 transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:bg-stone-400';
+const stepLabels = [{ n: 1, label: 'Choose Property' }, { n: 2, label: 'Your Details' }, { n: 3, label: 'Review' }];
 
 export default function Booking() {
   const [step, setStep] = useState<BookingStep>(1);
@@ -141,7 +142,7 @@ export default function Booking() {
         </p>
 
         <div className="mb-14 flex flex-wrap items-center gap-0">
-          {[{ n: 1, label: 'Choose Property' }, { n: 2, label: 'Your Details' }, { n: 3, label: 'Review' }].map((s, i, arr) => (
+          {stepLabels.map((s, i, arr) => (
             <div key={s.n} className="flex flex-1 items-center gap-3">
               <div className={`flex h-7 w-7 items-center justify-center border text-[0.72rem] ${step === s.n ? 'border-stone-900 bg-stone-900 text-stone-50' : step > s.n ? 'border-stone-300 bg-stone-100 text-stone-600' : 'border-stone-300 bg-white text-stone-400'}`}>
                 {step > s.n ? '✓' : s.n}
