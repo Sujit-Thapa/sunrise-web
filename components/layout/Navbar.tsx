@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
-import AuthModal from '../../modals/AuthModal';
 
 const NAV_LINKS = [
   { label: 'Properties', href: '/properties' },
@@ -17,7 +16,6 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -93,13 +91,13 @@ export default function Navbar() {
                 ))}
               </ul>
 
-              {/* Sign In Button */}
-              <button
-                onClick={() => setIsAuthOpen(true)}
+              {/* Sign Up Button */}
+              <Link
+                href="/auth/signup"
                 className="px-6 py-2 rounded-full bg-gray-900/90 backdrop-blur-sm text-white text-sm font-medium hover:bg-gray-900 transition-colors duration-200 whitespace-nowrap shadow-sm"
               >
-                Sign In
-              </button>
+                Sign Up
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -140,24 +138,21 @@ export default function Navbar() {
               </ul>
             </div>
 
-            {/* Sign In Button for Mobile */}
+            {/* Sign Up Button for Mobile */}
             <div className="border-t border-white/40 p-4 sm:p-6">
-              <button
-                onClick={() => {
-                  handleNavClick();
-                  setIsAuthOpen(true);
-                }}
-                className="w-full px-6 py-3 rounded-full bg-gray-900/90 backdrop-blur-sm text-white font-medium hover:bg-gray-900 transition-colors duration-200"
+              <Link
+                href="/auth/signup"
+                onClick={handleNavClick}
+                className="flex w-full items-center justify-center px-6 py-3 rounded-full bg-gray-900/90 backdrop-blur-sm text-white font-medium hover:bg-gray-900 transition-colors duration-200"
               >
-                Sign In / Create Account
-              </button>
+                Create Account
+              </Link>
             </div>
           </div>
         </div>
       )}
 
-      {/* Auth Modal */}
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+     
     </>
   );
 }
