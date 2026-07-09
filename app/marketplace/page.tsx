@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 
 type PropertyType = 'land' | 'house';
 type ListingStatus = 'available' | 'under offer';
+type SortOption = 'newest' | 'price-asc' | 'price-desc';
 
 interface Listing {
   id: string;
@@ -39,19 +40,35 @@ const EMPTY_FORM = {
   seller: '',
 };
 
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: 'newest', label: 'Newest' },
+  { value: 'price-asc', label: 'Price: Low to High' },
+  { value: 'price-desc', label: 'Price: High to Low' },
+];
+
 export default function Marketplace() {
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
   const [filter, setFilter] = useState<'all' | PropertyType>('all');
+  const [sort, setSort] = useState<SortOption>('newest');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const filtered = listings.filter((listing) => {
-    const matchesType = filter === 'all' || listing.type === filter;
-    const matchesSearch = listing.title.toLowerCase().includes(search.toLowerCase()) || listing.location.toLowerCase().includes(search.toLowerCase());
-    return matchesType && matchesSearch;
-  });
+  const filtered = listings
+    .filter((listing) => {
+      const matchesType = filter === 'all' || listing.type === filter;
+      const matchesSearch =
+        listing.title.toLowerCase().includes(search.toLowerCase()) ||
+        listing.location.toLowerCase().includes(search.toLowerCase());
+      return matchesType && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sort === 'price-asc') return a.price - b.price;
+      if (sort === 'price-desc') return b.price - a.price;
+      return 0;
+    });
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +98,6 @@ export default function Marketplace() {
 
   return (
     <>
-
       <main className="min-h-screen bg-white text-stone-900">
         <div className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-10">
           <p className="mb-4 text-[0.68rem] uppercase tracking-[0.22em] text-stone-500">Sunrise Realty · Community Marketplace</p>
@@ -92,42 +108,55 @@ export default function Marketplace() {
             Browse land and homes posted directly by sellers. List your own property, connect with buyers, and transact through our trusted platform.
           </p>
 
-          <div className="mb-8 flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[220px] flex-1">
-              <svg className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by title or location…"
-                className="w-full border border-stone-300 bg-white py-3 pl-11 pr-4 text-sm text-stone-900 outline-none transition focus:border-stone-500"
-              />
-            </div>
+          {/* Sticky filter bar */}
+          <div className="sticky top-0 z-30 -mx-6 mb-8 border-y border-stone-200 bg-white/95 px-6 py-4 backdrop-blur sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-[220px] flex-1">
+                <svg className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by title or location…"
+                  className="w-full border border-stone-300 bg-white py-3 pl-11 pr-4 text-sm text-stone-900 outline-none transition focus:border-stone-500"
+                />
+              </div>
 
-            <div className="flex flex-wrap gap-2">
-              {(['all', 'house', 'land'] as const).map((option) => (
-                <button
-                  key={option}
-                  onClick={() => setFilter(option)}
-                  className={`border px-4 py-2 text-[0.7rem] uppercase tracking-[0.12em] transition ${filter === option ? 'border-stone-900 bg-stone-900 text-stone-100' : 'border-stone-300 bg-white text-stone-500 hover:bg-stone-100'}`}
-                >
-                  {option === 'all' ? 'All' : option === 'house' ? 'Houses' : 'Land'}
-                </button>
-              ))}
-            </div>
+              <div className="flex flex-wrap gap-2">
+                {(['all', 'house', 'land'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setFilter(option)}
+                    className={`border px-4 py-2 text-[0.7rem] uppercase tracking-[0.12em] transition ${filter === option ? 'border-stone-900 bg-stone-900 text-stone-100' : 'border-stone-300 bg-white text-stone-500 hover:bg-stone-100'}`}
+                  >
+                    {option === 'all' ? 'All' : option === 'house' ? 'Houses' : 'Land'}
+                  </button>
+                ))}
+              </div>
 
-            <button
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 whitespace-nowrap border border-stone-900 bg-stone-900 px-4 py-3 text-[0.72rem] uppercase tracking-[0.14em] text-stone-100 transition hover:bg-stone-700"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              List Property
-            </button>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortOption)}
+                className="border border-stone-300 bg-white px-3 py-3 text-[0.7rem] uppercase tracking-[0.1em] text-stone-600 outline-none transition focus:border-stone-500"
+              >
+                {sortOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => setShowForm(true)}
+                className="flex items-center gap-2 whitespace-nowrap border border-stone-900 bg-stone-900 px-4 py-3 text-[0.72rem] uppercase tracking-[0.14em] text-stone-100 transition hover:bg-stone-700"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                List Property
+              </button>
+            </div>
           </div>
 
           <p className="mb-6 text-[0.72rem] uppercase tracking-[0.12em] text-stone-400">
@@ -139,14 +168,20 @@ export default function Marketplace() {
               <p className="text-xl italic text-stone-600">No listings match your search.</p>
             </div>
           ) : (
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-px overflow-hidden border border-stone-200 bg-stone-200 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((listing) => (
-                <article key={listing.id} className="border border-stone-300 bg-white p-6">
+                <article
+                  key={listing.id}
+                  onMouseEnter={() => setHoveredId(listing.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  className={`group relative flex flex-col bg-white p-6 transition-colors duration-150 ${hoveredId === listing.id ? 'bg-stone-50' : ''}`}
+                >
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <span className={`px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] ${listing.type === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}`}>
                       {listing.type}
                     </span>
-                    <span className={`text-[0.6rem] uppercase tracking-[0.14em] ${listing.status === 'under offer' ? 'text-amber-600' : 'text-stone-400'}`}>
+                    <span className={`inline-flex items-center gap-1.5 text-[0.6rem] uppercase tracking-[0.14em] ${listing.status === 'under offer' ? 'text-amber-600' : 'text-stone-400'}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${listing.status === 'under offer' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
                       {listing.status}
                     </span>
                   </div>
@@ -179,27 +214,28 @@ export default function Marketplace() {
                     ) : null}
                   </div>
 
-                  <div className="mb-5 h-px bg-stone-200" />
-
-                  <div className="flex items-end justify-between gap-4">
-                    <div>
-                      <p className="text-2xl font-light text-stone-900">${listing.price.toLocaleString()}</p>
-                      <p className="mt-1 text-[0.72rem] text-stone-400">Listed by {listing.seller}</p>
-                      <p className="text-[0.68rem] text-stone-400">{listing.posted}</p>
+                  <div className="mt-auto">
+                    <div className="mb-5 h-px bg-stone-200" />
+                    <div className="flex items-end justify-between gap-4">
+                      <div>
+                        <p className="text-2xl font-light text-stone-900">${listing.price.toLocaleString()}</p>
+                        <p className="mt-1 text-[0.72rem] text-stone-400">Listed by {listing.seller}</p>
+                        <p className="text-[0.68rem] text-stone-400">{listing.posted}</p>
+                      </div>
+                      <button
+                        onClick={() => setDeleteId(listing.id)}
+                        aria-label="Delete listing"
+                        className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-400 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14H6L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                          <path d="M9 6V4h6v2" />
+                        </svg>
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setDeleteId(listing.id)}
-                      aria-label="Delete listing"
-                      className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-400 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14H6L5 6" />
-                        <path d="M10 11v6" />
-                        <path d="M14 11v6" />
-                        <path d="M9 6V4h6v2" />
-                      </svg>
-                    </button>
                   </div>
                 </article>
               ))}

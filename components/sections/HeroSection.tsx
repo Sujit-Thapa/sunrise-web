@@ -155,15 +155,15 @@ export default function HeroSection() {
         >
           The Simplest Way to
           <br />
-          <em className="not-italic text-gold-primary">Find Property</em>
+          <em className="not-italic text-gold-primary">Finding Property</em>
         </h1>
 
-        <p
+        {/* <p
           className="mb-8 max-w-md text-center text-sm leading-relaxed text-ink"
           style={{ textShadow: '0 1px 8px rgba(253,243,220,0.95), 0 0 24px rgba(253,243,220,0.7)' }}
         >
           Discover your perfect home across Kathmandu Valley on an interactive map. Every listing verified.
-        </p>
+        </p> */}
 
         <div className="pointer-events-auto w-full max-w-3xl">
           <SearchBar />
