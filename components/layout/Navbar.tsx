@@ -5,13 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 
-const NAV_LINKS = [
-  { label: 'Properties', href: '/properties' },
-  { label: 'Marketplace', href: '/marketplace' },
-  { label: 'Booking', href: '/booking' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
-];
+
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
