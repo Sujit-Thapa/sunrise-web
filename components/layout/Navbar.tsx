@@ -66,7 +66,7 @@ export default function Navbar() {
             >
               <div className="relative w-24 h-24 sm:w-28 sm:h-28">
                 <Image
-                  src="/images/logo/sunrise.png"
+                  src="/images/logo/sunrise2.png"
                   alt="Sunrise Realty"
                   fill
                   className="w-full h-full object-contain"
