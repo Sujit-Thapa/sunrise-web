@@ -67,7 +67,7 @@ function PropertiesMap({
       const active = id === hoveredId;
 
       element.classList.toggle('translate-y-[-4px]', active);
-      label?.classList.toggle('bg-[#f5b931]', active);
+      label?.classList.toggle('bg-[#AC953E]', active);
       label?.classList.toggle('text-white', active);
       label?.classList.toggle('shadow-[0_10px_28px_rgba(13,27,42,0.4)]', active);
       label?.classList.toggle('scale-105', active);
@@ -97,7 +97,11 @@ function PropertiesMap({
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
 
+    let isDisposed = false;
+
     const addMarkers = () => {
+      if (isDisposed) return;
+
       map.resize();
       const bounds = new mapboxgl.LngLatBounds();
 
@@ -136,14 +140,30 @@ function PropertiesMap({
     map.on('error', handleError);
     window.addEventListener('resize', resizeMap);
 
+    const markerElements = markerEls.current;
+
     return () => {
+      if (isDisposed) return;
+      isDisposed = true;
+
       window.clearTimeout(resizeTimer);
       window.removeEventListener('resize', resizeMap);
       map.off('error', handleError);
-      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current.forEach((marker) => {
+        try {
+          marker.remove();
+        } catch {
+          // ignore cleanup errors when the map is being torn down during style loading
+        }
+      });
       markersRef.current = [];
-      markerEls.current.clear();
-      map.remove();
+      markerElements.clear();
+
+      try {
+        map.remove();
+      } catch {
+        // ignore cleanup aborts that can happen while the map style request is still resolving
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapboxToken, properties]);
@@ -222,7 +242,7 @@ function createPriceMarker(property: Property): HTMLAnchorElement {
   marker.className = 'group flex cursor-pointer flex-col items-center text-slate-800 no-underline';
   marker.innerHTML = `
     <span data-role="label" class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold shadow-[0_10px_24px_rgba(13,27,42,0.2)] transition duration-200">$${property.price.toLocaleString()}</span>
-    <span data-role="dot" class="mt-2 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#f5b931] shadow-[0_6px_16px_rgba(13,27,42,0.2)] transition duration-200"></span>
+    <span data-role="dot" class="mt-2 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#AC953E] shadow-[0_6px_16px_rgba(13,27,42,0.2)] transition duration-200"></span>
   `;
   return marker;
 }

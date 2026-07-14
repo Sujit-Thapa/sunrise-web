@@ -25,9 +25,20 @@ export default function HeroSection() {
 
   const [ctrlHint, setCtrlHint] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
+  const [mapNotice] = useState(
+    process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+      ? ''
+      : 'Interactive map preview is unavailable without a Mapbox token.',
+  );
+
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
   useEffect(() => {
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+    if (!mapboxToken) {
+      return;
+    }
+
+    mapboxgl.accessToken = mapboxToken;
 
     const initTimer = window.setTimeout(() => {
       if (!mapContainer.current) return;
@@ -94,7 +105,7 @@ export default function HeroSection() {
               className: 'sunrise-popup',
             }).setHTML(`
               <div class="min-w-[160px] p-3 font-sans">
-                <p class="mb-1 text-[9px] uppercase tracking-[0.18em] text-[#D4920A]">
+                <p class="mb-1 text-[9px] uppercase tracking-[0.18em] text-[#AC953E]">
                   ${property.type}${property.beds > 0 ? ` · ${property.beds} bed` : ''}
                 </p>
                 <p class="mb-0.5 text-base font-bold text-stone-900">${property.price}</p>
@@ -134,13 +145,18 @@ export default function HeroSection() {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [mapboxToken]);
 
   const overlayClasses = `absolute inset-0 z-10 flex flex-col items-center justify-center px-4 pb-20 transition-all duration-300 pointer-events-none ${isZooming ? 'scale-[0.97] opacity-0' : 'scale-100 opacity-100'}`;
 
   return (
     <div className="relative h-screen min-h-[580px] w-full overflow-hidden">
       <div ref={mapContainer} className="absolute inset-0 h-full w-full" />
+      {mapNotice ? (
+        <div className="absolute inset-x-4 bottom-4 z-20 rounded-brand-md bg-white/90 px-4 py-3 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur">
+          {mapNotice}
+        </div>
+      ) : null}
 
       <div className={overlayClasses}>
         <div className="mb-5 flex items-center gap-3">
@@ -200,9 +216,9 @@ function createPinElement(price: string): HTMLDivElement {
     <div class="relative pb-[7px]">
       <div class="flex items-center gap-[5px] whitespace-nowrap rounded-full border border-stone-900/10 bg-white px-3 py-1.5 shadow-[0_8px_24px_rgba(13,27,42,0.14)] transition duration-200 group-hover:-translate-y-0.5 group-hover:bg-[#fdf3dc]">
         <span class="flex shrink-0 items-center">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4920A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AC953E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-            <circle cx="12" cy="9" r="2.5" fill="#D4920A" stroke="none" />
+            <circle cx="12" cy="9" r="2.5" fill="#AC953E" stroke="none" />
           </svg>
         </span>
         <span class="text-[12px] font-bold tracking-[-0.01em] text-stone-900">${price}</span>

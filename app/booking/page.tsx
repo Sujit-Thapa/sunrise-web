@@ -64,19 +64,22 @@ export default function Booking() {
   });
   const [confirmed, setConfirmed] = useState(false);
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [bookingCode, setBookingCode] = useState('');
 
   const selected = PROPERTIES.find((p) => p.id === selectedId);
   const deposit = selected ? Math.round(selected.price * DEPOSIT_PERCENT) : 0;
   const filteredProps = PROPERTIES.filter((p) => filterType === 'all' || p.type === filterType);
-  const bookingId = `BK-${selected?.ref?.slice(-3) ?? '000'}`;
+  const bookingId = bookingCode || `BK-${selected?.ref?.slice(-3) ?? '000'}`;
 
   const handleConfirm = (e: FormEvent) => {
     e.preventDefault();
+    setBookingCode(`BK-${selected?.ref?.slice(-3) ?? '000'}`);
     setConfirmed(true);
   };
 
   const resetBooking = () => {
     setConfirmed(false);
+    setBookingCode('');
     setStep(1);
     setSelectedId('');
     setForm({
@@ -120,7 +123,7 @@ export default function Booking() {
               </div>
             ))}
           </div>
-          <p className="text-[0.68rem] uppercase tracking-[0.16em] text-stone-400">Booking ID · BK-{Date.now().toString().slice(-6)}</p>
+          <p className="text-[0.68rem] uppercase tracking-[0.16em] text-stone-400">Booking ID · {bookingId}</p>
           <button className="mt-8 border border-stone-300 bg-transparent px-8 py-3 text-[0.72rem] uppercase tracking-[0.16em] text-stone-600 transition hover:bg-stone-100" onClick={resetBooking}>
             Make Another Booking
           </button>
