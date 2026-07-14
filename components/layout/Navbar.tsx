@@ -64,11 +64,12 @@ export default function Navbar() {
               href="/"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+              <div className="relative w-32 h-32 sm:w-28 sm:h-28">
                 <Image
                   src="/images/logo/sunrise2.png"
                   alt="Sunrise Realty"
                   fill
+                  sizes="(min-width: 640px) 112px, 96px"
                   className="w-full h-full object-contain"
                   priority
                 />
@@ -93,10 +94,10 @@ export default function Navbar() {
 
               {/* Sign Up Button */}
               <Link
-                href="/auth/signup"
-                className="px-6 py-2 rounded-full bg-gray-900/90 backdrop-blur-sm text-white text-sm font-medium hover:bg-gray-900 transition-colors duration-200 whitespace-nowrap shadow-sm"
+                href="/auth/login"
+                className="px-6 py-2 rounded-full bg-B89B4E backdrop-blur-sm text-black text-sm font-medium hover:bg-[#B89B4E] transition-colors duration-200 whitespace-nowrap shadow-sm"
               >
-                Sign Up
+                Login
               </Link>
             </div>
 

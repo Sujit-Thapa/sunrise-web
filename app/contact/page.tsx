@@ -34,11 +34,11 @@ export default function Contact() {
           <div className="mb-20">
             <p className="mb-4 text-[0.68rem] uppercase tracking-[0.22em] text-stone-400">Sunrise Realty · Get in Touch</p>
             <h1 className="mb-5 font-cormorant text-[clamp(2.6rem,4.5vw,3.8rem)] font-light leading-[1.08] tracking-tight text-stone-900">
-              Let's find your<br />
+              Let&apos;s find your<br />
               <em className="italic text-stone-500">next chapter.</em>
             </h1>
             <p className="max-w-md text-[0.95rem] font-light leading-relaxed text-stone-500">
-              Whether you're buying, selling, or simply exploring — our team is here to guide you with clarity and care.
+              Whether you&apos;re buying, selling, or simply exploring — our team is here to guide you with clarity and care.
             </p>
           </div>
 
@@ -64,7 +64,7 @@ export default function Contact() {
               {submitted && (
                 <div className="mb-6 flex items-center gap-3 border border-stone-200 bg-stone-50 px-5 py-4 text-[0.85rem] text-stone-600">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-stone-400" />
-                  Thank you — we'll be in touch shortly.
+                  Thank you — we&apos;ll be in touch shortly.
                 </div>
               )}
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -84,7 +84,7 @@ export default function Contact() {
                 </label>
                 <label className="flex flex-col gap-2 text-[0.65rem] uppercase tracking-[0.16em] text-stone-400">
                   Message
-                  <textarea id="message" name="message" placeholder="Tell us about the property you're looking for, or how we can help…" value={formData.message} onChange={handleChange} required className={`${inputClass} min-h-[130px] resize-none`} />
+                  <textarea id="message" name="message" placeholder="Tell us about the property you&apos;re looking for, or how we can help…" value={formData.message} onChange={handleChange} required className={`${inputClass} min-h-[130px] resize-none`} />
                 </label>
                 <button type="submit" className="mt-2 w-full border-none bg-stone-900 py-4 text-[0.75rem] font-light uppercase tracking-[0.2em] text-stone-100 transition-colors hover:bg-stone-700">
                   Send Message →

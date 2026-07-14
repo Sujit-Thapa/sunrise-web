@@ -23,44 +23,40 @@ const SOCIALS = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-stone-200 bg-stone-50/80 text-stone-700">
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-16 sm:px-8 lg:px-10">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-xl">
-            <p className="mb-3 text-[1rem] font-medium uppercase tracking-[0.28em] text-stone-500">
-              Sunrise Multiple Business and Housinf Pvt. Ltd.
-            </p>
-           
-           
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
+    <footer className="relative border-t border-white/20 bg-white/30 backdrop-blur-xl text-stone-700">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-10 sm:px-8 lg:px-10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-2xl font-semibold tracking-tight text-[#B89B4E]">
+            Sunrise Multiple Business and Housing Pvt. Ltd.
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5">
             {SOCIALS.map((social) => (
-              <a
+              < a 
                 key={social.label}
                 href={social.href}
-                className="rounded-full border border-stone-300 px-3 py-2 text-sm text-stone-600 transition hover:border-stone-900 hover:text-stone-900"
+                className="relative overflow-hidden rounded-full border border-white/40 bg-white/20 px-4 py-1.5 text-[0.7rem] font-medium text-stone-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_3px_rgba(0,0,0,0.06)] backdrop-blur-md transition duration-300 hover:border-[#B89B4E]/50 hover:bg-white/35 hover:text-[#B89B4E] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_12px_rgba(184,155,78,0.15)]"
               >
-                {social.label}
+                <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-gradient-to-b from-white/50 to-transparent" />
+                <span className="relative">{social.label}</span>
               </a>
             ))}
           </div>
         </div>
 
-        <div className="grid gap-8  border-stone-200 pt-10 md:grid-cols-3">
+        <div className="grid gap-6 border-t border-white/30 pt-6 sm:grid-cols-3">
           <div>
-            <h3 className="mb-4 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-stone-500">
+            <h3 className="mb-2.5 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-stone-500">
               Explore
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {NAV_LINKS.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="flex items-center gap-2 text-sm text-stone-600 transition hover:text-stone-900"
+                    className="group flex items-center gap-1.5 text-xs text-stone-600 transition hover:text-[#B89B4E]"
                   >
                     <span>{link.label}</span>
-                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    <ArrowUpRight className="h-3 w-3 opacity-0 -translate-x-1 transition group-hover:opacity-100 group-hover:translate-x-0" />
                   </Link>
                 </li>
               ))}
@@ -68,15 +64,15 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-stone-500">
+            <h3 className="mb-2.5 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-stone-500">
               Services
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {QUICK_LINKS.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-stone-600 transition hover:text-stone-900"
+                    className="text-xs text-stone-600 transition hover:text-[#B89B4E]"
                   >
                     {link.label}
                   </Link>
@@ -86,36 +82,36 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-stone-500">
+            <h3 className="mb-2.5 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-stone-500">
               Contact
             </h3>
-            <div className="space-y-4 text-sm text-stone-600">
-              <a href="mailto:info@sunriserealty.com" className="flex items-start gap-3 transition hover:text-stone-900">
-                <Mail className="mt-0.5 h-4 w-4" />
-                <span>info@sunrismbh.com</span>
+            <div className="space-y-2 text-xs text-stone-600">
+              <a href="mailto:info@sunrisembh.com" className="flex items-start gap-2 transition hover:text-[#B89B4E]">
+                <Mail className="mt-0.5 h-3.5 w-3.5 text-[#B89B4E]" />
+                <span>info@sunrisembh.com</span>
               </a>
-              <a href="tel:5551234567" className="flex items-start gap-3 transition hover:text-stone-900">
-                <Phone className="mt-0.5 h-4 w-4" />
+              <a href="tel:5551234567" className="flex items-start gap-2 transition hover:text-[#B89B4E]">
+                <Phone className="mt-0.5 h-3.5 w-3.5 text-[#B89B4E]" />
                 <span>(555) 123-4567</span>
               </a>
-              <div className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-4 w-4" />
+              <div className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 text-[#B89B4E]" />
                 <span>84 Meridian Ave, Suite 200</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-stone-200 pt-8 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 border-t border-white/30 pt-5 text-[0.7rem] text-stone-500 sm:flex-row sm:items-center sm:justify-between">
           <p>© 2024 Sunrise Realty. All rights reserved.</p>
-          <div className="flex flex-wrap gap-5">
-            <a href="#" className="transition hover:text-stone-900">
+          <div className="flex flex-wrap gap-4">
+            <a href="#" className="transition hover:text-[#B89B4E]">
               Privacy
             </a>
-            <a href="#" className="transition hover:text-stone-900">
+            <a href="#" className="transition hover:text-[#B89B4E]">
               Terms
             </a>
-            <a href="#" className="transition hover:text-stone-900">
+            <a href="#" className="transition hover:text-[#B89B4E]">
               Cookie Settings
             </a>
           </div>
