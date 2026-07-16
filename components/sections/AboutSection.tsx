@@ -9,6 +9,20 @@ const stats = [
   { value: "42", label: "Cities Covered" },
 ]
 
+const values = [
+  {
+    heading: "Precision",
+    body: "Every listing is curated with obsessive attention to detail — from valuation to staging.",
+  },
+  {
+    heading: "Transparency",
+    body: "We believe in clear pricing, honest timelines, and no surprises at closing.",
+  },
+  {
+    heading: "Legacy",
+    body: "We think beyond the transaction. Our goal is to place you somewhere you'll stay.",
+  },
+]
 
 export default function AboutSection() {
   const sectionRef = useRef<HTMLElement>(null)
