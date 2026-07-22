@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { properties as fallbackProperties } from '@/lib/data/properties';
-import type { Property } from '@/types';
+import { api } from '@/lib/api';
+import type { Property, PropertiesListResponseDto } from '@/types';
 
 interface PropertyDetailPageProps {
   params: {
@@ -14,16 +14,10 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
   let property: Property | null = null;
 
   try {
-    const response = await fetch(`/api/properties/${id}`, { cache: 'no-store' });
-    if (response.ok) {
-      property = await response.json();
-    }
+    const { properties: apiProperties } = await api.get<PropertiesListResponseDto>('/v1/properties');
+    property = apiProperties.find((item) => item.id === id) ?? null;
   } catch {
-    // ignore and fallback to local static data below
-  }
-
-  if (!property) {
-    property = fallbackProperties.find((p) => p.id === id) ?? null;
+    property = null;
   }
 
   if (!property) {

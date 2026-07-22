@@ -1,13 +1,13 @@
 import PropertiesListing from '@/components/sections/PropertiesListing';
-import { properties as fallbackProperties } from '@/lib/data/properties';
-import type { Property } from '@/types';
+import { api } from '@/lib/api';
+import type { Property, PropertiesListResponseDto } from '@/types';
 
 export default async function Properties() {
-  let properties: Property[] = fallbackProperties;
+  let properties: Property[] = [];
 
   try {
-    const response = await fetch('/api/properties', { cache: 'no-store' });
-    if (response.ok) properties = await response.json();
+    const { properties: apiProperties } = await api.get<PropertiesListResponseDto>('/v1/properties');
+    properties = apiProperties;
   } catch {}
 
   return <div className="min-h-screen bg-white pt-[68px]"><PropertiesListing properties={properties} /></div>;

@@ -11,3 +11,7 @@ export interface Property {
   bathrooms: number;
   area: number; // in sq ft
 }
+
+export interface PropertiesListResponseDto {
+  properties: Property[];
+}

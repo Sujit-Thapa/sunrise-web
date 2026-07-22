@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { api } from '@/lib/api';
+import { properties as fallbackProperties } from '@/lib/data/properties';
+import type { PropertiesListResponseDto, Property as ApiProperty } from '@/types';
 
 type BookingStep = 1 | 2 | 3;
 
 type FilterType = 'all' | 'house' | 'land';
-type PaymentMethod = 'bank' | 'card' | 'escrow';
+type PaymentMethod = 'esewa' | 'card' ;
 
 interface Property {
   id: string;
@@ -29,21 +32,23 @@ interface FormState {
   payMethod: PaymentMethod;
 }
 
-const PROPERTIES: Property[] = [
-  { id: '1', title: 'The Harlow Estate', location: 'Maplewood, NJ', price: 1250000, type: 'house', size: '4,800 sq ft', beds: 5, baths: 4, ref: 'SR-001' },
-  { id: '2', title: 'Meridian Townhouse', location: 'Austin, TX', price: 620000, type: 'house', size: '2,200 sq ft', beds: 3, baths: 2, ref: 'SR-002' },
-  { id: '3', title: 'Lakeview Parcel A', location: 'Boulder, CO', price: 390000, type: 'land', size: '1.8 acres', ref: 'SR-003' },
-  { id: '4', title: 'The Westfield Residence', location: 'Pasadena, CA', price: 895000, type: 'house', size: '3,100 sq ft', beds: 4, baths: 3, ref: 'SR-004' },
-  { id: '5', title: 'Ridgecrest Plot', location: 'Asheville, NC', price: 215000, type: 'land', size: '0.9 acres', ref: 'SR-005' },
-  { id: '6', title: 'The Alderton', location: 'Portland, OR', price: 745000, type: 'house', size: '2,650 sq ft', beds: 4, baths: 3, ref: 'SR-006' },
-];
-
 const DEPOSIT_PERCENT = 0.05;
 const filterOptions: FilterType[] = ['all', 'house', 'land'];
+
+const mapBookingProperty = (item: ApiProperty): Property => ({
+  id: item.id,
+  title: item.title,
+  location: item.location,
+  price: item.price,
+  type: (item.bedrooms ?? 0) > 0 || (item.bathrooms ?? 0) > 0 ? 'house' : 'land',
+  size: item.area ? `${item.area.toLocaleString()} sq ft` : 'Details coming soon',
+  beds: item.bedrooms,
+  baths: item.bathrooms,
+  ref: item.id.slice(0, 6).toUpperCase(),
+});
 const paymentOptions: { value: PaymentMethod; label: string }[] = [
-  { value: 'bank', label: 'Bank Transfer' },
+  { value: 'esewa', label: 'eSewa' },
   { value: 'card', label: 'Credit Card' },
-  { value: 'escrow', label: 'Escrow' },
 ];
 const inputClass = 'w-full border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none transition placeholder:text-stone-400 focus:border-stone-500 focus:bg-stone-50';
 const buttonClass = 'border border-stone-300 bg-white px-4 py-2.5 text-[0.72rem] uppercase tracking-[0.16em] text-stone-600 transition hover:bg-stone-100';
@@ -60,15 +65,41 @@ export default function Booking() {
     phone: '',
     date: '',
     notes: '',
-    payMethod: 'bank',
+    payMethod: 'esewa',
   });
   const [confirmed, setConfirmed] = useState(false);
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [bookingCode, setBookingCode] = useState('');
+  const [properties, setProperties] = useState<Property[]>([]);
 
-  const selected = PROPERTIES.find((p) => p.id === selectedId);
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProperties = async () => {
+      try {
+        const { properties: apiProperties } = await api.get<PropertiesListResponseDto>('/v1/properties');
+
+        if (!isMounted) return;
+
+        const mappedProperties = apiProperties.map(mapBookingProperty);
+        setProperties(mappedProperties);
+      } catch {
+        if (isMounted) {
+          setProperties(fallbackProperties.map(mapBookingProperty));
+        }
+      }
+    };
+
+    loadProperties();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const selected = properties.find((p) => p.id === selectedId);
   const deposit = selected ? Math.round(selected.price * DEPOSIT_PERCENT) : 0;
-  const filteredProps = PROPERTIES.filter((p) => filterType === 'all' || p.type === filterType);
+  const filteredProps = properties.filter((p) => filterType === 'all' || p.type === filterType);
   const bookingId = bookingCode || `BK-${selected?.ref?.slice(-3) ?? '000'}`;
 
   const handleConfirm = (e: FormEvent) => {
@@ -89,7 +120,7 @@ export default function Booking() {
       phone: '',
       date: '',
       notes: '',
-      payMethod: 'bank',
+      payMethod: 'esewa',
     });
   };
 
@@ -135,7 +166,7 @@ export default function Booking() {
   return (
     <div className="min-h-screen bg-white text-stone-800" style={{ fontFamily: '"DM Sans", sans-serif' }}>
       <div className="mx-auto max-w-6xl px-6 py-24 sm:px-8 lg:px-10">
-        <p className="mb-4 text-[0.68rem] uppercase tracking-[0.22em] text-stone-500">Sunrise Realty · Advance Booking</p>
+        <p className="mb-4 text-[0.68rem] uppercase tracking-[0.22em] text-stone-500">Sunrise RealtEstate · Advance Booking</p>
         <h1 className="mb-3 max-w-[460px] font-serif text-4xl leading-[1.05] text-stone-900 sm:text-[clamp(2.4rem,4vw,3.4rem)]" style={{ fontFamily: '"Cormorant Garamond", serif' }}>
           Reserve your property<br />
           <em className="italic text-stone-600">before it&apos;s gone.</em>
@@ -250,7 +281,7 @@ export default function Booking() {
                     ['Reference', selected.ref],
                     ['Purchase Price', `$${selected.price.toLocaleString()}`],
                     ['Deposit (5%)', `$${deposit.toLocaleString()}`],
-                    ['Payment Method', form.payMethod === 'bank' ? 'Bank Transfer' : form.payMethod === 'card' ? 'Credit Card' : 'Escrow'],
+                    ['Payment Method', form.payMethod === 'esewa' ? 'eSewa' : form.payMethod === 'card' ? 'Credit Card' : 'Escrow'],
                     ['Appointment', form.date],
                     ['Name', `${form.firstName} ${form.lastName}`],
                     ['Email', form.email],

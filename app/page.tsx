@@ -1,21 +1,35 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import HeroSection from '@/components/sections/HeroSection';
 import PropertyCard from '@/components/ui/PropertyCard';
-import { properties } from '@/lib/data/properties';
+import { api } from '@/lib/api';
+import type { PropertiesListResponseDto, Property as ApiProperty } from '@/types';
 import Link from 'next/link';
 
 export default function Home() {
+  const [properties, setProperties] = useState<ApiProperty[]>([]);
+
+  useEffect(() => {
+    const loadProperties = async () => {
+      try {
+        const { properties: apiProperties } = await api.get<PropertiesListResponseDto>('/v1/properties');
+        setProperties(apiProperties);
+      } catch {
+        setProperties([]);
+      }
+    };
+
+    loadProperties();
+  }, []);
+
   return (
     <div>
-      <HeroSection />
-      <section className="bg-white py-20">
+      <HeroSection properties={properties} />
+      <section className="bg-white ">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-16 mt-20 text-center">
-            <div className="mb-5 flex items-center justify-center gap-8">
-              <span className="h-px w-14 bg-gold-primary" />
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-gold-primary">Our Services</p>
-              <span className="h-px w-14 bg-gold-primary" />
-            </div>
-            <h2 className="text-3xl font-normal tracking-wide text-midnight md:text-4xl">The smartest way to buy a home</h2>
+            <h2 className="text-3xl font-normal tracking-wide text-midnight md:text-4xl">The smartest way to buy a property</h2>
           </div>
           <div className="grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
             {properties.map((property) => (

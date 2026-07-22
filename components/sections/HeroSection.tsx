@@ -4,18 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import SearchBar from '../ui/SearchBar';
+import type { Property } from '@/types';
 
-const PROPERTIES = [
-  { id: 1, lngLat: [85.3182, 27.7172] as [number, number], price: 'Rs 2.5 Cr', label: 'Thamel', type: 'Apartment', beds: 3 },
-  { id: 2, lngLat: [85.334, 27.705] as [number, number], price: 'Rs 1.8 Cr', label: 'Patan', type: 'House', beds: 4 },
-  { id: 3, lngLat: [85.345, 27.73] as [number, number], price: 'Rs 75 L', label: 'Boudha', type: 'Land', beds: 0 },
-  { id: 4, lngLat: [85.306, 27.725] as [number, number], price: 'Rs 3.1 Cr', label: 'Baluwatar', type: 'Villa', beds: 5 },
-  { id: 5, lngLat: [85.355, 27.695] as [number, number], price: 'Rs 55 L', label: 'Lalitpur', type: 'Apartment', beds: 2 },
-  { id: 6, lngLat: [85.29, 27.71] as [number, number], price: 'Rs 1.2 Cr', label: 'Swayambhu', type: 'House', beds: 3 },
-  { id: 7, lngLat: [85.37, 27.74] as [number, number], price: 'Rs 4.2 Cr', label: 'Bhaktapur', type: 'Villa', beds: 6 },
-];
+interface HeroSectionProps {
+  properties?: Property[];
+}
 
-export default function HeroSection() {
+export default function HeroSection({ properties = [] }: HeroSectionProps) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerTimers = useRef<number[]>([]);
@@ -94,11 +89,11 @@ export default function HeroSection() {
           easing: (t) => 1 - Math.pow(1 - t, 2),
         });
 
-        PROPERTIES.forEach((property, index) => {
+        properties.forEach((property, index) => {
           const timeoutId = window.setTimeout(() => {
             if (!mapRef.current) return;
 
-            const element = createPinElement(property.price);
+            const element = createPinElement(`$${property.price.toLocaleString()}`);
             const popup = new mapboxgl.Popup({
               offset: 20,
               closeButton: false,
@@ -106,15 +101,15 @@ export default function HeroSection() {
             }).setHTML(`
               <div class="min-w-[160px] p-3 font-sans">
                 <p class="mb-1 text-[9px] uppercase tracking-[0.18em] text-[#AC953E]">
-                  ${property.type}${property.beds > 0 ? ` · ${property.beds} bed` : ''}
+                  ${property.bedrooms ? `${property.bedrooms} bed` : 'Property'}
                 </p>
-                <p class="mb-0.5 text-base font-bold text-stone-900">${property.price}</p>
-                <p class="text-[11px] text-stone-500">${property.label}, Kathmandu</p>
+                <p class="mb-0.5 text-base font-bold text-stone-900">$${property.price.toLocaleString()}</p>
+                <p class="text-[11px] text-stone-500">${property.location}</p>
               </div>
             `);
 
             const marker = new mapboxgl.Marker({ element, anchor: 'bottom' })
-              .setLngLat(property.lngLat)
+              .setLngLat([85.324, 27.7172] as [number, number])
               .setPopup(popup)
               .addTo(mapRef.current);
 
@@ -145,7 +140,7 @@ export default function HeroSection() {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, properties]);
 
   const overlayClasses = `absolute inset-0 z-10 flex flex-col items-center justify-center px-4 pb-20 transition-all duration-300 pointer-events-none ${isZooming ? 'scale-[0.97] opacity-0' : 'scale-100 opacity-100'}`;
 
