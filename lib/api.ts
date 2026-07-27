@@ -42,7 +42,24 @@ async function apiFetch<T>(
     return undefined as T;
   }
 
-  return res.json();
+  const payload = await res.json().catch(() => ({}));
+
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'success' in payload &&
+    'data' in payload
+  ) {
+    if (payload.success === false) {
+      const message = Array.isArray(payload.message)
+        ? payload.message.join(', ')
+        : payload.message;
+      throw new Error(message || 'Request failed');
+    }
+    return payload.data as T;
+  }
+
+  return payload as T;
 }
 
 export const api = {

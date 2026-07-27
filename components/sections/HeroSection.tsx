@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 
 import SearchBar from '../ui/SearchBar';
+import { formatCurrency } from '@/lib/properties';
 import type { PropertyResponseDto } from '@/types';
 
 const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
@@ -36,7 +37,9 @@ export default function HeroSection({
     : 'Interactive map preview is unavailable without a Mapbox token.';
 
   useEffect(() => {
-    if (!mapboxToken || !mapContainer.current) {
+    const container = mapContainer.current;
+
+    if (!mapboxToken || !container) {
       return;
     }
 
@@ -56,7 +59,7 @@ export default function HeroSection({
       if (!mapContainer.current) return;
 
       const map = new mapboxgl.Map({
-        container: mapContainer.current,
+        container,
         style: 'mapbox://styles/mapbox/outdoors-v12',
         center: KATHMANDU_CENTER,
         zoom: 1.7,
@@ -127,7 +130,7 @@ export default function HeroSection({
         }
       };
 
-      const wheelTarget = mapContainer.current;
+      const wheelTarget = container;
       wheelTarget?.addEventListener(
         'wheel',
         onWheelRef.current,
@@ -173,9 +176,7 @@ export default function HeroSection({
             if (!mapRef.current) return;
 
             const price = Number(property.price);
-            const formattedPrice = Number.isFinite(price)
-              ? `Rs. ${price.toLocaleString('en-US')}`
-              : 'Price unavailable';
+            const formattedPrice = formatCurrency(price);
 
             const location =
               [
@@ -265,11 +266,8 @@ export default function HeroSection({
       );
       markerTimers.current = [];
 
-      if (
-        mapContainer.current &&
-        onWheelRef.current
-      ) {
-        mapContainer.current.removeEventListener(
+      if (container && onWheelRef.current) {
+        container.removeEventListener(
           'wheel',
           onWheelRef.current,
         );

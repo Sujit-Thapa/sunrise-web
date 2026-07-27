@@ -2,30 +2,20 @@
 @config "../tailwind.config.ts";
 @import 'mapbox-gl/dist/mapbox-gl.css';
 
-@font-face {
-  font-family: 'Radikal';
-  src: url('/fonts/Radikal-Light.otf') format('otf');
-  font-weight: 300;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Radikal';
-  src: url('/fonts/Radikal-Regular.otf') format('otf');
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Radikal';
-  src: url('/fonts/Radikal-Bold.otf') format('otf');
-  font-weight: 700;
-  font-display: swap;
-}
-
 html,
 body {
   height: 100%;
-  background-color: #ffffff;
+  background:
+    radial-gradient(circle at top, rgba(184, 155, 78, 0.08), transparent 40%),
+    linear-gradient(180deg, #fcfaf6 0%, #ffffff 50%, #f8fafc 100%);
   color: #1c1917;
+}
+
+body {
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(184, 155, 78, 0.22);
+  color: #0d1b2a;
 }

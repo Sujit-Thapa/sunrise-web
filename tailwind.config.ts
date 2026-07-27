@@ -18,7 +18,7 @@ const config: Config = {
         'blush': '#FDF3DC',
       },
       fontFamily: {
-        sans: ['Radikal', 'sans-serif'],
+        sans: ['var(--font-radikal)', 'sans-serif'],
       },
       borderRadius: {
         'brand-sm': '4px',

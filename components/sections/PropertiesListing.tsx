@@ -5,6 +5,14 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import type { PropertyResponseDto } from '@/types';
+import {
+  formatArea,
+  formatCurrency,
+  formatLocation,
+  getListingTypeLabel,
+  getPrimaryImage,
+  getPropertyStatusLabel,
+} from '@/lib/properties';
 
 const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
 
@@ -16,9 +24,10 @@ interface PropertiesListingProps {
 export default function PropertiesListing({ properties, total }: PropertiesListingProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const items = Array.isArray(properties) ? properties : [];
+  const resultCount = total ?? items.length;
 
   return (
-    <div className="grid min-h-[calc(100vh-68px)] grid-cols-1 bg-white lg:grid-cols-[minmax(0,50vw)_minmax(320px,1fr)]">
+    <div className="grid min-h-[calc(100vh-68px)] grid-cols-1 bg-[linear-gradient(180deg,#fffaf1_0%,#ffffff_38%,#f8fafc_100%)] lg:grid-cols-[minmax(0,50vw)_minmax(320px,1fr)]">
       <section className="relative min-h-[520px] overflow-hidden border-r border-slate-200 bg-slate-50 lg:min-h-[calc(100vh-68px)]">
         <PropertiesMap properties={items} hoveredId={hoveredId} onHoverChange={setHoveredId} />
         <SearchPanel />
@@ -26,10 +35,16 @@ export default function PropertiesListing({ properties, total }: PropertiesListi
 
       <section className="px-5 py-8 sm:px-8 lg:max-h-[calc(100vh-68px)] lg:overflow-y-auto">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">
-            {total ?? items.length} Properties Found
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-gold-primary">
+            Property search
+          </p>
+          <h1 className="text-2xl font-semibold text-slate-900">
+            {resultCount} Properties Found
           </h1>
-          <p className="mt-2 text-base text-slate-500">Showing available properties</p>
+          <p className="mt-2 max-w-xl text-base text-slate-500">
+            Hover a listing to spotlight it on the map. The experience stays useful even when the
+            map token is missing.
+          </p>
         </div>
 
         <div className="space-y-5">
@@ -43,8 +58,11 @@ export default function PropertiesListing({ properties, total }: PropertiesListi
               />
             ))
           ) : (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
-              No properties are available right now.
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-8 text-center shadow-sm">
+              <p className="text-lg font-medium text-slate-800">No properties available right now</p>
+              <p className="mt-2 text-sm text-slate-500">
+                Try again later or broaden your search once new listings are published.
+              </p>
             </div>
           )}
         </div>
@@ -68,7 +86,7 @@ function PropertiesMap({
   const [mapError, setMapError] = useState('');
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
-  const mapMessage = mapboxToken ? mapError : 'Mapbox token is missing.';
+  const mapMessage = mapboxToken ? mapError : 'Mapbox token is missing. Add NEXT_PUBLIC_MAPBOX_TOKEN to enable the live map.';
 
   useEffect(() => {
     markerEls.current.forEach((element, id) => {
@@ -197,10 +215,10 @@ function PropertiesMap({
     <div className="absolute inset-0 bg-slate-200">
       <div ref={mapContainer} className="h-full w-full" />
       {mapMessage ? (
-        <div className="absolute inset-x-6 bottom-6 z-20 rounded-brand-md bg-white p-4 text-sm font-semibold text-slate-600 shadow-xl">
-          {mapMessage}
-        </div>
-      ) : null}
+          <div className="absolute inset-x-6 bottom-6 z-20 rounded-brand-md bg-white p-4 text-sm font-medium text-slate-600 shadow-xl">
+            {mapMessage}
+          </div>
+        ) : null}
     </div>
   );
 }
@@ -309,20 +327,13 @@ function PropertyResult({
   isHovered: boolean;
   onHoverChange: (id: string | null) => void;
 }) {
-  const images = Array.isArray(property.images) ? property.images : [];
-  const primaryImage =
-    images.find((image) => image.isPrimary) ??
-    [...images].sort((a, b) => a.sortOrder - b.sortOrder)[0];
-
-  const location = [property.street, property.city, property.state, property.country]
-    .filter(Boolean)
-    .join(', ');
-
-  const price = Number(property.price);
-  const areaSize = property.areaSize != null ? Number(property.areaSize) : null;
+  const primaryImage = getPrimaryImage(property.images);
+  const location = formatLocation(property) || 'Location not provided';
+  const price = formatCurrency(property.price);
+  const areaSize = formatArea(property.areaSize, property.areaUnit);
   const category = property.category || 'Property';
-  const listingType = property.listingType || '';
-  const status = property.status ? String(property.status).toLowerCase() : '';
+  const listingType = getListingTypeLabel(property.listingType);
+  const status = getPropertyStatusLabel(property.status);
 
   return (
     <Link
@@ -359,23 +370,15 @@ function PropertyResult({
           </span>
         </div>
 
-        <p className="mt-2 truncate text-base text-slate-400">{location || 'Location not provided'}</p>
+        <p className="mt-2 truncate text-base text-slate-400">{location}</p>
 
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
-          {listingType ? <span className="capitalize">{listingType}</span> : null}
-
-          {areaSize != null && Number.isFinite(areaSize) ? (
-            <span>
-              {areaSize.toLocaleString('en-US')} {property.areaUnit ?? ''}
-            </span>
-          ) : null}
-
-          {status ? <span className="capitalize">{status}</span> : null}
+          <span>{listingType}</span>
+          <span>{areaSize}</span>
+          <span>{status}</span>
         </div>
 
-        <p className="mt-3 text-lg font-medium text-gold-primary">
-          Rs. {Number.isFinite(price) ? price.toLocaleString('en-US') : '0'}
-        </p>
+        <p className="mt-3 text-lg font-medium text-gold-primary">{price}</p>
       </div>
     </Link>
   );

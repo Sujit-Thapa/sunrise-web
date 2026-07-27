@@ -1,70 +1,87 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import type { PropertyResponseDto } from '@/types';
+import {
+  formatArea,
+  formatCurrency,
+  formatLocation,
+  getListingTypeLabel,
+  getPrimaryImage,
+  getPropertyStatusLabel,
+} from '@/lib/properties';
 
 interface PropertyCardProps {
   property: PropertyResponseDto;
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
-  const images = Array.isArray(property.images) ? property.images : [];
-  const primaryImage =
-    images.find((image) => image.isPrimary) ??
-    [...images].sort((a, b) => a.sortOrder - b.sortOrder)[0];
-
-  const location = [property.street, property.city, property.state, property.country]
-    .filter(Boolean)
-    .join(', ');
-
-  const price = Number(property.price);
-  const area = property.areaSize != null ? Number(property.areaSize) : null;
+  const primaryImage = getPrimaryImage(property.images);
+  const location = formatLocation(property);
+  const price = formatCurrency(property.price);
+  const area = formatArea(property.areaSize, property.areaUnit);
+  const listingTypeLabel = getListingTypeLabel(property.listingType);
+  const statusLabel = getPropertyStatusLabel(property.status);
 
   return (
-    <div className="group">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-brand-lg bg-gray-100">
-        <Image
-          src={primaryImage?.url || '/images/sunrise.png'}
-          alt={property.title || 'Property'}
-          fill
-          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+    <Link
+      href={`/properties/${property.id}`}
+      className="group block rounded-brand-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-primary focus-visible:ring-offset-2"
+      aria-label={`View ${property.title || 'property details'}`}
+    >
+      <article className="overflow-hidden rounded-brand-lg border border-slate-100 bg-white shadow-brand-sm transition-all duration-250 group-hover:-translate-y-1 group-hover:border-gold-highlight/50 group-hover:shadow-brand-md">
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+          <Image
+            src={primaryImage?.url || '/images/sunrise.png'}
+            alt={property.title || 'Property'}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
 
-        {property.listingType ? (
-          <span className="absolute right-4 top-4 rounded-full bg-white px-4 py-2 text-xs font-bold uppercase text-gray-800 shadow-sm">
-            {property.listingType}
-          </span>
-        ) : null}
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-midnight/35 via-transparent to-transparent" />
 
-      <div className="pt-6">
-        <div className="mb-2 flex items-start justify-between gap-4">
-          <h3 className="min-w-0 text-xl font-normal leading-snug text-midnight">
-            {property.title || 'Untitled property'}
-          </h3>
+          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+            <span className="rounded-full bg-white/90 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-midnight shadow-brand-sm backdrop-blur">
+              {listingTypeLabel}
+            </span>
 
-          <span className="whitespace-nowrap text-xl font-medium text-gold-primary">
-            Rs. {Number.isFinite(price) ? price.toLocaleString('en-US') : '0'}
-          </span>
+            {property.category ? (
+              <span className="rounded-full bg-midnight/80 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                {String(property.category).replace(/[_-]+/g, ' ')}
+              </span>
+            ) : null}
+          </div>
         </div>
 
-        <p className="mb-4 text-base text-slate-500">{location || 'Location not provided'}</p>
+        <div className="space-y-4 p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="truncate text-xl font-medium leading-snug text-midnight">
+                {property.title || 'Untitled property'}
+              </h3>
+              <p className="mt-1 truncate text-sm text-slate-500">
+                {location || 'Location not provided'}
+              </p>
+            </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-700">
-          {area != null && Number.isFinite(area) ? (
+            <span className="shrink-0 whitespace-nowrap text-lg font-semibold text-gold-primary">
+              {price}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
             <span className="flex items-center gap-1.5">
               <AreaIcon />
-              {area.toLocaleString('en-US')} {property.areaUnit ?? ''}
+              {area}
             </span>
-          ) : null}
 
-          {property.category ? <span className="capitalize">{property.category}</span> : null}
-
-          {property.status ? (
-            <span className="capitalize">{String(property.status).toLowerCase()}</span>
-          ) : null}
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+              {statusLabel}
+            </span>
+          </div>
         </div>
-      </div>
-    </div>
+      </article>
+    </Link>
   );
 }
 

@@ -1,6 +1,14 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { propertiesApi } from '@/lib/backend';
+import {
+  formatArea,
+  formatCurrency,
+  formatLocation,
+  getListingTypeLabel,
+  getPrimaryImage,
+  getPropertyStatusLabel,
+} from '@/lib/properties';
 import type { PropertyResponseDto } from '@/types';
 
 interface PropertyDetailPageProps {
@@ -10,17 +18,11 @@ interface PropertyDetailPageProps {
 }
 
 function locationLabel(property: PropertyResponseDto): string {
-  return [property.street, property.city, property.state, property.country].filter(Boolean).join(', ');
+  return formatLocation(property);
 }
 
 function sizeLabel(property: PropertyResponseDto): string {
-  if (!property.areaSize) return 'Not specified';
-  return `${property.areaSize.toLocaleString()} ${property.areaUnit ?? ''}`.trim();
-}
-
-function primaryImage(property: PropertyResponseDto) {
-  if (property.images.length === 0) return null;
-  return property.images.find((img) => img.isPrimary) ?? property.images[0];
+  return formatArea(property.areaSize, property.areaUnit);
 }
 
 const statusStyles: Record<string, string> = {
@@ -45,11 +47,11 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
     notFound();
   }
 
-  const hero = primaryImage(property);
+  const hero = getPrimaryImage(property.images);
   const gallery = property.images.filter((img) => img.id !== hero?.id);
 
   return (
-    <div className="min-h-screen bg-[#F7F5F0]" style={{ fontFamily: '"DM Sans", sans-serif' }}>
+    <div className="min-h-screen bg-[linear-gradient(180deg,#fcfaf6_0%,#ffffff_100%)]">
       <div className="mx-auto max-w-6xl px-6 py-16 sm:px-8 lg:px-10">
         <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
           <div className="relative h-96 md:h-[500px] bg-stone-100">
@@ -71,7 +73,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
             <span
               className={`absolute left-6 top-6 rounded-full px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.14em] ${statusStyles[property.status] ?? 'bg-stone-100 text-stone-500'}`}
             >
-              {property.status}
+              {getPropertyStatusLabel(property.status)}
             </span>
           </div>
 
@@ -87,21 +89,11 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
 
           <div className="p-8 sm:p-10">
             <p className="mb-2 text-[0.68rem] uppercase tracking-[0.2em] text-[#B89B4E]">
-              {property.category} · {property.listingType === 'rent' ? 'For Rent' : 'For Sale'}
+              {property.category} · {getListingTypeLabel(property.listingType)}
             </p>
-            <h1
-              className="mb-3 text-3xl font-semibold text-stone-900 sm:text-4xl"
-              style={{ fontFamily: '"Cormorant Garamond", serif' }}
-            >
-              {property.title}
-            </h1>
+            <h1 className="mb-3 text-3xl font-semibold text-stone-900 sm:text-4xl">{property.title}</h1>
             <p className="mb-6 text-lg text-stone-500">{locationLabel(property) || 'Location not specified'}</p>
-            <p
-              className="mb-8 text-4xl font-semibold text-stone-900"
-              style={{ fontFamily: '"Cormorant Garamond", serif' }}
-            >
-              ${property.price.toLocaleString()}
-            </p>
+            <p className="mb-8 text-4xl font-semibold text-stone-900">{formatCurrency(property.price)}</p>
 
             <div className="mb-8 grid grid-cols-2 gap-4 border-y border-stone-200 py-6 sm:grid-cols-3">
               <div className="text-center">
@@ -119,12 +111,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
             </div>
 
             <div className="mb-8">
-              <h2
-                className="mb-4 text-2xl font-semibold text-stone-900"
-                style={{ fontFamily: '"Cormorant Garamond", serif' }}
-              >
-                Description
-              </h2>
+              <h2 className="mb-4 text-2xl font-semibold text-stone-900">Description</h2>
               <p className="leading-relaxed text-stone-700">{property.description}</p>
             </div>
 
