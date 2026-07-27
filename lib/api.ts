@@ -1,15 +1,25 @@
-// lib/api.ts
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
+
+interface ApiOptions extends RequestInit {
+  /**
+   * Next.js fetch cache behavior. Pass 'no-store' for anything that must
+   * always be fresh (auth, reservations, admin views). Defaults to
+   * 'no-store' since most of this API is user/session specific.
+   */
+  cache?: RequestCache;
+  next?: { revalidate?: number | false; tags?: string[] };
+}
 
 async function apiFetch<T>(
   path: string,
-  options: RequestInit = {},
+  options: ApiOptions = {},
   token?: string
 ): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
+    cache: 'no-store',
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
@@ -17,16 +27,31 @@ async function apiFetch<T>(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Request failed: ${res.status}`);
+    // NestJS validation errors return `message` as an array of strings,
+    // e.g. ["email must be a valid email", "phoneNumber should not be empty"]
+    const message = Array.isArray(err.message)
+      ? err.message.join(', ')
+      : err.message;
+    throw new Error(message || `Request failed: ${res.status}`);
   }
+
+  // DELETE endpoints often return 204 No Content — guard against
+  // calling .json() on an empty body.
+  const contentLength = res.headers.get('content-length');
+  if (res.status === 204 || contentLength === '0') {
+    return undefined as T;
+  }
+
   return res.json();
 }
 
 export const api = {
-  get: <T>(path: string, token?: string) => apiFetch<T>(path, { method: "GET" }, token),
-  post: <T>(path: string, body: unknown, token?: string) =>
-    apiFetch<T>(path, { method: "POST", body: JSON.stringify(body) }, token),
-  patch: <T>(path: string, body: unknown, token?: string) =>
-    apiFetch<T>(path, { method: "PATCH", body: JSON.stringify(body) }, token),
-  delete: <T>(path: string, token?: string) => apiFetch<T>(path, { method: "DELETE" }, token),
+  get: <T>(path: string, token?: string, options?: ApiOptions) =>
+    apiFetch<T>(path, { ...options, method: 'GET' }, token),
+  post: <T>(path: string, body: unknown, token?: string, options?: ApiOptions) =>
+    apiFetch<T>(path, { ...options, method: 'POST', body: JSON.stringify(body) }, token),
+  patch: <T>(path: string, body: unknown, token?: string, options?: ApiOptions) =>
+    apiFetch<T>(path, { ...options, method: 'PATCH', body: JSON.stringify(body) }, token),
+  delete: <T>(path: string, token?: string, options?: ApiOptions) =>
+    apiFetch<T>(path, { ...options, method: 'DELETE' }, token),
 };

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { getAuthToken } from '@/lib/auth';
+import { userPropertiesApi } from '@/lib/backend';
 
 type PropertyType = 'land' | 'house';
 type ListingStatus = 'available' | 'under offer';
@@ -70,25 +72,54 @@ export default function Marketplace() {
       return 0;
     });
 
-  const handleAdd = (e: React.FormEvent) => {
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newListing: Listing = {
-      id: Date.now().toString(),
+    setApiError(null);
+    setSubmitting(true);
+
+    const token = getAuthToken();
+    const payload = {
       title: form.title,
       location: form.location,
       price: Number(form.price),
       type: form.type,
       size: form.size,
-      seller: form.seller || 'You',
-      status: 'available',
       beds: form.beds ? Number(form.beds) : undefined,
       baths: form.baths ? Number(form.baths) : undefined,
-      posted: 'Just now',
+      seller: form.seller || 'You',
+      description: '',
     };
 
-    setListings((prev) => [newListing, ...prev]);
-    setForm(EMPTY_FORM);
-    setShowForm(false);
+    try {
+      if (!token) {
+        throw new Error('You must be signed in to submit a property.');
+      }
+      const created = await userPropertiesApi.submit(payload, token);
+      const newListing: Listing = {
+        id: created.id,
+        title: created.title,
+        location: created.location,
+        price: created.price,
+        type: created.type as PropertyType,
+        size: created.size,
+        seller: created.seller || 'You',
+        status: 'available',
+        beds: created.beds,
+        baths: created.baths,
+        posted: 'Just now',
+      };
+
+      setListings((prev) => [newListing, ...prev]);
+      setForm(EMPTY_FORM);
+      setShowForm(false);
+    } catch (err) {
+      setApiError((err as Error).message || 'Unable to submit listing.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -249,6 +280,11 @@ export default function Marketplace() {
           <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto border border-stone-300 bg-white p-8 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="mb-6 text-2xl font-light text-stone-900">List your property</h2>
             <form onSubmit={handleAdd} className="space-y-4">
+              {apiError ? (
+                <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {apiError}
+                </p>
+              ) : null}
               <div>
                 <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Property Title</label>
                 <input value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. Corner Plot, Riverside District" />
@@ -299,7 +335,9 @@ export default function Marketplace() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 border border-stone-300 bg-transparent px-4 py-3 text-[0.72rem] uppercase tracking-[0.16em] text-stone-600 transition hover:bg-stone-100">Cancel</button>
-                <button type="submit" className="flex-1 border border-stone-900 bg-stone-900 px-4 py-3 text-[0.72rem] uppercase tracking-[0.18em] text-stone-100 transition hover:bg-stone-700">Publish Listing →</button>
+                <button type="submit" disabled={submitting} className="flex-1 border border-stone-900 bg-stone-900 px-4 py-3 text-[0.72rem] uppercase tracking-[0.18em] text-stone-100 transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
+                  {submitting ? 'Submitting…' : 'Publish Listing →'}
+                </button>
               </div>
             </form>
           </div>
