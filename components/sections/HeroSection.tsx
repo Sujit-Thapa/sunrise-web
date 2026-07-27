@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import SearchBar from '../ui/SearchBar';
 import type { Property } from '@/types';
 
@@ -27,6 +26,8 @@ export default function HeroSection({ properties = [] }: HeroSectionProps) {
   );
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+
+  const propertiesCount = properties.length;
 
   useEffect(() => {
     if (!mapboxToken) {
@@ -76,7 +77,8 @@ export default function HeroSection({ properties = [] }: HeroSectionProps) {
         }
       };
 
-      mapContainer.current.addEventListener('wheel', onWheel, { passive: false });
+      const wheelTarget = mapContainer.current;
+      wheelTarget?.addEventListener('wheel', onWheel, { passive: false });
 
       map.on('load', () => {
         map.resize();
@@ -135,12 +137,15 @@ export default function HeroSection({ properties = [] }: HeroSectionProps) {
       if (hintTimer.current) window.clearTimeout(hintTimer.current);
       markerTimers.current.forEach(window.clearTimeout);
       markerTimers.current = [];
+      if (mapContainer.current) {
+        mapContainer.current.removeEventListener('wheel', onWheel);
+      }
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [mapboxToken, properties]);
+  }, [mapboxToken, propertiesCount]);
 
   const overlayClasses = `absolute inset-0 z-10 flex flex-col items-center justify-center px-4 pb-20 transition-all duration-300 pointer-events-none ${isZooming ? 'scale-[0.97] opacity-0' : 'scale-100 opacity-100'}`;
 
@@ -182,6 +187,7 @@ export default function HeroSection({ properties = [] }: HeroSectionProps) {
       </div>
 
       <button
+        type="button"
         className={`absolute bottom-8 left-1/2 z-20 flex h-11 w-11 -translate-x-1/2 items-center justify-center rounded-full bg-gold-primary shadow-gold transition-all duration-250 hover:scale-110 hover:bg-gold-deep ${isZooming ? 'opacity-0' : 'opacity-100'} animate-bounce`}
         aria-label="Scroll down"
       >

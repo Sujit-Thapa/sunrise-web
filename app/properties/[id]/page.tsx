@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { api } from '@/lib/api';
-import type { Property, PropertiesListResponseDto } from '@/types';
+import { propertiesApi } from '@/lib/backend';
+import type { PropertyResponseDto } from '@/types';
 
 interface PropertyDetailPageProps {
   params: {
@@ -9,13 +9,34 @@ interface PropertyDetailPageProps {
   };
 }
 
+function locationLabel(property: PropertyResponseDto): string {
+  return [property.street, property.city, property.state, property.country].filter(Boolean).join(', ');
+}
+
+function sizeLabel(property: PropertyResponseDto): string {
+  if (!property.areaSize) return 'Not specified';
+  return `${property.areaSize.toLocaleString()} ${property.areaUnit ?? ''}`.trim();
+}
+
+function primaryImage(property: PropertyResponseDto) {
+  if (property.images.length === 0) return null;
+  return property.images.find((img) => img.isPrimary) ?? property.images[0];
+}
+
+const statusStyles: Record<string, string> = {
+  ACTIVE: 'bg-emerald-50 text-emerald-700',
+  RESERVED: 'bg-amber-50 text-amber-700',
+  HIDDEN: 'bg-stone-100 text-stone-500',
+  DRAFT: 'bg-stone-100 text-stone-500',
+  COMPLETED: 'bg-sky-50 text-sky-700',
+};
+
 export default async function PropertyDetailPage({ params }: PropertyDetailPageProps) {
   const { id } = params;
-  let property: Property | null = null;
+  let property: PropertyResponseDto | null = null;
 
   try {
-    const { properties: apiProperties } = await api.get<PropertiesListResponseDto>('/v1/properties');
-    property = apiProperties.find((item) => item.id === id) ?? null;
+    property = await propertiesApi.findOne(id);
   } catch {
     property = null;
   }
@@ -24,51 +45,99 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
     notFound();
   }
 
+  const hero = primaryImage(property);
+  const gallery = property.images.filter((img) => img.id !== hero?.id);
+
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="relative h-96 md:h-[500px]">
-            <Image
-              src={property.image}
-              alt={property.title}
-              fill
-              sizes="(min-width: 768px) 1280px, 100vw"
-              className="object-cover"
-              priority
-            />
+    <div className="min-h-screen bg-[#F7F5F0]" style={{ fontFamily: '"DM Sans", sans-serif' }}>
+      <div className="mx-auto max-w-6xl px-6 py-16 sm:px-8 lg:px-10">
+        <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
+          <div className="relative h-96 md:h-[500px] bg-stone-100">
+            {hero ? (
+              <Image
+                src={hero.url}
+                alt={property.title}
+                fill
+                sizes="(min-width: 768px) 1280px, 100vw"
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-stone-400">
+                No image available
+              </div>
+            )}
+
+            <span
+              className={`absolute left-6 top-6 rounded-full px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.14em] ${statusStyles[property.status] ?? 'bg-stone-100 text-stone-500'}`}
+            >
+              {property.status}
+            </span>
           </div>
-          <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+
+          {gallery.length > 0 ? (
+            <div className="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white p-3">
+              {gallery.map((img) => (
+                <div key={img.id} className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-lg bg-stone-100">
+                  <Image src={img.url} alt="" fill sizes="112px" className="object-cover" />
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="p-8 sm:p-10">
+            <p className="mb-2 text-[0.68rem] uppercase tracking-[0.2em] text-[#B89B4E]">
+              {property.category} · {property.listingType === 'rent' ? 'For Rent' : 'For Sale'}
+            </p>
+            <h1
+              className="mb-3 text-3xl font-semibold text-stone-900 sm:text-4xl"
+              style={{ fontFamily: '"Cormorant Garamond", serif' }}
+            >
               {property.title}
             </h1>
-            <p className="text-xl text-gray-600 mb-4">{property.location}</p>
-            <p className="text-4xl font-bold text-pink-500 mb-6">
+            <p className="mb-6 text-lg text-stone-500">{locationLabel(property) || 'Location not specified'}</p>
+            <p
+              className="mb-8 text-4xl font-semibold text-stone-900"
+              style={{ fontFamily: '"Cormorant Garamond", serif' }}
+            >
               ${property.price.toLocaleString()}
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+            <div className="mb-8 grid grid-cols-2 gap-4 border-y border-stone-200 py-6 sm:grid-cols-3">
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{property.bedrooms}</p>
-                <p className="text-gray-600">Bedrooms</p>
+                <p className="text-xl font-semibold text-stone-900">{sizeLabel(property)}</p>
+                <p className="text-sm text-stone-500">Size</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{property.bathrooms}</p>
-                <p className="text-gray-600">Bathrooms</p>
+                <p className="text-xl font-semibold capitalize text-stone-900">{property.category}</p>
+                <p className="text-sm text-stone-500">Category</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{property.area}</p>
-                <p className="text-gray-600">Sq Ft</p>
+                <p className="text-xl font-semibold capitalize text-stone-900">{property.listingType}</p>
+                <p className="text-sm text-stone-500">Listing Type</p>
               </div>
             </div>
-            <div className="border-t pt-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Description</h2>
-              <p className="text-gray-700 leading-relaxed">{property.description}</p>
+
+            <div className="mb-8">
+              <h2
+                className="mb-4 text-2xl font-semibold text-stone-900"
+                style={{ fontFamily: '"Cormorant Garamond", serif' }}
+              >
+                Description
+              </h2>
+              <p className="leading-relaxed text-stone-700">{property.description}</p>
             </div>
-            <div className="mt-8">
-              <button className="bg-pink-500 text-white px-8 py-3 rounded-lg hover:bg-pink-600 transition-colors text-lg font-semibold">
-                Contact Agent
-              </button>
-            </div>
+
+            {/*
+              NOTE: there's no "contact agent" endpoint in the current API
+              schema (the two open questions with your backend dev — a
+              contact form endpoint and auth token storage — are still
+              pending). This button is a placeholder until that endpoint
+              exists; wire it up once confirmed.
+            */}
+            <button className="rounded-xl bg-[#B89B4E] px-8 py-3 text-lg font-semibold text-white shadow-sm shadow-[#B89B4E]/30 transition hover:bg-[#a3894a]">
+              Contact Agent
+            </button>
           </div>
         </div>
       </div>

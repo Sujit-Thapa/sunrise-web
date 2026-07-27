@@ -1,45 +1,29 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
+import type {
+  AreaUnit,
+  CreateUserPropertyDto,
+  ListingType,
+  UserPropertyResponseDto,
+} from '@/types';
 
-type PropertyType = 'land' | 'house';
-type ListingStatus = 'available' | 'under offer';
+type CategoryFilter = 'all' | 'house' | 'land' | 'apartment' | 'commercial';
 type SortOption = 'newest' | 'price-asc' | 'price-desc';
-
-interface Listing {
-  id: string;
-  title: string;
-  location: string;
-  price: number;
-  type: PropertyType;
-  size: string;
-  seller: string;
-  status: ListingStatus;
-  beds?: number;
-  baths?: number;
-  posted: string;
-}
-
-const INITIAL_LISTINGS: Listing[] = [
-  { id: '1', title: 'Corner Plot, Riverside District', location: 'Riverside, CA', price: 185000, type: 'land', size: '0.8 acres', seller: 'Marcus T.', status: 'available', posted: '2 days ago' },
-  { id: '2', title: 'Colonial Home with Garden', location: 'Maplewood, NJ', price: 620000, type: 'house', size: '2,400 sq ft', seller: 'Priya S.', status: 'available', beds: 4, baths: 3, posted: '5 days ago' },
-  { id: '3', title: 'Agricultural Land Parcel', location: 'Fresno, CA', price: 95000, type: 'land', size: '3.2 acres', seller: 'Elena R.', status: 'under offer', posted: '1 week ago' },
-  { id: '4', title: 'Modern Townhouse, City Centre', location: 'Austin, TX', price: 480000, type: 'house', size: '1,850 sq ft', seller: 'James K.', status: 'available', beds: 3, baths: 2, posted: '3 days ago' },
-  { id: '5', title: 'Hillside Building Lot', location: 'Boulder, CO', price: 310000, type: 'land', size: '1.1 acres', seller: 'Sofia M.', status: 'available', posted: '6 days ago' },
-  { id: '6', title: 'Craftsman Bungalow', location: 'Portland, OR', price: 545000, type: 'house', size: '1,620 sq ft', seller: 'Daniel W.', status: 'available', beds: 3, baths: 2, posted: '4 days ago' },
-];
 
 const EMPTY_FORM = {
   title: '',
-  location: '',
+  description: '',
   price: '',
-  type: 'house' as PropertyType,
-  size: '',
-  beds: '',
-  baths: '',
-  seller: '',
+  listingType: 'sale' as ListingType,
+  category: 'house' as Exclude<CategoryFilter, 'all'>,
+  city: '',
+  state: '',
+  country: '',
+  areaSize: '',
+  areaUnit: 'sqft' as AreaUnit,
 };
 
 const sortOptions: { value: SortOption; label: string }[] = [
@@ -48,32 +32,62 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: 'price-desc', label: 'Price: High to Low' },
 ];
 
+const categoryFilters: CategoryFilter[] = ['all', 'house', 'land', 'apartment', 'commercial'];
+
+function locationLabel(item: UserPropertyResponseDto): string {
+  return [item.street, item.city, item.state, item.country].filter(Boolean).join(', ');
+}
+
+function sizeLabel(item: UserPropertyResponseDto): string {
+  if (!item.areaSize) return 'Size not specified';
+  return `${item.areaSize.toLocaleString()} ${item.areaUnit ?? ''}`.trim();
+}
+
 export default function Marketplace() {
-  const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
-  const [filter, setFilter] = useState<'all' | PropertyType>('all');
+  const [listings, setListings] = useState<UserPropertyResponseDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [filter, setFilter] = useState<CategoryFilter>('all');
   const [sort, setSort] = useState<SortOption>('newest');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const filtered = listings
+  const fetchListings = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const res = await userPropertiesApi.findAll({ page: 1, limit: 50 });
+      setListings(res.items);
+    } catch (err) {
+      setLoadError((err as Error).message || 'Unable to load listings.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchListings();
+  }, []);
+
+  const filtered = (listings ?? [])
     .filter((listing) => {
-      const matchesType = filter === 'all' || listing.type === filter;
-      const matchesSearch =
-        listing.title.toLowerCase().includes(search.toLowerCase()) ||
-        listing.location.toLowerCase().includes(search.toLowerCase());
+      const matchesType = filter === 'all' || listing.category?.toLowerCase() === filter;
+      const haystack = `${listing.title ?? ''} ${locationLabel(listing)}`.toLowerCase();
+      const matchesSearch = haystack.includes(search.toLowerCase());
       return matchesType && matchesSearch;
     })
     .sort((a, b) => {
       if (sort === 'price-asc') return a.price - b.price;
       if (sort === 'price-desc') return b.price - a.price;
-      return 0;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,16 +95,18 @@ export default function Marketplace() {
     setSubmitting(true);
 
     const token = getAuthToken();
-    const payload = {
+
+    const payload: CreateUserPropertyDto = {
       title: form.title,
-      location: form.location,
+      description: form.description,
       price: Number(form.price),
-      type: form.type,
-      size: form.size,
-      beds: form.beds ? Number(form.beds) : undefined,
-      baths: form.baths ? Number(form.baths) : undefined,
-      seller: form.seller || 'You',
-      description: '',
+      listingType: form.listingType,
+      category: form.category,
+      city: form.city,
+      state: form.state,
+      country: form.country,
+      areaSize: form.areaSize ? Number(form.areaSize) : undefined,
+      areaUnit: form.areaSize ? form.areaUnit : undefined,
     };
 
     try {
@@ -98,21 +114,7 @@ export default function Marketplace() {
         throw new Error('You must be signed in to submit a property.');
       }
       const created = await userPropertiesApi.submit(payload, token);
-      const newListing: Listing = {
-        id: created.id,
-        title: created.title,
-        location: created.location,
-        price: created.price,
-        type: created.type as PropertyType,
-        size: created.size,
-        seller: created.seller || 'You',
-        status: 'available',
-        beds: created.beds,
-        baths: created.baths,
-        posted: 'Just now',
-      };
-
-      setListings((prev) => [newListing, ...prev]);
+      setListings((prev) => [created, ...prev]);
       setForm(EMPTY_FORM);
       setShowForm(false);
     } catch (err) {
@@ -122,9 +124,19 @@ export default function Marketplace() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    setListings((prev) => prev.filter((listing) => listing.id !== id));
-    setDeleteId(null);
+  const handleDelete = async (id: string) => {
+    setDeleting(true);
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('You must be signed in to remove a listing.');
+      await userPropertiesApi.remove(id, token);
+      setListings((prev) => prev.filter((listing) => listing.id !== id));
+    } catch (err) {
+      setLoadError((err as Error).message || 'Unable to remove listing.');
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
+    }
   };
 
   return (
@@ -156,13 +168,13 @@ export default function Marketplace() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {(['all', 'house', 'land'] as const).map((option) => (
+                {categoryFilters.map((option) => (
                   <button
                     key={option}
                     onClick={() => setFilter(option)}
                     className={`border px-4 py-2 text-[0.7rem] uppercase tracking-[0.12em] transition ${filter === option ? 'border-stone-900 bg-stone-900 text-stone-100' : 'border-stone-300 bg-white text-stone-500 hover:bg-stone-100'}`}
                   >
-                    {option === 'all' ? 'All' : option === 'house' ? 'Houses' : 'Land'}
+                    {option === 'all' ? 'All' : option.charAt(0).toUpperCase() + option.slice(1)}
                   </button>
                 ))}
               </div>
@@ -190,87 +202,87 @@ export default function Marketplace() {
             </div>
           </div>
 
-          <p className="mb-6 text-[0.72rem] uppercase tracking-[0.12em] text-stone-400">
-            {filtered.length} listing{filtered.length !== 1 ? 's' : ''} found
-          </p>
-
-          {filtered.length === 0 ? (
-            <div className="rounded border border-dashed border-stone-300 bg-white/70 px-8 py-16 text-center text-stone-500">
-              <p className="text-xl italic text-stone-600">No listings match your search.</p>
-            </div>
+          {loading ? (
+            <p className="py-16 text-center text-sm text-stone-400">Loading listings…</p>
+          ) : loadError ? (
+            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{loadError}</p>
           ) : (
-            <div className="grid gap-px overflow-hidden border border-stone-200 bg-stone-200 sm:grid-cols-2 xl:grid-cols-3">
-              {filtered.map((listing) => (
-                <article
-                  key={listing.id}
-                  onMouseEnter={() => setHoveredId(listing.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  className={`group relative flex flex-col bg-white p-6 transition-colors duration-150 ${hoveredId === listing.id ? 'bg-stone-50' : ''}`}
-                >
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <span className={`px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] ${listing.type === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}`}>
-                      {listing.type}
-                    </span>
-                    <span className={`inline-flex items-center gap-1.5 text-[0.6rem] uppercase tracking-[0.14em] ${listing.status === 'under offer' ? 'text-amber-600' : 'text-stone-400'}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${listing.status === 'under offer' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                      {listing.status}
-                    </span>
-                  </div>
+            <>
+              <p className="mb-6 text-[0.72rem] uppercase tracking-[0.12em] text-stone-400">
+                {filtered.length} listing{filtered.length !== 1 ? 's' : ''} found
+              </p>
 
-                  <h3 className="mb-2 text-xl text-stone-900">{listing.title}</h3>
-                  <p className="mb-5 flex items-center gap-2 text-sm text-stone-500">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                    {listing.location}
-                  </p>
+              {filtered.length === 0 ? (
+                <div className="rounded border border-dashed border-stone-300 bg-white/70 px-8 py-16 text-center text-stone-500">
+                  <p className="text-xl italic text-stone-600">No listings match your search.</p>
+                </div>
+              ) : (
+                <div className="grid gap-px overflow-hidden border border-stone-200 bg-stone-200 sm:grid-cols-2 xl:grid-cols-3">
+                  {filtered.map((listing) => (
+                    <article
+                      key={listing.id}
+                      onMouseEnter={() => setHoveredId(listing.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                      className={`group relative flex flex-col bg-white p-6 transition-colors duration-150 ${hoveredId === listing.id ? 'bg-stone-50' : ''}`}
+                    >
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <span className={`px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] ${listing.category.toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}`}>
+                          {listing.category}
+                        </span>
+                        <span className={`inline-flex items-center gap-1.5 text-[0.6rem] uppercase tracking-[0.14em] ${listing.status === 'pending' ? 'text-amber-600' : listing.status === 'rejected' ? 'text-rose-600' : 'text-stone-400'}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${listing.status === 'approved' ? 'bg-emerald-500' : listing.status === 'pending' ? 'bg-amber-500' : listing.status === 'rejected' ? 'bg-rose-500' : 'bg-stone-400'}`} />
+                          {listing.status}
+                        </span>
+                      </div>
 
-                  <div className="mb-5 flex flex-wrap gap-5">
-                    <div>
-                      <p className="mb-1 text-[0.6rem] uppercase tracking-[0.14em] text-stone-400">Size</p>
-                      <p className="text-sm text-stone-700">{listing.size}</p>
-                    </div>
-                    {listing.beds ? (
-                      <div>
-                        <p className="mb-1 text-[0.6rem] uppercase tracking-[0.14em] text-stone-400">Beds</p>
-                        <p className="text-sm text-stone-700">{listing.beds}</p>
-                      </div>
-                    ) : null}
-                    {listing.baths ? (
-                      <div>
-                        <p className="mb-1 text-[0.6rem] uppercase tracking-[0.14em] text-stone-400">Baths</p>
-                        <p className="text-sm text-stone-700">{listing.baths}</p>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-auto">
-                    <div className="mb-5 h-px bg-stone-200" />
-                    <div className="flex items-end justify-between gap-4">
-                      <div>
-                        <p className="text-2xl font-light text-stone-900">${listing.price.toLocaleString()}</p>
-                        <p className="mt-1 text-[0.72rem] text-stone-400">Listed by {listing.seller}</p>
-                        <p className="text-[0.68rem] text-stone-400">{listing.posted}</p>
-                      </div>
-                      <button
-                        onClick={() => setDeleteId(listing.id)}
-                        aria-label="Delete listing"
-                        className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-400 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6l-1 14H6L5 6" />
-                          <path d="M10 11v6" />
-                          <path d="M14 11v6" />
-                          <path d="M9 6V4h6v2" />
+                      <h3 className="mb-2 text-xl text-stone-900">{listing.title}</h3>
+                      <p className="mb-5 flex items-center gap-2 text-sm text-stone-500">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
                         </svg>
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                        {locationLabel(listing) || 'Location not specified'}
+                      </p>
+
+                      <div className="mb-5 flex flex-wrap gap-5">
+                        <div>
+                          <p className="mb-1 text-[0.6rem] uppercase tracking-[0.14em] text-stone-400">Size</p>
+                          <p className="text-sm text-stone-700">{sizeLabel(listing)}</p>
+                        </div>
+                        <div>
+                          <p className="mb-1 text-[0.6rem] uppercase tracking-[0.14em] text-stone-400">Listing</p>
+                          <p className="text-sm text-stone-700 capitalize">{listing.listingType}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-auto">
+                        <div className="mb-5 h-px bg-stone-200" />
+                        <div className="flex items-end justify-between gap-4">
+                          <div>
+                            <p className="text-2xl font-light text-stone-900">${listing.price.toLocaleString()}</p>
+                            <p className="mt-1 text-[0.72rem] text-stone-400">Listed by {listing.submittedBy.fullName}</p>
+                            <p className="text-[0.68rem] text-stone-400">{new Date(listing.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          <button
+                            onClick={() => setDeleteId(listing.id)}
+                            aria-label="Delete listing"
+                            className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-400 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                              <path d="M9 6V4h6v2" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
@@ -290,47 +302,64 @@ export default function Marketplace() {
                 <input value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. Corner Plot, Riverside District" />
               </div>
 
+              <div>
+                <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Description</label>
+                <textarea value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500 min-h-[80px] resize-none" placeholder="Describe the property…" />
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Type</label>
-                  <select value={form.type} onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value as PropertyType }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500">
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Category</label>
+                  <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as typeof prev.category }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500">
                     <option value="house">House</option>
+                    <option value="apartment">Apartment</option>
                     <option value="land">Land</option>
+                    <option value="commercial">Commercial</option>
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Price (USD)</label>
-                  <input type="number" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. 250000" />
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Listing Type</label>
+                  <select value={form.listingType} onChange={(e) => setForm((prev) => ({ ...prev, listingType: e.target.value as ListingType }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500">
+                    <option value="sale">For Sale</option>
+                    <option value="rent">For Rent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Price (NPR)</label>
+                <input type="number" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. 25000000" />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">City</label>
+                  <input value={form.city} onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="Kathmandu" />
+                </div>
+                <div>
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">State/Province</label>
+                  <input value={form.state} onChange={(e) => setForm((prev) => ({ ...prev, state: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="Bagmati" />
+                </div>
+                <div>
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Country</label>
+                  <input value={form.country} onChange={(e) => setForm((prev) => ({ ...prev, country: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="Nepal" />
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Location</label>
-                  <input value={form.location} onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="City, State" />
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Area Size</label>
+                  <input type="number" value={form.areaSize} onChange={(e) => setForm((prev) => ({ ...prev, areaSize: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. 1500" />
                 </div>
                 <div>
-                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Size</label>
-                  <input value={form.size} onChange={(e) => setForm((prev) => ({ ...prev, size: e.target.value }))} required className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. 1,500 sq ft or 0.5 acres" />
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Area Unit</label>
+                  <select value={form.areaUnit} onChange={(e) => setForm((prev) => ({ ...prev, areaUnit: e.target.value as AreaUnit }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500">
+                    <option value="sqft">sq ft</option>
+                    <option value="sqm">sq m</option>
+                    <option value="aana">Aana</option>
+                    <option value="ropani">Ropani</option>
+                  </select>
                 </div>
-              </div>
-
-              {form.type === 'house' ? (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Bedrooms</label>
-                    <input type="number" value={form.beds} onChange={(e) => setForm((prev) => ({ ...prev, beds: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. 3" />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Bathrooms</label>
-                    <input type="number" value={form.baths} onChange={(e) => setForm((prev) => ({ ...prev, baths: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. 2" />
-                  </div>
-                </div>
-              ) : null}
-
-              <div>
-                <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Your Name</label>
-                <input value={form.seller} onChange={(e) => setForm((prev) => ({ ...prev, seller: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="How you'll appear on the listing" />
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -345,13 +374,15 @@ export default function Marketplace() {
       ) : null}
 
       {deleteId ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 px-4" onClick={() => setDeleteId(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 px-4" onClick={() => !deleting && setDeleteId(null)}>
           <div className="w-full max-w-sm border border-stone-300 bg-white p-7 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="mb-3 text-2xl font-light text-stone-900">Remove listing?</h3>
             <p className="mb-6 text-sm leading-7 text-stone-600">This listing will be permanently removed from the marketplace. This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 border border-stone-300 bg-transparent px-4 py-3 text-[0.72rem] uppercase tracking-[0.14em] text-stone-600 transition hover:bg-stone-100">Keep it</button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 bg-rose-700 px-4 py-3 text-[0.72rem] uppercase tracking-[0.14em] text-white transition hover:bg-rose-800">Yes, remove</button>
+              <button disabled={deleting} onClick={() => setDeleteId(null)} className="flex-1 border border-stone-300 bg-transparent px-4 py-3 text-[0.72rem] uppercase tracking-[0.14em] text-stone-600 transition hover:bg-stone-100 disabled:opacity-60">Keep it</button>
+              <button disabled={deleting} onClick={() => handleDelete(deleteId)} className="flex-1 bg-rose-700 px-4 py-3 text-[0.72rem] uppercase tracking-[0.14em] text-white transition hover:bg-rose-800 disabled:opacity-60">
+                {deleting ? 'Removing…' : 'Yes, remove'}
+              </button>
             </div>
           </div>
         </div>

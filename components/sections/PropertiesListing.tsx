@@ -9,34 +9,41 @@ import type { Property } from '@/types';
 const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
 
 interface PropertiesListingProps {
-  properties: Property[];
+  properties?: Property[];
 }
 
 export default function PropertiesListing({ properties }: PropertiesListingProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const items = properties ?? [];
 
   return (
     <div className="grid min-h-[calc(100vh-68px)] grid-cols-1 bg-white lg:grid-cols-[minmax(0,50vw)_minmax(320px,1fr)]">
       <section className="relative min-h-[520px] overflow-hidden border-r border-slate-200 bg-slate-50 lg:min-h-[calc(100vh-68px)]">
-        <PropertiesMap properties={properties} hoveredId={hoveredId} onHoverChange={setHoveredId} />
+        <PropertiesMap properties={items} hoveredId={hoveredId} onHoverChange={setHoveredId} />
         <SearchPanel />
       </section>
 
       <section className="px-5 py-8 sm:px-8 lg:max-h-[calc(100vh-68px)] lg:overflow-y-auto">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">{properties.length} Properties Found</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{items.length} Properties Found</h1>
           <p className="mt-2 text-base text-slate-500">Showing results for Kathmandu, Nepal</p>
         </div>
 
         <div className="space-y-5">
-          {properties.map((property) => (
-            <PropertyResult
-              key={property.id}
-              property={property}
-              isHovered={hoveredId === property.id}
-              onHoverChange={setHoveredId}
-            />
-          ))}
+          {items.length > 0 ? (
+            items.map((property) => (
+              <PropertyResult
+                key={property.id}
+                property={property}
+                isHovered={hoveredId === property.id}
+                onHoverChange={setHoveredId}
+              />
+            ))
+          ) : (
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
+              No properties are available right now.
+            </div>
+          )}
         </div>
       </section>
     </div>

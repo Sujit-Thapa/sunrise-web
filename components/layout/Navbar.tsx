@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
 const NAV_LINKS = [
@@ -16,6 +17,8 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,6 +35,7 @@ export default function Navbar() {
     } else {
       document.body.style.overflow = 'unset';
     }
+
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -39,6 +43,10 @@ export default function Navbar() {
 
   const handleNavClick = () => {
     setIsOpen(false);
+  };
+
+  const isActiveLink = (href: string) => {
+    return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   return (
@@ -54,6 +62,7 @@ export default function Navbar() {
         {/* diagonal sheen, like light glancing off glass */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/40 via-white/5 to-transparent" />
         <div className="pointer-events-none absolute -top-1/2 -left-1/4 w-1/2 h-[200%] rotate-12 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
         {/* crisp top highlight, like a light catching the glass edge */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
 
@@ -79,20 +88,35 @@ export default function Navbar() {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
               <ul className="flex items-center gap-8">
-                {NAV_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm font-medium text-gray-800 hover:text-gray-900 transition-colors relative group"
-                    >
-                      {link.label}
-                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 group-hover:w-full transition-all duration-300" />
-                    </Link>
-                  </li>
-                ))}
+                {NAV_LINKS.map((link) => {
+                  const isActive = isActiveLink(link.href);
+
+                  return (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className={`text-sm font-medium transition-colors relative group ${
+                          isActive
+                            ? 'text-black'
+                            : 'text-gray-800 hover:text-gray-900'
+                        }`}
+                      >
+                        {link.label}
+
+                        <span
+                          className={`absolute -bottom-1 left-0 h-0.5 bg-[#B89B4E] transition-all duration-300 ${
+                            isActive
+                              ? 'w-full'
+                              : 'w-0 group-hover:w-full'
+                          }`}
+                        />
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
 
-              {/* Sign Up Button */}
+              {/* Login Button */}
               <Link
                 href="/auth/login"
                 className="px-6 py-2 rounded-full bg-B89B4E backdrop-blur-sm text-black text-sm font-medium hover:bg-[#B89B4E] transition-colors duration-200 whitespace-nowrap shadow-sm"
@@ -121,21 +145,37 @@ export default function Navbar() {
       {isOpen && (
         <div className="fixed inset-0 z-40 pt-20 bg-white/30 backdrop-blur-xl backdrop-saturate-200 lg:hidden">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-transparent" />
+
           <div className="relative flex flex-col h-full">
             {/* Navigation Links */}
             <div className="flex-1 overflow-y-auto">
               <ul className="flex flex-col">
-                {NAV_LINKS.map((link) => (
-                  <li key={link.label} className="border-b border-white/40">
-                    <Link
-                      href={link.href}
-                      className="block px-6 py-4 text-base font-medium text-gray-900 hover:bg-white/40 transition-colors"
-                      onClick={handleNavClick}
+                {NAV_LINKS.map((link) => {
+                  const isActive = isActiveLink(link.href);
+
+                  return (
+                    <li
+                      key={link.label}
+                      className="border-b border-white/40"
                     >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+                      <Link
+                        href={link.href}
+                        className={`relative block px-6 py-4 text-base font-medium transition-colors ${
+                          isActive
+                            ? 'bg-white/50 text-black'
+                            : 'text-gray-900 hover:bg-white/40'
+                        }`}
+                        onClick={handleNavClick}
+                      >
+                        {isActive && (
+                          <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#B89B4E]" />
+                        )}
+
+                        {link.label}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
@@ -152,8 +192,6 @@ export default function Navbar() {
           </div>
         </div>
       )}
-
-     
     </>
   );
 }

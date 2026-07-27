@@ -115,6 +115,7 @@ export default function SearchBar() {
 
       {/* Search button */}
       <button
+        type="button"
         aria-label="Search properties"
         className="w-[52px] h-[52px] m-[6px] rounded-full bg-gold-primary hover:bg-gold-deep hover:shadow-gold flex items-center justify-center shrink-0 transition-all duration-250 active:scale-95"
       >

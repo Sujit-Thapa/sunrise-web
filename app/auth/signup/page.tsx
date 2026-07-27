@@ -2,18 +2,35 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-
 import { useState } from 'react';
-import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import {
+  Mail,
+  Lock,
+  User,
+  Phone,
+  ArrowRight,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
-import { FaApple, FaFacebook } from 'react-icons/fa';
+import { FaApple, FaFacebookF } from 'react-icons/fa';
+
 import { auth, setAuthToken } from '@/lib/auth';
 import type { RegisterUserDto } from '@/types';
 
 const socials = [
-  { name: 'Google', icon: FcGoogle },
-  { name: 'Apple', icon: FaApple },
-  { name: 'Facebook', icon: FaFacebook },
+  {
+    name: 'Google',
+    icon: FcGoogle,
+  },
+  {
+    name: 'Apple',
+    icon: FaApple,
+  },
+  {
+    name: 'Facebook',
+    icon: FaFacebookF,
+  },
 ];
 
 export default function SignupPage() {
@@ -49,162 +66,321 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#F7F5F0] grid lg:grid-cols-2">
-      {/* Left - Form */}
-      <div className="flex flex-col justify-center items-center px-6 sm:px-12">
-        <div className="w-full max-w-sm">
-          <Link href="/" className="inline-flex items-center mb-10">
+    <main className="h-screen w-full overflow-hidden bg-white lg:grid lg:grid-cols-[0.92fr_1.08fr]">
+      {/* Left side */}
+      <section className="flex h-screen items-center justify-center overflow-hidden px-5 py-4 sm:px-8 lg:px-12 xl:px-16">
+        <div className="w-full max-w-[400px]">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="mb-3 inline-flex items-center transition-opacity hover:opacity-80"
+          >
             <Image
               src="/images/logo/sunrise2.png"
               alt="Sunrise Realty"
-              width={1300}
-              height={40}
-              className="h-30 w-auto object-contain"
+              width={160}
+              height={65}
+              className="h-14 w-auto object-contain xl:h-16"
               priority
             />
           </Link>
 
-          <h1 className="text-3xl font-semibold text-slate-900 mb-1 tracking-tight">Create account</h1>
-          <p className="text-slate-500 text-sm mb-8">Start your home search today</p>
+          {/* Heading */}
+          <div className="mb-4">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#B89B4E]">
+              Welcome to Sunrise
+            </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error ? (
-              <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <h1 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 xl:text-3xl">
+              Create your account
+            </h1>
+
+            <p className="mt-1.5 text-xs leading-5 text-slate-500 xl:text-sm">
+              Find properties, save favorites and manage your search in one
+              place.
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {error && (
+              <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">
                 {error}
-              </p>
-            ) : null}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
-                <User className="h-4 w-4 text-slate-500" /> Full name
-              </label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Jane Doe"
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/15"
-                required
-              />
-            </div>
+              </div>
+            )}
 
+            {/* Full name */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
-                <Mail className="h-4 w-4 text-slate-500" /> Email address
+              <label
+                htmlFor="fullName"
+                className="mb-1 block text-xs font-medium text-slate-700"
+              >
+                Full name
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/15"
-                required
-              />
-            </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
-                <Phone className="h-4 w-4 text-slate-500" /> Phone number
-              </label>
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="98XXXXXXXX"
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/15"
-                required
-              />
-            </div>
+              <div className="group relative">
+                <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#B89B4E]" />
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
-                <Lock className="h-4 w-4 text-slate-500" /> Password
-              </label>
-              <div className="relative">
                 <input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Jane Doe"
+                  autoComplete="name"
+                  required
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/10"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-1 block text-xs font-medium text-slate-700"
+              >
+                Email address
+              </label>
+
+              <div className="group relative">
+                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#B89B4E]" />
+
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  required
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/10"
+                />
+              </div>
+            </div>
+
+            {/* Phone number */}
+            <div>
+              <label
+                htmlFor="phoneNumber"
+                className="mb-1 block text-xs font-medium text-slate-700"
+              >
+                Phone number
+              </label>
+
+              <div className="group relative">
+                <Phone className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#B89B4E]" />
+
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="98XXXXXXXX"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  required
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/10"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-1 block text-xs font-medium text-slate-700"
+              >
+                Password
+              </label>
+
+              <div className="group relative">
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#B89B4E]" />
+
+                <input
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a password"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/15"
+                  autoComplete="new-password"
                   required
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-10 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/10"
                 />
+
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl bg-[#B89B4E] px-6 py-2.5 font-semibold text-white transition hover:bg-[#a3894a] active:scale-95 shadow-sm shadow-[#B89B4E]/30 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#B89B4E] px-5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#a88d45] hover:shadow-md hover:shadow-[#B89B4E]/15 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? 'Creating account…' : 'Create account'} <ArrowRight className="h-5 w-5" />
+              <span>
+                {loading ? 'Creating account…' : 'Create account'}
+              </span>
+
+              {!loading && (
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              )}
             </button>
           </form>
 
-          <div className="my-6 flex items-center gap-4">
-            <div className="flex-1 border-t border-slate-200" />
-            <span className="text-xs font-medium text-slate-400">OR</span>
-            <div className="flex-1 border-t border-slate-200" />
+          {/* Divider */}
+          <div className="my-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-slate-200" />
+
+            <span className="whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
+              Or continue with
+            </span>
+
+            <div className="h-px flex-1 bg-slate-200" />
           </div>
 
-          <div className="space-y-2.5">
-            {socials.map((s) => (
-              <button
-                key={s.name}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-6 py-2.5 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
-              >
-                <s.icon className="h-5 w-5" />
-                Continue with {s.name}
-              </button>
-            ))}
+          {/* Social login */}
+          <div className="grid grid-cols-3 gap-2.5">
+            {socials.map((social) => {
+              const Icon = social.icon;
+
+              return (
+                <button
+                  key={social.name}
+                  type="button"
+                  aria-label={`Continue with ${social.name}`}
+                  title={`Continue with ${social.name}`}
+                  className="group flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 active:scale-[0.97]"
+                >
+                  <Icon
+                    className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${
+                      social.name === 'Apple'
+                        ? 'text-black'
+                        : social.name === 'Facebook'
+                          ? 'text-[#1877F2]'
+                          : ''
+                    }`}
+                  />
+                </button>
+              );
+            })}
           </div>
 
-          <p className="mt-8 text-center text-sm text-slate-600">
+          {/* Login link */}
+          <p className="mt-4 text-center text-xs text-slate-500">
             Already have an account?{' '}
-            <Link href="/auth/login" className="font-semibold text-[#B89B4E] hover:text-[#9c8342]">
+            <Link
+              href="/auth/login"
+              className="font-semibold text-slate-900 transition-colors hover:text-[#B89B4E]"
+            >
               Sign in
             </Link>
           </p>
 
-          <p className="mt-4 text-center text-xs text-slate-400">
-            By creating an account, I accept the{' '}
-            <Link href="#" className="text-[#B89B4E] hover:underline">terms of use</Link>
+          {/* Terms */}
+          <p className="mt-2 text-center text-[10px] leading-4 text-slate-400">
+            By creating an account, you agree to our{' '}
+            <Link
+              href="#"
+              className="text-slate-600 underline-offset-4 transition-colors hover:text-[#B89B4E] hover:underline"
+            >
+              terms of use
+            </Link>
+            .
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Right - Image panel */}
-      <div className="hidden lg:block relative p-6">
-        <div className="relative h-full w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#B89B4E] to-[#8a723a] shadow-xl">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-80"
-            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80')" }}
+      {/* Right image panel */}
+      <section className="hidden h-screen overflow-hidden p-3 lg:block">
+        <div className="relative h-full w-full overflow-hidden rounded-[24px] bg-slate-900">
+          <Image
+            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=90"
+            alt="Modern luxury home"
+            fill
+            sizes="55vw"
+            className="object-cover"
+            priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-[#B89B4E]/10" />
 
-          <div className="absolute inset-0 flex flex-col justify-between p-10">
-            <div>
-              <h2 className="text-3xl font-semibold text-white mb-3 tracking-tight">Join Us Today</h2>
-              <p className="text-white/80 max-w-md">
-                Save homes, track price changes, and get matched with listings picked for you.
-              </p>
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/70" />
+
+          {/* Brand badge */}
+          <div className="absolute left-7 top-7">
+            <div className="flex items-center gap-2 rounded-full border border-white/20 bg-black/10 px-3 py-1.5 backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D5B967]" />
+
+              <span className="text-[11px] font-medium text-white">
+                Sunrise Realty
+              </span>
             </div>
+          </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-5">
-              <p className="text-xs uppercase tracking-wider font-semibold text-white/70 mb-2">Free to join</p>
-              <p className="text-white text-sm leading-relaxed">
-                Create an account in seconds and start browsing homes right away.
+          {/* Bottom content */}
+          <div className="absolute bottom-0 left-0 right-0 p-8 xl:p-10">
+            <div className="max-w-lg">
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
+                Find your next home
               </p>
+
+              <h2 className="text-3xl font-medium leading-[1.1] tracking-[-0.035em] text-white xl:text-4xl">
+                A better way to discover where you belong.
+              </h2>
+
+              <p className="mt-3 max-w-md text-xs leading-5 text-white/65 xl:text-sm">
+                Explore properties, save the homes you love and keep your
+                search organized in one simple place.
+              </p>
+
+              {/* Features */}
+              <div className="mt-5 flex items-center gap-5 border-t border-white/20 pt-5">
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Simple
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-white/50">
+                    Easy search
+                  </p>
+                </div>
+
+                <div className="h-7 w-px bg-white/20" />
+
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Personal
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-white/50">
+                    Save favorites
+                  </p>
+                </div>
+
+                <div className="h-7 w-px bg-white/20" />
+
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Free
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-white/50">
+                    Join today
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

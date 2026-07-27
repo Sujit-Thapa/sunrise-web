@@ -32,7 +32,7 @@ export default function Home() {
             <h2 className="text-3xl font-normal tracking-wide text-midnight md:text-4xl">The smartest way to buy a property</h2>
           </div>
           <div className="grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
-            {properties.map((property) => (
+            {(properties ?? []).map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
           </div>
