@@ -4,17 +4,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import type { Property } from '@/types';
+import type { PropertyResponseDto } from '@/types';
 
 const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
 
 interface PropertiesListingProps {
-  properties?: Property[];
+  properties?: PropertyResponseDto[];
+  total?: number;
 }
 
-export default function PropertiesListing({ properties }: PropertiesListingProps) {
+export default function PropertiesListing({ properties, total }: PropertiesListingProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const items = properties ?? [];
+  const items = Array.isArray(properties) ? properties : [];
 
   return (
     <div className="grid min-h-[calc(100vh-68px)] grid-cols-1 bg-white lg:grid-cols-[minmax(0,50vw)_minmax(320px,1fr)]">
@@ -25,8 +26,10 @@ export default function PropertiesListing({ properties }: PropertiesListingProps
 
       <section className="px-5 py-8 sm:px-8 lg:max-h-[calc(100vh-68px)] lg:overflow-y-auto">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">{items.length} Properties Found</h1>
-          <p className="mt-2 text-base text-slate-500">Showing results for Kathmandu, Nepal</p>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {total ?? items.length} Properties Found
+          </h1>
+          <p className="mt-2 text-base text-slate-500">Showing available properties</p>
         </div>
 
         <div className="space-y-5">
@@ -55,7 +58,7 @@ function PropertiesMap({
   hoveredId,
   onHoverChange,
 }: {
-  properties: Property[];
+  properties: PropertyResponseDto[];
   hoveredId: string | null;
   onHoverChange: (id: string | null) => void;
 }) {
@@ -86,16 +89,23 @@ function PropertiesMap({
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    const mappedProperties = properties.filter(
-      (property): property is Property & { coordinates: [number, number] } => Boolean(property.coordinates),
-    );
+    const mappedProperties = properties.filter((property) => {
+      const latitude = Number(property.latitude);
+      const longitude = Number(property.longitude);
+      return Number.isFinite(latitude) && Number.isFinite(longitude);
+    });
 
     mapboxgl.accessToken = mapboxToken;
+
+    const firstProperty = mappedProperties[0];
+    const initialCenter: [number, number] = firstProperty
+      ? [Number(firstProperty.longitude), Number(firstProperty.latitude)]
+      : KATHMANDU_CENTER;
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/outdoors-v12',
-      center: mappedProperties[0]?.coordinates ?? KATHMANDU_CENTER,
+      center: initialCenter,
       zoom: 12,
       attributionControl: false,
       cooperativeGestures: true,
@@ -113,7 +123,12 @@ function PropertiesMap({
       const bounds = new mapboxgl.LngLatBounds();
 
       mappedProperties.forEach((property) => {
-        bounds.extend(property.coordinates);
+        const coordinates: [number, number] = [
+          Number(property.longitude),
+          Number(property.latitude),
+        ];
+
+        bounds.extend(coordinates);
 
         const element = createPriceMarker(property);
         element.addEventListener('mouseenter', () => onHoverChange(property.id));
@@ -122,8 +137,9 @@ function PropertiesMap({
         markerEls.current.set(property.id, element);
 
         const marker = new mapboxgl.Marker({ element, anchor: 'bottom' })
-          .setLngLat(property.coordinates)
+          .setLngLat(coordinates)
           .addTo(map);
+
         markersRef.current.push(marker);
       });
 
@@ -156,20 +172,22 @@ function PropertiesMap({
       window.clearTimeout(resizeTimer);
       window.removeEventListener('resize', resizeMap);
       map.off('error', handleError);
+
       markersRef.current.forEach((marker) => {
         try {
           marker.remove();
         } catch {
-          // ignore cleanup errors when the map is being torn down during style loading
+          // Ignore cleanup errors while the map is tearing down.
         }
       });
+
       markersRef.current = [];
       markerElements.clear();
 
       try {
         map.remove();
       } catch {
-        // ignore cleanup aborts that can happen while the map style request is still resolving
+        // Ignore cleanup aborts while the style request is resolving.
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,14 +219,31 @@ function SearchPanel() {
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Location</p>
           <p className="mt-1 truncate text-sm font-bold text-slate-500">Where are you looking?</p>
         </div>
+
         {fields.map((field) => (
-          <SearchField key={field.label} label={field.label} value={field.value} showChevron={field.showChevron} />
+          <SearchField
+            key={field.label}
+            label={field.label}
+            value={field.value}
+            showChevron={field.showChevron}
+          />
         ))}
+
         <button
+          type="button"
           aria-label="Search properties"
           className="flex h-14 w-14 items-center justify-center rounded-full bg-gold-primary text-white transition-colors duration-200 hover:bg-gold-deep"
         >
-          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="23"
+            height="23"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="11" cy="11" r="7" />
             <line x1="16.5" y1="16.5" x2="21" y2="21" />
           </svg>
@@ -234,7 +269,13 @@ function SearchField({
         <p className="truncate text-sm font-bold text-slate-500">{value}</p>
         {showChevron ? (
           <svg width="12" height="8" viewBox="0 0 12 8" fill="none" className="shrink-0 text-slate-800">
-            <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M1 1.5L6 6.5L11 1.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         ) : null}
       </div>
@@ -242,15 +283,20 @@ function SearchField({
   );
 }
 
-function createPriceMarker(property: Property): HTMLAnchorElement {
+function createPriceMarker(property: PropertyResponseDto): HTMLAnchorElement {
   const marker = document.createElement('a');
+  const price = Number(property.price);
+
   marker.href = `/properties/${property.id}`;
   marker.ariaLabel = `View ${property.title}`;
   marker.className = 'group flex cursor-pointer flex-col items-center text-slate-800 no-underline';
   marker.innerHTML = `
-    <span data-role="label" class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold shadow-[0_10px_24px_rgba(13,27,42,0.2)] transition duration-200">$${property.price.toLocaleString()}</span>
+    <span data-role="label" class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold shadow-[0_10px_24px_rgba(13,27,42,0.2)] transition duration-200">Rs. ${
+      Number.isFinite(price) ? price.toLocaleString('en-US') : '0'
+    }</span>
     <span data-role="dot" class="mt-2 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#AC953E] shadow-[0_6px_16px_rgba(13,27,42,0.2)] transition duration-200"></span>
   `;
+
   return marker;
 }
 
@@ -259,35 +305,77 @@ function PropertyResult({
   isHovered,
   onHoverChange,
 }: {
-  property: Property;
+  property: PropertyResponseDto;
   isHovered: boolean;
   onHoverChange: (id: string | null) => void;
 }) {
+  const images = Array.isArray(property.images) ? property.images : [];
+  const primaryImage =
+    images.find((image) => image.isPrimary) ??
+    [...images].sort((a, b) => a.sortOrder - b.sortOrder)[0];
+
+  const location = [property.street, property.city, property.state, property.country]
+    .filter(Boolean)
+    .join(', ');
+
+  const price = Number(property.price);
+  const areaSize = property.areaSize != null ? Number(property.areaSize) : null;
+  const category = property.category || 'Property';
+  const listingType = property.listingType || '';
+  const status = property.status ? String(property.status).toLowerCase() : '';
+
   return (
     <Link
       href={`/properties/${property.id}`}
       onMouseEnter={() => onHoverChange(property.id)}
       onMouseLeave={() => onHoverChange(null)}
       className={`grid grid-cols-[124px_1fr] gap-5 rounded-brand-lg border bg-white p-4 transition-all duration-200 sm:grid-cols-[150px_1fr] ${
-        isHovered ? 'border-gold-highlight shadow-brand-md' : 'border-slate-100 hover:border-gold-highlight hover:shadow-brand-md'
+        isHovered
+          ? 'border-gold-highlight shadow-brand-md'
+          : 'border-slate-100 hover:border-gold-highlight hover:shadow-brand-md'
       }`}
     >
       <div className="relative h-28 overflow-hidden rounded-brand-md bg-slate-100 sm:h-32">
-        <Image src={property.image} alt={property.title} fill sizes="150px" className="object-cover" />
+        {primaryImage?.url ? (
+          <Image
+            src={primaryImage.url}
+            alt={property.title || 'Property'}
+            fill
+            sizes="150px"
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-slate-400">No image</div>
+        )}
       </div>
+
       <div className="min-w-0 py-1">
-        <h2 className="truncate text-lg font-medium text-slate-800">{property.title}</h2>
-        <p className="mt-2 truncate text-base text-slate-400">{property.location}</p>
-        <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
-          <span>
-            {property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="truncate text-lg font-medium text-slate-800">
+            {property.title || 'Untitled property'}
+          </h2>
+          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold uppercase text-slate-500">
+            {category}
           </span>
-          <span>
-            {property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}
-          </span>
-          <span>{property.area.toLocaleString()} sqft</span>
+        </div>
+
+        <p className="mt-2 truncate text-base text-slate-400">{location || 'Location not provided'}</p>
+
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+          {listingType ? <span className="capitalize">{listingType}</span> : null}
+
+          {areaSize != null && Number.isFinite(areaSize) ? (
+            <span>
+              {areaSize.toLocaleString('en-US')} {property.areaUnit ?? ''}
+            </span>
+          ) : null}
+
+          {status ? <span className="capitalize">{status}</span> : null}
+        </div>
+
+        <p className="mt-3 text-lg font-medium text-gold-primary">
+          Rs. {Number.isFinite(price) ? price.toLocaleString('en-US') : '0'}
         </p>
-        <p className="mt-3 text-lg font-medium text-gold-primary">${property.price.toLocaleString()}</p>
       </div>
     </Link>
   );
