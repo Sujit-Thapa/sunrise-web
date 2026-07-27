@@ -2,10 +2,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { useState } from 'react';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple, FaFacebook } from 'react-icons/fa';
+import { auth, setAuthToken } from '@/lib/auth';
+import type { LoginDto } from '@/types';
 
 const socials = [
   { name: 'Google', icon: FcGoogle },
@@ -17,10 +20,28 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password });
+    setError(null);
+    setLoading(true);
+
+    const payload: LoginDto = {
+      email,
+      password,
+    };
+
+    try {
+      const response = await auth.login(payload);
+      setAuthToken(response.accessToken);
+      window.location.href = '/';
+    } catch (err) {
+      setError((err as Error).message || 'Login failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,6 +64,11 @@ export default function LoginPage() {
           <p className="text-slate-500 text-sm mb-8">Welcome back to find your next home</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error ? (
+              <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {error}
+              </p>
+            ) : null}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
                 <Mail className="h-4 w-4 text-slate-500" /> Email address
@@ -87,9 +113,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl bg-[#B89B4E] px-6 py-2.5 font-semibold text-white transition hover:bg-[#a3894a] active:scale-95 shadow-sm shadow-[#B89B4E]/30"
+              disabled={loading}
+              className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl bg-[#B89B4E] px-6 py-2.5 font-semibold text-white transition hover:bg-[#a3894a] active:scale-95 shadow-sm shadow-[#B89B4E]/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Sign in <ArrowRight className="h-5 w-5" />
+              {loading ? 'Signing in…' : 'Sign in'} <ArrowRight className="h-5 w-5" />
             </button>
           </form>
 
