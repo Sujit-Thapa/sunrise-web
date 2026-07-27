@@ -3,6 +3,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '@/lib/api';
 import { properties as fallbackProperties } from '@/lib/data/properties';
+import { getAuthToken } from '@/lib/auth';
+import { paymentApi } from '@/lib/backend';
 import type { PropertiesListResponseDto, Property as ApiProperty } from '@/types';
 
 type BookingStep = 1 | 2 | 3;
@@ -102,10 +104,43 @@ export default function Booking() {
   const filteredProps = properties.filter((p) => filterType === 'all' || p.type === filterType);
   const bookingId = bookingCode || `BK-${selected?.ref?.slice(-3) ?? '000'}`;
 
-  const handleConfirm = (e: FormEvent) => {
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
+  const handleConfirm = async (e: FormEvent) => {
     e.preventDefault();
-    setBookingCode(`BK-${selected?.ref?.slice(-3) ?? '000'}`);
-    setConfirmed(true);
+    setPaymentError(null);
+    setPaymentLoading(true);
+
+    const token = getAuthToken();
+
+    try {
+      if (!selected) {
+        throw new Error('No property selected.');
+      }
+      if (!token) {
+        throw new Error('You must be logged in to proceed with payment.');
+      }
+
+      const payload = {
+        propertyId: selected.id,
+        amount: deposit,
+        callbackUrl: `${window.location.origin}/booking/confirmation`,
+      };
+
+      if (form.payMethod === 'esewa') {
+        await paymentApi.initiateEsewa(payload, token);
+      } else {
+        await paymentApi.initiateKhalti(payload, token);
+      }
+
+      setBookingCode(`BK-${selected.ref.slice(-3)}`);
+      setConfirmed(true);
+    } catch (err) {
+      setPaymentError((err as Error).message || 'Unable to initiate payment.');
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   const resetBooking = () => {
@@ -302,9 +337,16 @@ export default function Booking() {
                 <p className="border-t border-stone-300 pt-4 text-[0.75rem] leading-6 text-stone-400">
                   By confirming this booking, you agree to pay a 5% advance deposit of <strong className="text-stone-600">${deposit.toLocaleString()}</strong>. This reserves the property exclusively for you for 30 days while the full purchase agreement is prepared. The deposit is fully refundable within 7 days.
                 </p>
+                {paymentError ? (
+                  <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {paymentError}
+                  </p>
+                ) : null}
                 <div className="mt-6 flex flex-wrap gap-3">
                   <button type="button" className={buttonClass} onClick={() => setStep(2)}>← Edit Details</button>
-                  <button type="submit" className={`${primaryButtonClass} flex-1`}>Confirm Booking →</button>
+                  <button type="submit" disabled={paymentLoading} className={`${primaryButtonClass} flex-1 ${paymentLoading ? 'cursor-wait opacity-70' : ''}`}>
+                    {paymentLoading ? 'Processing…' : 'Confirm Booking →'}
+                  </button>
                 </div>
               </form>
             )}
