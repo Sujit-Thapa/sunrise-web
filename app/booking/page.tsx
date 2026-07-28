@@ -2,7 +2,12 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import Image from 'next/image';
+import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
+import {
+  setPendingBooking,
+  snapshotProperty,
+} from '@/lib/account-storage';
 import { propertiesApi, paymentApi } from '@/lib/backend';
 import {
   formatArea,
@@ -120,6 +125,7 @@ function redirectPaymentResponse(
 }
 
 export default function Booking() {
+  const { user } = useAuthSession();
   const [step, setStep] = useState<BookingStep>(1);
   const [selectedId, setSelectedId] = useState('');
   const [form, setForm] = useState<FormState>({
@@ -174,10 +180,13 @@ export default function Booking() {
     try {
       if (!selected) throw new Error('No property selected.');
       if (!token) throw new Error('You must be logged in to proceed with payment.');
+      if (!user) throw new Error('Please wait a moment while we verify your account.');
 
       // Real InitiatePaymentDto only accepts propertyId — amount and the
       // callback URL are computed server-side, not supplied by the client.
       const payload: InitiatePaymentDto = { propertyId: selected.id };
+      const pendingBooking = snapshotProperty(selected);
+      setPendingBooking(user.id, pendingBooking, { provider: form.payMethod });
 
       if (form.payMethod === 'esewa') {
         const res = await paymentApi.initiateEsewa(payload, token);

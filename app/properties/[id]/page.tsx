@@ -12,6 +12,7 @@ import {
   getPrimaryImage,
   getPropertyStatusLabel,
 } from '@/lib/properties';
+import SavePropertyButton from '@/components/ui/SavePropertyButton';
 import type { PropertyResponseDto } from '@/types';
 
 interface PropertyDetailPageProps {
@@ -199,6 +200,10 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
                 </span>
                 . Reach out if you want more details or a viewing.
               </p>
+
+              <div className="mt-6">
+                <SavePropertyButton property={property} />
+              </div>
 
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <MiniStat label="Status" value={getPropertyStatusLabel(property.status)} />

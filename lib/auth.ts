@@ -9,6 +9,7 @@ import type {
 } from '@/types';
 
 const AUTH_TOKEN_KEY = 'sunrise_auth_token';
+export const AUTH_CHANGE_EVENT = 'sunrise-auth-changed';
 
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -18,11 +19,13 @@ export function getAuthToken(): string | null {
 export function setAuthToken(token: string) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+  window.dispatchEvent(new CustomEvent(AUTH_CHANGE_EVENT));
 }
 
 export function clearAuthToken() {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  window.dispatchEvent(new CustomEvent(AUTH_CHANGE_EVENT));
 }
 
 export const auth = {

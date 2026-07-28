@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChevronDown, LogOut, Menu, Shield, UserCircle2, X } from 'lucide-react';
+
+import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 
 const NAV_LINKS = [
   { label: 'Properties', href: '/properties' },
@@ -15,19 +17,12 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
+  const { user, loading, signOut } = useAuthSession();
   const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const router = useRouter();
 
   useEffect(() => {
     if (isOpen) {
@@ -41,52 +36,60 @@ export default function Navbar() {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
+        setAccountOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleNavClick = () => {
     setIsOpen(false);
+    setAccountOpen(false);
   };
 
-  const isActiveLink = (href: string) => {
-    return pathname === href || pathname.startsWith(`${href}/`);
+  const handleLogout = () => {
+    signOut();
+    setAccountOpen(false);
+    setIsOpen(false);
+    router.push('/');
   };
+
+  const isActiveLink = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const initials = user
+    ? user.fullName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join('')
+    : 'U';
 
   return (
     <>
-      {/* Navbar */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 backdrop-blur-md backdrop-saturate-200 border-b overflow-hidden ${
-          isScrolled
-            ? 'bg-white/15 border-white/30 shadow-[0_1px_20px_rgba(0,0,0,0.04)]'
-            : 'bg-white/5 border-white/10'
-        }`}
-      >
-        {/* diagonal sheen, like light glancing off glass */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/40 via-white/5 to-transparent" />
-        <div className="pointer-events-none absolute -top-1/2 -left-1/4 w-1/2 h-[200%] rotate-12 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-        {/* crisp top highlight, like a light catching the glass edge */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            {/* Logo */}
-            <Link
-              href="/"
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            >
-              <div className="relative w-32 h-32 sm:w-28 sm:h-28">
+      <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/15 bg-white/10 backdrop-blur-xl backdrop-saturate-200 shadow-[0_1px_20px_rgba(0,0,0,0.04)]">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/35 via-white/10 to-transparent" />
+        <div className="pointer-events-none absolute -top-1/2 -left-1/4 h-[200%] w-1/2 rotate-12 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative z-10 flex h-16 items-center justify-between sm:h-20">
+            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+              <div className="relative h-12 w-32 sm:h-14 sm:w-36">
                 <Image
                   src="/images/logo/sunrise2.png"
-                  alt="Sunrise Realty"
+                  alt="Sunrise Realestate"
                   fill
-                  sizes="(min-width: 640px) 112px, 96px"
-                  className="w-full h-full object-contain"
+                  sizes="(min-width: 640px) 144px, 128px"
+                  className="object-contain"
                   priority
                 />
               </div>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden items-center gap-6 lg:flex">
               <ul className="flex items-center gap-8">
                 {NAV_LINKS.map((link) => {
                   const isActive = isActiveLink(link.href);
@@ -95,19 +98,14 @@ export default function Navbar() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
-                        className={`text-sm font-medium transition-colors relative group ${
-                          isActive
-                            ? 'text-black'
-                            : 'text-gray-800 hover:text-gray-900'
+                        className={`group relative text-sm font-medium transition-colors ${
+                          isActive ? 'text-midnight' : 'text-slate-700 hover:text-midnight'
                         }`}
                       >
                         {link.label}
-
                         <span
-                          className={`absolute -bottom-1 left-0 h-0.5 bg-[#B89B4E] transition-all duration-300 ${
-                            isActive
-                              ? 'w-full'
-                              : 'w-0 group-hover:w-full'
+                          className={`absolute -bottom-1 left-0 h-0.5 bg-gold-primary transition-all duration-300 ${
+                            isActive ? 'w-full' : 'w-0 group-hover:w-full'
                           }`}
                         />
                       </Link>
@@ -116,61 +114,118 @@ export default function Navbar() {
                 })}
               </ul>
 
-              {/* Login Button */}
-              <Link
-                href="/auth/login"
-                className="px-6 py-2 rounded-full bg-B89B4E backdrop-blur-sm text-black text-sm font-medium hover:bg-[#B89B4E] transition-colors duration-200 whitespace-nowrap shadow-sm"
-              >
-                Login
-              </Link>
+              {loading ? (
+                <div className="h-10 w-28 animate-pulse rounded-full bg-stone-100" />
+              ) : user ? (
+                <div ref={accountRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setAccountOpen((prev) => !prev)}
+                    className="flex items-center gap-3 rounded-full border border-white/25 bg-white/30 px-3 py-2 text-left text-midnight shadow-sm backdrop-blur-md transition hover:border-white/40 hover:bg-white/40"
+                    aria-expanded={accountOpen}
+                    aria-label="Open account menu"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-midnight text-xs font-semibold text-white">
+                      {initials}
+                    </span>
+                    <span className="hidden flex-col leading-tight sm:flex">
+                      <span className="text-sm font-semibold text-midnight">{user.fullName}</span>
+                      <span className="text-[0.65rem] uppercase tracking-[0.16em] text-slate-600">
+                        {user.role}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-slate-600 transition-transform ${
+                        accountOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {accountOpen ? (
+                    <div className="absolute right-0 top-[calc(100%+0.75rem)] z-[60] w-64 overflow-hidden rounded-[24px] border border-white/20 bg-white/90 p-2 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+                      <div className="px-3 py-3">
+                        <p className="text-sm font-semibold text-midnight">{user.fullName}</p>
+                        <p className="mt-1 text-xs text-slate-500">{user.email}</p>
+                      </div>
+                      <div className="my-1 h-px bg-stone-100" />
+                      <Link
+                        href="/profile"
+                        onClick={handleNavClick}
+                        className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-stone-50 hover:text-midnight"
+                      >
+                        <UserCircle2 className="h-4 w-4" />
+                        Profile
+                      </Link>
+                      {(user.role === 'admin' || user.role === 'agent') ? (
+                        <Link
+                          href="/admin"
+                          onClick={handleNavClick}
+                          className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-stone-50 hover:text-midnight"
+                        >
+                          <Shield className="h-4 w-4" />
+                          Admin
+                        </Link>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="mt-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/auth/login"
+                    className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-md transition hover:border-white/35 hover:bg-white/20"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="rounded-full bg-gold-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gold-primary/90"
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              )}
             </div>
 
-            {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-white/40 transition-colors"
+              type="button"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="rounded-lg p-2 transition hover:bg-white/10 lg:hidden"
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
             >
-              {isOpen ? (
-                <X className="w-6 h-6 text-gray-900" />
-              ) : (
-                <Menu className="w-6 h-6 text-gray-900" />
-              )}
+              {isOpen ? <X className="h-6 w-6 text-white" /> : <Menu className="h-6 w-6 text-white" />}
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="fixed inset-0 z-40 pt-20 bg-white/30 backdrop-blur-xl backdrop-saturate-200 lg:hidden">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-transparent" />
-
-          <div className="relative flex flex-col h-full">
-            {/* Navigation Links */}
-            <div className="flex-1 overflow-y-auto">
-              <ul className="flex flex-col">
+      {isOpen ? (
+        <div className="fixed inset-0 z-40 bg-white/20 pt-16 backdrop-blur-xl lg:hidden">
+          <div className="relative flex h-full flex-col">
+            <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+              <ul className="divide-y divide-white/15 rounded-[28px] border border-white/20 bg-white/70 shadow-sm backdrop-blur-xl">
                 {NAV_LINKS.map((link) => {
                   const isActive = isActiveLink(link.href);
 
                   return (
-                    <li
-                      key={link.label}
-                      className="border-b border-white/40"
-                    >
+                    <li key={link.label}>
                       <Link
                         href={link.href}
-                        className={`relative block px-6 py-4 text-base font-medium transition-colors ${
-                          isActive
-                            ? 'bg-white/50 text-black'
-                            : 'text-gray-900 hover:bg-white/40'
-                        }`}
                         onClick={handleNavClick}
+                        className={`block px-5 py-4 text-base font-medium ${
+                          isActive
+                            ? 'bg-white/60 text-midnight'
+                            : 'text-slate-700 hover:bg-white/40 hover:text-midnight'
+                        }`}
                       >
-                        {isActive && (
-                          <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#B89B4E]" />
-                        )}
-
                         {link.label}
                       </Link>
                     </li>
@@ -179,19 +234,66 @@ export default function Navbar() {
               </ul>
             </div>
 
-            {/* Sign Up Button for Mobile */}
-            <div className="border-t border-white/40 p-4 sm:p-6">
-              <Link
-                href="/auth/signup"
-                onClick={handleNavClick}
-                className="flex w-full items-center justify-center px-6 py-3 rounded-full bg-gray-900/90 backdrop-blur-sm text-white font-medium hover:bg-gray-900 transition-colors duration-200"
-              >
-                Create Account
-              </Link>
+            <div className="border-t border-white/15 p-4 sm:p-6">
+              {loading ? (
+                <div className="h-12 rounded-full bg-white/20" />
+              ) : user ? (
+                <div className="space-y-3">
+                  <div className="rounded-[24px] border border-white/20 bg-white/70 p-4 backdrop-blur-xl">
+                    <p className="text-sm font-semibold text-midnight">{user.fullName}</p>
+                    <p className="text-xs text-slate-500">{user.email}</p>
+                    <p className="mt-2 text-[0.65rem] uppercase tracking-[0.16em] text-slate-400">
+                      {user.role}
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Link
+                      href="/profile"
+                      onClick={handleNavClick}
+                      className="rounded-full border border-white/20 bg-white/80 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                    >
+                      Profile
+                    </Link>
+                    {(user.role === 'admin' || user.role === 'agent') ? (
+                      <Link
+                        href="/admin"
+                        onClick={handleNavClick}
+                        className="rounded-full border border-white/20 bg-white/80 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                      >
+                        Admin
+                      </Link>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  <Link
+                    href="/auth/login"
+                    onClick={handleNavClick}
+                    className="rounded-full border border-white/20 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white backdrop-blur-md transition hover:border-white/35 hover:bg-white/20"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    onClick={handleNavClick}
+                    className="rounded-full bg-gold-primary px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-gold-primary/90"
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   );
 }

@@ -1,8 +1,15 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+
+import { useAuthSession } from '@/components/auth/AuthSessionProvider';
+import {
+  addBookedProperty,
+  clearPendingBooking,
+  getPendingBooking,
+} from '@/lib/account-storage';
 
 type ConfirmationStatus = 'success' | 'failed' | 'pending' | 'unknown';
 
@@ -146,11 +153,24 @@ function StatusIcon({ status }: { status: ConfirmationStatus }) {
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
-  const [parsed, setParsed] = useState<ReturnType<typeof parseCallbackParams> | null>(null);
+  const { user } = useAuthSession();
+  const hasStoredBooking = useRef(false);
+  const parsed = useMemo(() => parseCallbackParams(searchParams), [searchParams]);
 
   useEffect(() => {
-    setParsed(parseCallbackParams(searchParams));
-  }, [searchParams]);
+    if (!parsed || parsed.status !== 'success' || !user || hasStoredBooking.current) return;
+
+    const pending = getPendingBooking(user.id);
+
+    if (pending) {
+      addBookedProperty(user.id, pending.property, {
+        paymentId: parsed.paymentId,
+        provider: parsed.provider ?? pending.provider,
+      });
+      clearPendingBooking(user.id);
+      hasStoredBooking.current = true;
+    }
+  }, [parsed, user]);
 
   if (!parsed) {
     return (

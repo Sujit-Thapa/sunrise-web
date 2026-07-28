@@ -10,6 +10,7 @@ import {
   getPrimaryImage,
   getPropertyStatusLabel,
 } from '@/lib/properties';
+import SavePropertyButton from '@/components/ui/SavePropertyButton';
 
 interface PropertyCardProps {
   property: PropertyResponseDto;
@@ -24,12 +25,18 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const statusLabel = getPropertyStatusLabel(property.status);
 
   return (
-    <Link
-      href={`/properties/${property.id}`}
-      className="group block rounded-brand-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-primary focus-visible:ring-offset-2"
-      aria-label={`View ${property.title || 'property details'}`}
-    >
-      <article className="overflow-hidden rounded-brand-lg border border-slate-100 bg-white shadow-brand-sm transition-all duration-250 group-hover:-translate-y-1 group-hover:border-gold-highlight/50 group-hover:shadow-brand-md">
+    <article className="group relative overflow-hidden rounded-brand-lg border border-slate-100 bg-white shadow-brand-sm transition-all duration-250 hover:-translate-y-1 hover:border-gold-highlight/50 hover:shadow-brand-md">
+      <div className="absolute right-4 top-4 z-20">
+        <SavePropertyButton property={property} />
+      </div>
+
+      <Link
+        href={`/properties/${property.id}`}
+        className="absolute inset-0 z-10 rounded-brand-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-primary focus-visible:ring-offset-2"
+        aria-label={`View ${property.title || 'property details'}`}
+      />
+
+      <div className="relative z-0">
         <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           <Image
             src={primaryImage?.url || '/images/sunrise.png'}
@@ -81,8 +88,8 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </span>
           </div>
         </div>
-      </article>
-    </Link>
+      </div>
+    </article>
   );
 }
 
