@@ -40,7 +40,7 @@ export default async function Properties() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-[68px]">
+    <div className="min-h-screen bg-white">
       <PropertiesListing
         properties={properties}
         total={total}

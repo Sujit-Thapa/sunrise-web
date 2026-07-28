@@ -27,7 +27,7 @@ export default function PropertiesListing({ properties, total }: PropertiesListi
   const resultCount = total ?? items.length;
 
   return (
-    <div className="grid min-h-[calc(100vh-68px)] grid-cols-1 bg-[linear-gradient(180deg,#fffaf1_0%,#ffffff_38%,#f8fafc_100%)] lg:grid-cols-[minmax(0,50vw)_minmax(320px,1fr)]">
+    <div className="grid min-h-[calc(100vh-68px)] grid-cols-1 bg-white lg:grid-cols-[minmax(0,50vw)_minmax(320px,1fr)]">
       <section className="relative min-h-[520px] overflow-hidden border-r border-slate-200 bg-slate-50 lg:min-h-[calc(100vh-68px)]">
         <PropertiesMap properties={items} hoveredId={hoveredId} onHoverChange={setHoveredId} />
         <SearchPanel />

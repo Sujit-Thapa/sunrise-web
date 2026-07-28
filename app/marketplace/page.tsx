@@ -1,8 +1,18 @@
 'use client';
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
+import {
+  formatArea,
+  formatCurrency,
+  formatLocation,
+  getListingTypeLabel,
+  getPrimaryImage,
+  getPropertyStatusLabel,
+} from '@/lib/properties';
 import type {
   AreaUnit,
   CreateUserPropertyDto,
@@ -35,12 +45,11 @@ const sortOptions: { value: SortOption; label: string }[] = [
 const categoryFilters: CategoryFilter[] = ['all', 'house', 'land', 'apartment', 'commercial'];
 
 function locationLabel(item: UserPropertyResponseDto): string {
-  return [item.street, item.city, item.state, item.country].filter(Boolean).join(', ');
+  return formatLocation(item);
 }
 
 function sizeLabel(item: UserPropertyResponseDto): string {
-  if (!item.areaSize) return 'Size not specified';
-  return `${item.areaSize.toLocaleString()} ${item.areaUnit ?? ''}`.trim();
+  return formatArea(item.areaSize, item.areaUnit);
 }
 
 export default function Marketplace() {
@@ -142,20 +151,25 @@ export default function Marketplace() {
   return (
     <>
       <main className="min-h-screen bg-white text-stone-900">
-        <div className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-10">
-          <p className="mb-4 text-[0.68rem] uppercase tracking-[0.22em] text-stone-500">Sunrise Realty · Community Marketplace</p>
-          <h1 className="mb-3 text-4xl font-light leading-tight sm:text-5xl">
-            Properties listed by <span className="italic text-stone-600">the community.</span>
-          </h1>
-          <p className="mb-10 max-w-xl text-sm leading-7 text-stone-600">
-            Browse land and homes posted directly by sellers. List your own property, connect with buyers, and transact through our trusted platform.
-          </p>
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="rounded-[28px] border border-stone-200 bg-white/85 px-6 py-8 shadow-brand-sm backdrop-blur sm:px-8">
+            <p className="mb-3 text-[0.68rem] uppercase tracking-[0.24em] text-gold-primary">
+              Sunrise Realestate · Community Marketplace
+            </p>
+            <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+              Properties listed by <span className="text-slate-500">the community.</span>
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">
+              Browse land and homes posted directly by sellers. List your own property, connect
+              with buyers, and keep the marketplace moving in one place.
+            </p>
+          </div>
 
           {/* Sticky filter bar */}
-          <div className="sticky top-0 z-30 -mx-6 mb-8 border-y border-stone-200 bg-white/95 px-6 py-4 backdrop-blur sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
+          <div className="sticky top-0 z-30 my-6 rounded-[28px] border border-stone-200 bg-white/95 px-4 py-4 shadow-brand-sm backdrop-blur sm:px-6">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative min-w-[220px] flex-1">
-                <svg className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
@@ -163,7 +177,7 @@ export default function Marketplace() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by title or location…"
-                  className="w-full border border-stone-300 bg-white py-3 pl-11 pr-4 text-sm text-stone-900 outline-none transition focus:border-stone-500"
+                  className="w-full rounded-full border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm text-stone-900 outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
                 />
               </div>
 
@@ -172,7 +186,7 @@ export default function Marketplace() {
                   <button
                     key={option}
                     onClick={() => setFilter(option)}
-                    className={`border px-4 py-2 text-[0.7rem] uppercase tracking-[0.12em] transition ${filter === option ? 'border-stone-900 bg-stone-900 text-stone-100' : 'border-stone-300 bg-white text-stone-500 hover:bg-stone-100'}`}
+                    className={`rounded-full border px-4 py-2 text-[0.7rem] uppercase tracking-[0.12em] transition ${filter === option ? 'border-midnight bg-midnight text-white' : 'border-stone-200 bg-white text-slate-500 hover:border-gold-primary hover:text-gold-primary'}`}
                   >
                     {option === 'all' ? 'All' : option.charAt(0).toUpperCase() + option.slice(1)}
                   </button>
@@ -182,7 +196,7 @@ export default function Marketplace() {
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortOption)}
-                className="border border-stone-300 bg-white px-3 py-3 text-[0.7rem] uppercase tracking-[0.1em] text-stone-600 outline-none transition focus:border-stone-500"
+                className="rounded-full border border-stone-200 bg-white px-4 py-3 text-[0.7rem] uppercase tracking-[0.1em] text-slate-600 outline-none transition focus:border-gold-primary"
               >
                 {sortOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -191,7 +205,7 @@ export default function Marketplace() {
 
               <button
                 onClick={() => setShowForm(true)}
-                className="flex items-center gap-2 whitespace-nowrap border border-stone-900 bg-stone-900 px-4 py-3 text-[0.72rem] uppercase tracking-[0.14em] text-stone-100 transition hover:bg-stone-700"
+                className="flex items-center gap-2 whitespace-nowrap rounded-full border border-midnight bg-midnight px-4 py-3 text-[0.72rem] uppercase tracking-[0.14em] text-stone-100 transition hover:bg-slate-800"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="12" y1="5" x2="12" y2="19" />
@@ -203,70 +217,85 @@ export default function Marketplace() {
           </div>
 
           {loading ? (
-            <p className="py-16 text-center text-sm text-stone-400">Loading listings…</p>
+            <div className="rounded-[28px] border border-stone-200 bg-white px-8 py-16 text-center shadow-brand-sm">
+              <p className="text-sm text-slate-500">Loading listings…</p>
+            </div>
           ) : loadError ? (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{loadError}</p>
+            <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{loadError}</p>
           ) : (
             <>
-              <p className="mb-6 text-[0.72rem] uppercase tracking-[0.12em] text-stone-400">
+              <p className="mb-6 text-[0.72rem] uppercase tracking-[0.16em] text-slate-400">
                 {filtered.length} listing{filtered.length !== 1 ? 's' : ''} found
               </p>
 
               {filtered.length === 0 ? (
-                <div className="rounded border border-dashed border-stone-300 bg-white/70 px-8 py-16 text-center text-stone-500">
-                  <p className="text-xl italic text-stone-600">No listings match your search.</p>
+                <div className="rounded-[28px] border border-dashed border-stone-300 bg-white/70 px-8 py-16 text-center text-slate-500 shadow-brand-sm">
+                  <p className="text-xl font-medium text-slate-700">No listings match your search.</p>
+                  <p className="mt-2 text-sm">Try a different location or category to widen the search.</p>
                 </div>
               ) : (
-                <div className="grid gap-px overflow-hidden border border-stone-200 bg-stone-200 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {filtered.map((listing) => (
                     <article
                       key={listing.id}
                       onMouseEnter={() => setHoveredId(listing.id)}
                       onMouseLeave={() => setHoveredId(null)}
-                      className={`group relative flex flex-col bg-white p-6 transition-colors duration-150 ${hoveredId === listing.id ? 'bg-stone-50' : ''}`}
+                      className={`group overflow-hidden rounded-[28px] border border-stone-200 bg-white shadow-brand-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-brand-md ${hoveredId === listing.id ? 'border-gold-primary/40' : ''}`}
                     >
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <span className={`px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] ${listing.category.toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}`}>
-                          {listing.category}
-                        </span>
-                        <span className={`inline-flex items-center gap-1.5 text-[0.6rem] uppercase tracking-[0.14em] ${listing.status === 'pending' ? 'text-amber-600' : listing.status === 'rejected' ? 'text-rose-600' : 'text-stone-400'}`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${listing.status === 'approved' ? 'bg-emerald-500' : listing.status === 'pending' ? 'bg-amber-500' : listing.status === 'rejected' ? 'bg-rose-500' : 'bg-stone-400'}`} />
-                          {listing.status}
-                        </span>
-                      </div>
-
-                      <h3 className="mb-2 text-xl text-stone-900">{listing.title}</h3>
-                      <p className="mb-5 flex items-center gap-2 text-sm text-stone-500">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        {locationLabel(listing) || 'Location not specified'}
-                      </p>
-
-                      <div className="mb-5 flex flex-wrap gap-5">
-                        <div>
-                          <p className="mb-1 text-[0.6rem] uppercase tracking-[0.14em] text-stone-400">Size</p>
-                          <p className="text-sm text-stone-700">{sizeLabel(listing)}</p>
-                        </div>
-                        <div>
-                          <p className="mb-1 text-[0.6rem] uppercase tracking-[0.14em] text-stone-400">Listing</p>
-                          <p className="text-sm text-stone-700 capitalize">{listing.listingType}</p>
+                      <div className="relative aspect-[4/3] bg-slate-100">
+                        {getPrimaryImage(listing.images)?.url ? (
+                          <Image
+                            src={getPrimaryImage(listing.images)!.url}
+                            alt={listing.title || 'Property'}
+                            fill
+                            sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,rgba(184,155,78,0.12),rgba(15,23,42,0.05))] text-sm font-medium text-slate-500">
+                            No image yet
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-midnight/35 via-transparent to-transparent" />
+                        <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                          <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${listing.category.toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/90 text-midnight'} backdrop-blur`}>
+                            {listing.category}
+                          </span>
+                          <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${listing.status === 'pending' ? 'bg-amber-50 text-amber-700' : listing.status === 'rejected' ? 'bg-rose-50 text-rose-700' : 'bg-white/90 text-slate-500'} backdrop-blur`}>
+                            {getPropertyStatusLabel(listing.status)}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="mt-auto">
-                        <div className="mb-5 h-px bg-stone-200" />
-                        <div className="flex items-end justify-between gap-4">
+                      <div className="p-5">
+                        <h3 className="text-xl font-semibold text-midnight">{listing.title}</h3>
+                        <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                          </svg>
+                          {locationLabel(listing) || 'Location not specified'}
+                        </p>
+
+                        <div className="mt-5 flex flex-wrap gap-3">
+                          <span className="rounded-full bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+                            {sizeLabel(listing)}
+                          </span>
+                          <span className="rounded-full bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+                            {getListingTypeLabel(listing.listingType)}
+                          </span>
+                        </div>
+
+                        <div className="mt-6 flex items-end justify-between gap-4 border-t border-stone-100 pt-5">
                           <div>
-                            <p className="text-2xl font-light text-stone-900">${listing.price.toLocaleString()}</p>
-                            <p className="mt-1 text-[0.72rem] text-stone-400">Listed by {listing.submittedBy.fullName}</p>
-                            <p className="text-[0.68rem] text-stone-400">{new Date(listing.createdAt).toLocaleDateString()}</p>
+                            <p className="text-2xl font-semibold text-midnight">{formatCurrency(listing.price)}</p>
+                            <p className="mt-1 text-[0.72rem] text-slate-400">Listed by {listing.submittedBy.fullName}</p>
+                            <p className="text-[0.68rem] text-slate-400">{new Date(listing.createdAt).toLocaleDateString()}</p>
                           </div>
                           <button
                             onClick={() => setDeleteId(listing.id)}
                             aria-label="Delete listing"
-                            className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-400 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 text-stone-400 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                               <polyline points="3 6 5 6 21 6" />

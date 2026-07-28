@@ -51,7 +51,7 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
   const gallery = property.images.filter((img) => img.id !== hero?.id);
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#fcfaf6_0%,#ffffff_100%)]">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-6xl px-6 py-16 sm:px-8 lg:px-10">
         <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
           <div className="relative h-96 md:h-[500px] bg-stone-100">

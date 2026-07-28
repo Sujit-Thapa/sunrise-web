@@ -1,8 +1,16 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import Image from 'next/image';
 import { getAuthToken } from '@/lib/auth';
 import { propertiesApi, paymentApi } from '@/lib/backend';
+import {
+  formatArea,
+  formatCurrency,
+  formatLocation,
+  getListingTypeLabel,
+  getPrimaryImage,
+} from '@/lib/properties';
 import type {
   PropertyResponseDto,
   ConnectIpsInitiateResponseDto,
@@ -45,7 +53,7 @@ const stepLabels = [{ n: 1, label: 'Choose Property' }, { n: 2, label: 'Your Det
 
 /** Combines the address fields the backend actually returns into one line. */
 function locationLabel(p: PropertyResponseDto): string {
-  return [p.street, p.city, p.state, p.country].filter(Boolean).join(', ');
+  return formatLocation(p);
 }
 
 /** Backend has no fixed "house | land" enum — category is a free string. */
@@ -56,8 +64,15 @@ function propertyFilterType(p: PropertyResponseDto): FilterType {
 }
 
 function sizeLabel(p: PropertyResponseDto): string {
-  if (!p.areaSize) return 'Details coming soon';
-  return `${p.areaSize.toLocaleString()} ${p.areaUnit ?? ''}`.trim();
+  return formatArea(p.areaSize, p.areaUnit);
+}
+
+function redirectTo(url: string) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.rel = 'noreferrer';
+  link.target = '_self';
+  link.click();
 }
 
 export default function Booking() {
@@ -122,14 +137,14 @@ export default function Booking() {
 
       if (form.payMethod === 'esewa') {
         const res: EsewaInitiateResponseDto = await paymentApi.initiateEsewa(payload, token);
-        window.location.href = res.paymentUrl;
+        redirectTo(res.paymentUrl);
       } else if (form.payMethod === 'khalti') {
         const res: KhaltiInitiateResponseDto = await paymentApi.initiateKhalti(payload, token);
-        window.location.href = res.paymentUrl;
+        redirectTo(res.paymentUrl);
       } else {
         // ConnectIPS uses a different response key: checkoutUrl, not paymentUrl.
         const res: ConnectIpsInitiateResponseDto = await paymentApi.initiateConnectIps(payload, token);
-        window.location.href = res.checkoutUrl;
+        redirectTo(res.checkoutUrl);
       }
       // Execution stops here on success — the browser navigates away to
       // the payment gateway. The actual "booking confirmed" state should
@@ -143,24 +158,28 @@ export default function Booking() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-stone-800" style={{ fontFamily: '"DM Sans", sans-serif' }}>
-      <div className="mx-auto max-w-6xl px-6 py-24 sm:px-8 lg:px-10">
-        <p className="mb-4 text-[0.68rem] uppercase tracking-[0.22em] text-stone-500">Sunrise Realty · Advance Booking</p>
-        <h1 className="mb-3 max-w-[460px] font-serif text-4xl leading-[1.05] text-stone-900 sm:text-[clamp(2.4rem,4vw,3.4rem)]" style={{ fontFamily: '"Cormorant Garamond", serif' }}>
-          Reserve your property<br />
-          <em className="italic text-stone-600">before it&apos;s gone.</em>
-        </h1>
-        <p className="mb-14 max-w-[460px] text-[0.92rem] leading-8 text-stone-600">
-          Secure your chosen home or land with an advance deposit. Our team will walk you through the full purchase process.
-        </p>
+    <div className="min-h-screen bg-white text-stone-800">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="rounded-[28px] border border-stone-200 bg-white/85 px-6 py-8 shadow-brand-sm backdrop-blur sm:px-8">
+          <p className="mb-3 text-[0.68rem] uppercase tracking-[0.22em] text-gold-primary">Sunrise Realestate · Advance Booking</p>
+          <h1 className="max-w-2xl text-4xl font-semibold leading-[1.05] tracking-tight text-midnight sm:text-[clamp(2.4rem,4vw,3.4rem)]">
+            Reserve your property
+            <br />
+            <span className="text-slate-500">before it&apos;s gone.</span>
+          </h1>
+          <p className="mt-4 max-w-2xl text-[0.92rem] leading-8 text-slate-500">
+            Secure your chosen home or land with an advance deposit. Our team will walk you
+            through the full purchase process.
+          </p>
+        </div>
 
-        <div className="mb-14 flex flex-wrap items-center gap-0">
+        <div className="mb-10 mt-8 flex flex-wrap items-center gap-0">
           {stepLabels.map((s, i, arr) => (
             <div key={s.n} className="flex flex-1 items-center gap-3">
-              <div className={`flex h-7 w-7 items-center justify-center border text-[0.72rem] ${step === s.n ? 'border-stone-900 bg-stone-900 text-stone-50' : step > s.n ? 'border-stone-300 bg-stone-100 text-stone-600' : 'border-stone-300 bg-white text-stone-400'}`}>
+              <div className={`flex h-7 w-7 items-center justify-center border text-[0.72rem] ${step === s.n ? 'border-midnight bg-midnight text-white' : step > s.n ? 'border-stone-300 bg-stone-100 text-stone-600' : 'border-stone-300 bg-white text-stone-400'}`}>
                 {step > s.n ? '✓' : s.n}
               </div>
-              <span className={`text-[0.72rem] uppercase tracking-[0.1em] ${step === s.n ? 'text-stone-900' : 'text-stone-400'}`}>{s.label}</span>
+              <span className={`text-[0.72rem] uppercase tracking-[0.1em] ${step === s.n ? 'text-midnight' : 'text-stone-400'}`}>{s.label}</span>
               {i < arr.length - 1 && <div className="ml-3 hidden h-px flex-1 bg-stone-300 sm:block" />}
             </div>
           ))}
@@ -172,32 +191,54 @@ export default function Booking() {
               <div>
                 <div className="mb-6 flex flex-wrap gap-2">
                   {filterOptions.map((f) => (
-                    <button key={f} className={`${buttonClass} ${filterType === f ? 'border-stone-900 bg-stone-900 text-stone-50' : ''}`} onClick={() => setFilterType(f)}>
+                    <button key={f} className={`${buttonClass} rounded-full ${filterType === f ? 'border-midnight bg-midnight text-white' : 'bg-white'}`} onClick={() => setFilterType(f)}>
                       {f === 'all' ? 'All' : f === 'house' ? 'Houses' : 'Land'}
                     </button>
                   ))}
                 </div>
 
                 {loadingProperties ? (
-                  <p className="py-10 text-center text-sm text-stone-400">Loading properties…</p>
+                  <div className="rounded-[28px] border border-stone-200 bg-white px-8 py-16 text-center shadow-brand-sm">
+                    <p className="text-sm text-slate-500">Loading properties…</p>
+                  </div>
                 ) : loadError ? (
-                  <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{loadError}</p>
+                  <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{loadError}</p>
                 ) : (
-                  <div className="grid gap-2 md:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-2">
                     {filteredProps.map((p) => (
-                      <button key={p.id} type="button" className={`border p-5 text-left transition ${selectedId === p.id ? 'border-stone-900 bg-white' : 'border-stone-200 bg-white hover:border-stone-400 hover:bg-stone-50'}`} onClick={() => setSelectedId(p.id)}>
-                        <p className={`mb-3 text-[0.58rem] uppercase tracking-[0.18em] ${propertyFilterType(p) === 'house' ? 'text-[#3A5070]' : 'text-[#3A5830]'}`}>{p.category}</p>
-                        <h3 className="mb-1 font-serif text-lg text-stone-900" style={{ fontFamily: '"Cormorant Garamond", serif' }}>{p.title}</h3>
-                        <p className="mb-3 text-sm text-stone-500">{locationLabel(p)}</p>
-                        <p className="mb-2 text-[0.72rem] text-stone-500">{sizeLabel(p)}</p>
-                        <p className="font-serif text-[1.3rem] text-stone-900" style={{ fontFamily: '"Cormorant Garamond", serif' }}>${p.price.toLocaleString()}</p>
-                        <p className="mt-2 text-[0.62rem] uppercase tracking-[0.12em] text-stone-400">{p.id.slice(0, 8).toUpperCase()}</p>
+                      <button key={p.id} type="button" className={`overflow-hidden rounded-[24px] border text-left transition ${selectedId === p.id ? 'border-midnight bg-white shadow-brand-md' : 'border-stone-200 bg-white hover:border-gold-primary/60 hover:shadow-brand-sm'}`} onClick={() => setSelectedId(p.id)}>
+                        <div className="relative aspect-[4/3] bg-slate-100">
+                          {getPrimaryImage(p.images)?.url ? (
+                            <Image
+                              src={getPrimaryImage(p.images)!.url}
+                              alt={p.title || 'Property'}
+                              fill
+                              sizes="(min-width: 768px) 50vw, 100vw"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,rgba(184,155,78,0.12),rgba(15,23,42,0.05))] text-sm font-medium text-slate-500">
+                              No image yet
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-5">
+                          <p className={`mb-3 text-[0.58rem] uppercase tracking-[0.18em] ${propertyFilterType(p) === 'house' ? 'text-[#3A5070]' : 'text-[#3A5830]'}`}>{p.category}</p>
+                          <h3 className="mb-1 text-lg font-semibold text-midnight">{p.title}</h3>
+                          <p className="mb-3 text-sm text-slate-500">{locationLabel(p)}</p>
+                          <div className="mb-3 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">{sizeLabel(p)}</span>
+                            <span className="rounded-full bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">{getListingTypeLabel(p.listingType)}</span>
+                          </div>
+                          <p className="text-[1.3rem] font-semibold text-midnight">{formatCurrency(p.price)}</p>
+                          <p className="mt-2 text-[0.62rem] uppercase tracking-[0.12em] text-slate-400">{p.id.slice(0, 8).toUpperCase()}</p>
+                        </div>
                       </button>
                     ))}
                   </div>
                 )}
 
-                <button className={`${primaryButtonClass} mt-8`} disabled={!selectedId} onClick={() => setStep(2)}>
+                <button className={`${primaryButtonClass} mt-8 rounded-full`} disabled={!selectedId} onClick={() => setStep(2)}>
                   Continue →
                 </button>
               </div>
@@ -252,14 +293,14 @@ export default function Booking() {
 
             {step === 3 && selected && (
               <form onSubmit={handleConfirm}>
-                <div className="mb-6 border border-stone-300 bg-white p-8">
-                  <p className="mb-5 text-[0.62rem] uppercase tracking-[0.18em] text-stone-400">Booking Summary</p>
+                  <div className="mb-6 rounded-[28px] border border-stone-200 bg-white p-8 shadow-brand-sm">
+                  <p className="mb-5 text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">Booking Summary</p>
                   {[
                     ['Property', selected.title],
                     ['Location', locationLabel(selected)],
                     ['Reference', selected.id.slice(0, 8).toUpperCase()],
-                    ['Purchase Price', `$${selected.price.toLocaleString()}`],
-                    ['Estimated Deposit', `$${deposit.toLocaleString()}`],
+                    ['Purchase Price', formatCurrency(selected.price)],
+                    ['Estimated Deposit', formatCurrency(deposit)],
                     ['Payment Method', paymentOptions.find((o) => o.value === form.payMethod)?.label ?? ''],
                     ['Appointment', form.date],
                     ['Name', `${form.firstName} ${form.lastName}`],
@@ -273,16 +314,16 @@ export default function Booking() {
                   ))}
                   {form.notes && (
                     <div className="pt-3 text-sm">
-                      <span className="mb-1 block text-stone-500">Notes</span>
+                      <span className="mb-1 block text-slate-500">Notes</span>
                       <span className="text-stone-800">{form.notes}</span>
                     </div>
                   )}
                 </div>
-                <p className="border-t border-stone-300 pt-4 text-[0.75rem] leading-6 text-stone-400">
+                <p className="border-t border-stone-200 pt-4 text-[0.75rem] leading-6 text-slate-400">
                   The exact deposit amount is calculated by our system and confirmed on the payment gateway — the figure above is an estimate. Clicking confirm will take you to {paymentOptions.find((o) => o.value === form.payMethod)?.label} to complete payment.
                 </p>
                 {paymentError ? (
-                  <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  <p className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                     {paymentError}
                   </p>
                 ) : null}
@@ -297,14 +338,29 @@ export default function Booking() {
           </div>
 
           <aside className="lg:sticky lg:top-8">
-            <div className="border border-stone-300 bg-white p-7">
-              <p className="mb-5 text-[0.62rem] uppercase tracking-[0.18em] text-stone-400">Selected Property</p>
+            <div className="overflow-hidden rounded-[28px] border border-stone-200 bg-white p-7 shadow-brand-sm">
+              <p className="mb-5 text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">Selected Property</p>
               {!selected ? (
-                <p className="font-serif text-sm italic text-stone-400" style={{ fontFamily: '"Cormorant Garamond", serif' }}>No property chosen yet.</p>
+                <p className="text-sm italic text-slate-400">No property chosen yet.</p>
               ) : (
                 <>
-                  <p className="font-serif text-xl text-stone-900" style={{ fontFamily: '"Cormorant Garamond", serif' }}>{selected.title}</p>
-                  <p className="mb-5 text-sm text-stone-500">{locationLabel(selected)}</p>
+                  <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-[24px] bg-slate-100">
+                    {getPrimaryImage(selected.images)?.url ? (
+                      <Image
+                        src={getPrimaryImage(selected.images)!.url}
+                        alt={selected.title || 'Property'}
+                        fill
+                        sizes="320px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,rgba(184,155,78,0.12),rgba(15,23,42,0.05))] text-sm font-medium text-slate-500">
+                        No image yet
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xl font-semibold text-midnight">{selected.title}</p>
+                  <p className="mb-5 text-sm text-slate-500">{locationLabel(selected)}</p>
                   {[
                     ['Category', selected.category],
                     ['Size', sizeLabel(selected)],
@@ -315,9 +371,9 @@ export default function Booking() {
                       <span className="text-stone-800">{value}</span>
                     </div>
                   ))}
-                  <div className="mt-4 flex items-center justify-between border-t border-stone-300 pt-4">
-                    <span className="text-[0.72rem] uppercase tracking-[0.1em] text-stone-500">Est. Deposit</span>
-                    <span className="font-serif text-[1.3rem] text-stone-900" style={{ fontFamily: '"Cormorant Garamond", serif' }}>${deposit.toLocaleString()}</span>
+                  <div className="mt-4 flex items-center justify-between border-t border-stone-200 pt-4">
+                    <span className="text-[0.72rem] uppercase tracking-[0.1em] text-slate-500">Est. Deposit</span>
+                    <span className="text-[1.3rem] font-semibold text-midnight">{formatCurrency(deposit)}</span>
                   </div>
                 </>
               )}

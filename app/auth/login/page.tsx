@@ -71,7 +71,7 @@ export default function LoginPage() {
           >
             <Image
               src="/images/logo/sunrise2.png"
-              alt="Sunrise Realty"
+              alt="Sunrise Realestate"
               width={160}
               height={65}
               className="h-14 w-auto object-contain xl:h-16"
@@ -228,7 +228,7 @@ export default function LoginPage() {
 
           {/* Signup */}
           <p className="mt-5 text-center text-xs text-slate-500">
-            New to Sunrise?{' '}
+            New to Sunrise Realestate?{' '}
             <Link
               href="/auth/signup"
               className="font-semibold text-slate-900 transition-colors hover:text-[#B89B4E]"
@@ -272,7 +272,7 @@ export default function LoginPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-[#D5B967]" />
 
               <span className="text-[11px] font-medium text-white">
-                Sunrise Realty
+                Sunrise Realestate
               </span>
             </div>
           </div>

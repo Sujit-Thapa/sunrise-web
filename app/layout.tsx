@@ -14,14 +14,14 @@ const radikal = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Sunrise Realty - Find Your Dream Home',
-  description: 'Discover the perfect property with Sunrise Realty',
+  title: 'Sunrise Realestate - Find Your Dream Home',
+  description: 'Discover the perfect property with Sunrise Realestate',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={radikal.variable}>
-      <body className="min-h-full flex flex-col font-sans antialiased bg-[#fcfaf6] text-stone-900">
+      <body className="min-h-full flex flex-col bg-white font-sans antialiased text-stone-900">
         <SiteShell>{children}</SiteShell>
       </body>
     </html>

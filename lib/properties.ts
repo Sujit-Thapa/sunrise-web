@@ -1,10 +1,16 @@
 import type {
   AreaUnit,
   ListingType,
-  PropertyImageResponseDto,
   PropertyResponseDto,
   PropertyStatus,
 } from '@/types';
+
+type ImageLike = {
+  id?: string;
+  url: string;
+  isPrimary: boolean;
+  sortOrder: number;
+};
 
 export function formatCurrency(value: number | string | null | undefined): string {
   const amount = Number(value);
@@ -36,8 +42,8 @@ export function formatLocation(property: Pick<PropertyResponseDto, 'street' | 'c
 }
 
 export function getPrimaryImage(
-  images: PropertyImageResponseDto[] | null | undefined,
-): PropertyImageResponseDto | undefined {
+  images: Array<ImageLike> | null | undefined,
+): ImageLike | undefined {
   if (!Array.isArray(images) || images.length === 0) {
     return undefined;
   }
@@ -73,4 +79,3 @@ export function getPropertyStatusLabel(status: PropertyStatus | string | null | 
     .toLowerCase()
     .replace(/^\w/, (char) => char.toUpperCase());
 }
-

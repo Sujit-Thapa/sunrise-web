@@ -25,11 +25,11 @@ export default function Footer() {
   return (
     <footer className="relative mt-20">
       {/* Soft separation from the section above */}
-      <div className="pointer-events-none absolute inset-x-0 -top-12 h-12 bg-gradient-to-b from-transparent to-stone-100/30" />
+      <div className="pointer-events-none absolute inset-x-0 -top-12 h-12 bg-gradient-to-b from-transparent to-white" />
 
-      <div className="relative overflow-hidden border-t border-stone-200/70 bg-white/30 text-stone-700 backdrop-blur-xl">
+      <div className="relative overflow-hidden border-t border-stone-200/70 bg-white text-stone-700">
         {/* Subtle top highlight */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#B89B4E]/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#B89B4E]/25 to-transparent" />
 
         <div className="mx-auto max-w-7xl px-6 py-12 sm:px-8 lg:px-10 lg:py-14">
           {/* Main footer content */}
@@ -125,7 +125,7 @@ export default function Footer() {
           {/* Bottom area */}
           <div className="mt-12 flex flex-col gap-4 border-t border-stone-200/70 pt-6 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between">
             <p>
-              © {new Date().getFullYear()} Sunrise Realty. All rights reserved.
+              © {new Date().getFullYear()} Sunrise Realestate. All rights reserved.
             </p>
 
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
