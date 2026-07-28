@@ -57,23 +57,23 @@ export default function AboutSection() {
         {/* Intro */}
         <div className="grid gap-10 lg:grid-cols-2 lg:items-end">
           <div>
-            <p className="mb-4 text-[0.7rem] font-medium uppercase tracking-[0.22em] text-stone-500">
+            <p className="mb-4 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-gold-primary">
               Est. 2006 · Real Estate
             </p>
-            <h2 className="font-serif text-4xl leading-tight text-stone-900 sm:text-5xl">
+            <h2 className="text-4xl font-semibold leading-tight tracking-tight text-midnight sm:text-5xl">
               Where fine homes<br />
-              <em className="italic text-stone-600">find the right hands.</em>
+              <span className="text-slate-500">find the right hands.</span>
             </h2>
           </div>
 
           <div>
-            <p className="mb-8 text-base leading-8 text-stone-600">
+            <p className="mb-8 text-base leading-8 text-slate-500">
               We are a boutique real estate firm built on discretion, expertise, and an
               unwavering belief that the right home changes everything. For nearly two decades,
               we have guided buyers and sellers through some of the most significant decisions
               of their lives — quietly, and with care.
             </p>
-            <button className="inline-flex items-center gap-3 border-b border-stone-900 pb-1 text-[0.8rem] uppercase tracking-[0.14em] text-stone-900 transition hover:gap-4 hover:text-stone-600">
+            <button className="inline-flex items-center gap-3 border-b border-midnight pb-1 text-[0.8rem] uppercase tracking-[0.14em] text-midnight transition hover:gap-4 hover:text-gold-primary">
               Our story
               <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
                 <path d="M1 5h14M10 1l5 4-5 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -91,8 +91,8 @@ export default function AboutSection() {
               key={stat.label}
               className={`border-stone-200 ${index < stats.length - 1 ? "md:border-r md:pr-6" : ""}`}
             >
-              <div className="font-serif text-3xl text-stone-900 sm:text-4xl">{stat.value}</div>
-              <div className="mt-2 text-[0.72rem] uppercase tracking-[0.15em] text-stone-500">
+              <div className="text-3xl font-semibold text-midnight sm:text-4xl">{stat.value}</div>
+              <div className="mt-2 text-[0.72rem] uppercase tracking-[0.15em] text-slate-400">
                 {stat.label}
               </div>
             </div>
@@ -103,9 +103,9 @@ export default function AboutSection() {
         <div className="mt-16 grid gap-3 lg:grid-cols-3">
           {values.map((value, index) => (
             <div key={value.heading} className="border border-stone-200 bg-stone-50 p-8">
-              <div className="mb-5 font-serif text-sm italic text-stone-400">0{index + 1}</div>
-              <h3 className="mb-3 font-serif text-2xl text-stone-900">{value.heading}</h3>
-              <p className="text-sm leading-7 text-stone-600">{value.body}</p>
+              <div className="mb-5 text-sm font-semibold text-gold-primary">0{index + 1}</div>
+              <h3 className="mb-3 text-2xl font-semibold text-midnight">{value.heading}</h3>
+              <p className="text-sm leading-7 text-slate-500">{value.body}</p>
             </div>
           ))}
         </div>

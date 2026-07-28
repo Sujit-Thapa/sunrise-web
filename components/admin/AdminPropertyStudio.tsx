@@ -13,11 +13,13 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import { auth, getAuthToken } from '@/lib/auth';
 import { propertiesApi } from '@/lib/backend';
 import {
   formatArea,
   formatCurrency,
   formatLocation,
+  getPropertyCategoryLabel,
   getListingTypeLabel,
   getPrimaryImage,
   getPropertyStatusLabel,
@@ -53,15 +55,15 @@ interface PropertyFormState {
 }
 
 const CATEGORY_OPTIONS: Array<{ value: PropertyCategory; label: string }> = [
-  { value: 'house', label: 'House' },
-  { value: 'apartment', label: 'Apartment' },
-  { value: 'land', label: 'Land' },
-  { value: 'commercial', label: 'Commercial' },
+  { value: 'HOUSE', label: 'House' },
+  { value: 'APARTMENT', label: 'Apartment' },
+  { value: 'LAND', label: 'Land' },
+  { value: 'COMMERCIAL', label: 'Commercial' },
 ];
 
 const LISTING_OPTIONS: Array<{ value: ListingType; label: string }> = [
-  { value: 'sale', label: 'For Sale' },
-  { value: 'rent', label: 'For Rent' },
+  { value: 'SALE', label: 'For Sale' },
+  { value: 'RENT', label: 'For Rent' },
 ];
 
 const AREA_OPTIONS: Array<{ value: AreaUnit; label: string }> = [
@@ -79,14 +81,12 @@ const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
   { value: 'hidden', label: 'Hidden' },
 ];
 
-const ADMIN_BYPASS = true;
-
 const EMPTY_FORM: PropertyFormState = {
   title: '',
   description: '',
   price: '',
-  listingType: 'sale',
-  category: 'house',
+  listingType: 'SALE',
+  category: 'HOUSE',
   street: '',
   city: '',
   state: '',
@@ -187,42 +187,11 @@ function categoryClass(category: string): string {
   return 'bg-midnight/5 text-midnight';
 }
 
-function createDemoProperty(
-  form: PropertyFormState,
-  existing?: PropertyResponseDto,
-): PropertyResponseDto {
-  const now = new Date().toISOString();
-  const id = existing?.id ?? crypto.randomUUID();
-
-  return {
-    id,
-    title: normalizeText(form.title),
-    description: normalizeText(form.description),
-    price: Number(form.price),
-    listingType: form.listingType,
-    category: form.category,
-    status: existing?.status ?? 'ACTIVE',
-    outcome: existing?.outcome,
-    areaSize: parseOptionalNumber(form.areaSize),
-    areaUnit: form.areaSize.trim() ? form.areaUnit : undefined,
-    street: normalizeText(form.street) || undefined,
-    city: normalizeText(form.city),
-    state: normalizeText(form.state),
-    country: normalizeText(form.country),
-    postalCode: normalizeText(form.postalCode) || undefined,
-    latitude: parseOptionalNumber(form.latitude),
-    longitude: parseOptionalNumber(form.longitude),
-    reservationFeeOverride: parseOptionalNumber(form.reservationFeeOverride),
-    createdByAgentId: existing?.createdByAgentId ?? 'demo-admin',
-    images: existing?.images ?? [],
-    createdAt: existing?.createdAt ?? now,
-    updatedAt: now,
-  };
-}
-
 export default function AdminPropertyStudio() {
   const [properties, setProperties] = useState<PropertyResponseDto[]>([]);
-  const token = '';
+  const [token, setToken] = useState('');
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [loadingProperties, setLoadingProperties] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -236,7 +205,7 @@ export default function AdminPropertyStudio() {
   );
   const [deleteTarget, setDeleteTarget] = useState<PropertyResponseDto | null>(null);
 
-  async function refreshProperties(tokenValue: string) {
+  async function refreshProperties(tokenValue?: string) {
     setLoadingProperties(true);
 
     try {
@@ -253,7 +222,48 @@ export default function AdminPropertyStudio() {
   }
 
   useEffect(() => {
-    void refreshProperties('');
+    const authToken = getAuthToken();
+
+    if (!authToken) {
+      setAuthMessage('Please sign in to access the admin dashboard.');
+      setAuthLoading(false);
+      setLoadingProperties(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const verifyAdmin = async () => {
+      try {
+        const user = await auth.me(authToken);
+
+        if (!isMounted) return;
+
+        if (user.role !== 'admin' && user.role !== 'agent') {
+          setAuthMessage('This account does not have admin access.');
+          setToken('');
+          setLoadingProperties(false);
+          setAuthLoading(false);
+          return;
+        }
+
+        setToken(authToken);
+        await refreshProperties(authToken);
+      } catch (error) {
+        if (!isMounted) return;
+        setAuthMessage((error as Error).message || 'Please sign in to access the admin dashboard.');
+      } finally {
+        if (isMounted) {
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    void verifyAdmin();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredProperties = useMemo(() => {
@@ -304,6 +314,40 @@ export default function AdminPropertyStudio() {
 
   const isEditing = mode === 'edit' && editingId !== null;
 
+  if (authLoading) {
+    return (
+      <div className="min-h-[calc(100vh-68px)] bg-white">
+        <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="rounded-[28px] border border-stone-200 bg-white px-8 py-10 text-center shadow-brand-sm">
+            <p className="text-sm font-medium text-slate-500">Checking admin access…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (authMessage) {
+    return (
+      <div className="min-h-[calc(100vh-68px)] bg-white">
+        <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="w-full max-w-lg rounded-[28px] border border-stone-200 bg-white p-8 text-center shadow-brand-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
+              Admin access required
+            </p>
+            <h1 className="mt-3 text-2xl font-semibold text-midnight">Sign in to continue</h1>
+            <p className="mt-3 text-sm leading-7 text-slate-500">{authMessage}</p>
+            <Link
+              href="/auth/login"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Go to login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setNotice(null);
@@ -320,22 +364,18 @@ export default function AdminPropertyStudio() {
       return;
     }
 
+    if (!token) {
+      setNotice({
+        kind: 'error',
+        message: 'Admin token not found. Please sign in again before saving properties.',
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
-      if (ADMIN_BYPASS) {
-        if (isEditing && editingId) {
-          setProperties((current) =>
-            current.map((property) =>
-              property.id === editingId ? createDemoProperty(form, property) : property,
-            ),
-          );
-          setNotice({ kind: 'success', message: 'Demo property updated locally.' });
-        } else {
-          setProperties((current) => [createDemoProperty(form), ...current]);
-          setNotice({ kind: 'success', message: 'Demo property created locally.' });
-        }
-      } else if (isEditing && editingId) {
+      if (isEditing && editingId) {
         const updated = await propertiesApi.update(editingId, payload as UpdatePropertyDto, token);
         setProperties((current) =>
           current.map((property) => (property.id === updated.id ? updated : property)),
@@ -379,19 +419,12 @@ export default function AdminPropertyStudio() {
     setBusyId(property.id);
 
     try {
-      if (ADMIN_BYPASS) {
-        setProperties((current) =>
-          current.map((item) =>
-            item.id === property.id ? { ...item, status: 'ACTIVE', updatedAt: new Date().toISOString() } : item,
-          ),
-        );
-        setNotice({ kind: 'success', message: 'Demo property marked as live.' });
-      } else {
-        const updated = await propertiesApi.publish(property.id, token ?? '');
-        setProperties((current) =>
-          current.map((item) => (item.id === updated.id ? updated : item)),
-        );
-      }
+      if (!token) throw new Error('Admin token not found. Please sign in again.');
+      const updated = await propertiesApi.publish(property.id, token);
+      setProperties((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setNotice({ kind: 'success', message: 'Property marked as live.' });
     } catch (error) {
       setNotice({
         kind: 'error',
@@ -406,19 +439,12 @@ export default function AdminPropertyStudio() {
     setBusyId(property.id);
 
     try {
-      if (ADMIN_BYPASS) {
-        setProperties((current) =>
-          current.map((item) =>
-            item.id === property.id ? { ...item, status: 'HIDDEN', updatedAt: new Date().toISOString() } : item,
-          ),
-        );
-        setNotice({ kind: 'success', message: 'Demo property hidden locally.' });
-      } else {
-        const updated = await propertiesApi.hide(property.id, token ?? '');
-        setProperties((current) =>
-          current.map((item) => (item.id === updated.id ? updated : item)),
-        );
-      }
+      if (!token) throw new Error('Admin token not found. Please sign in again.');
+      const updated = await propertiesApi.hide(property.id, token);
+      setProperties((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setNotice({ kind: 'success', message: 'Property hidden.' });
     } catch (error) {
       setNotice({
         kind: 'error',
@@ -434,14 +460,10 @@ export default function AdminPropertyStudio() {
     setBusyId(deleteTarget.id);
 
     try {
-      if (ADMIN_BYPASS) {
-        setProperties((current) => current.filter((property) => property.id !== deleteTarget.id));
-        setNotice({ kind: 'success', message: 'Demo property removed locally.' });
-      } else {
-        await propertiesApi.remove(deleteTarget.id, token ?? '');
-        setProperties((current) => current.filter((property) => property.id !== deleteTarget.id));
-        setNotice({ kind: 'success', message: 'Property removed.' });
-      }
+      if (!token) throw new Error('Admin token not found. Please sign in again.');
+      await propertiesApi.remove(deleteTarget.id, token);
+      setProperties((current) => current.filter((property) => property.id !== deleteTarget.id));
+      setNotice({ kind: 'success', message: 'Property removed.' });
       setDeleteTarget(null);
     } catch (error) {
       setNotice({
@@ -466,9 +488,8 @@ export default function AdminPropertyStudio() {
                 Manage your property inventory from one place.
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
-                Demo mode is active, so you can inspect the admin workflow without logging in.
-                Create listings, update content, publish live properties, and keep the public site
-                in sync with the backend when you’re ready to reconnect auth.
+                Sign in with an admin or agent account to create, update, publish, and remove
+                properties in the live backend.
               </p>
             </div>
 
@@ -495,9 +516,8 @@ export default function AdminPropertyStudio() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Admin login is temporarily bypassed for preview. The actions here update local demo
-            state until you tell me to reconnect the real auth flow.
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
+            Admin actions now persist to the backend when you are signed in with a valid token.
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -856,7 +876,7 @@ export default function AdminPropertyStudio() {
                                     String(property.category),
                                   )}`}
                                 >
-                                  {String(property.category).replace(/[_-]+/g, ' ')}
+                                  {getPropertyCategoryLabel(property.category)}
                                 </span>
                                 <span
                                   className={`rounded-full px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] ${statusClass(

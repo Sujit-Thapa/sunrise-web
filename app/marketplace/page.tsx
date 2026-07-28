@@ -9,6 +9,7 @@ import {
   formatArea,
   formatCurrency,
   formatLocation,
+  getPropertyCategoryLabel,
   getListingTypeLabel,
   getPrimaryImage,
   getPropertyStatusLabel,
@@ -27,8 +28,8 @@ const EMPTY_FORM = {
   title: '',
   description: '',
   price: '',
-  listingType: 'sale' as ListingType,
-  category: 'house' as Exclude<CategoryFilter, 'all'>,
+  listingType: 'SALE' as ListingType,
+  category: 'HOUSE' as Exclude<CategoryFilter, 'all'>,
   city: '',
   state: '',
   country: '',
@@ -258,8 +259,8 @@ export default function Marketplace() {
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-midnight/35 via-transparent to-transparent" />
                         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                          <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${listing.category.toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/90 text-midnight'} backdrop-blur`}>
-                            {listing.category}
+                          <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${String(listing.category).toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/90 text-midnight'} backdrop-blur`}>
+                            {getPropertyCategoryLabel(listing.category)}
                           </span>
                           <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${listing.status === 'pending' ? 'bg-amber-50 text-amber-700' : listing.status === 'rejected' ? 'bg-rose-50 text-rose-700' : 'bg-white/90 text-slate-500'} backdrop-blur`}>
                             {getPropertyStatusLabel(listing.status)}
@@ -340,17 +341,17 @@ export default function Marketplace() {
                 <div>
                   <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Category</label>
                   <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as typeof prev.category }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500">
-                    <option value="house">House</option>
-                    <option value="apartment">Apartment</option>
-                    <option value="land">Land</option>
-                    <option value="commercial">Commercial</option>
+                    <option value="HOUSE">House</option>
+                    <option value="APARTMENT">Apartment</option>
+                    <option value="LAND">Land</option>
+                    <option value="COMMERCIAL">Commercial</option>
                   </select>
                 </div>
                 <div>
                   <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Listing Type</label>
                   <select value={form.listingType} onChange={(e) => setForm((prev) => ({ ...prev, listingType: e.target.value as ListingType }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500">
-                    <option value="sale">For Sale</option>
-                    <option value="rent">For Rent</option>
+                    <option value="SALE">For Sale</option>
+                    <option value="RENT">For Rent</option>
                   </select>
                 </div>
               </div>

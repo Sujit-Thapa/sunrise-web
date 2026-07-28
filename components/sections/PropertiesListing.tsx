@@ -9,6 +9,7 @@ import {
   formatArea,
   formatCurrency,
   formatLocation,
+  getPropertyCategoryLabel,
   getListingTypeLabel,
   getPrimaryImage,
   getPropertyStatusLabel,
@@ -331,7 +332,7 @@ function PropertyResult({
   const location = formatLocation(property) || 'Location not provided';
   const price = formatCurrency(property.price);
   const areaSize = formatArea(property.areaSize, property.areaUnit);
-  const category = property.category || 'Property';
+  const category = getPropertyCategoryLabel(property.category);
   const listingType = getListingTypeLabel(property.listingType);
   const status = getPropertyStatusLabel(property.status);
 

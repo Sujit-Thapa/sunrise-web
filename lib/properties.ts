@@ -71,6 +71,15 @@ export function getListingTypeLabel(listingType: ListingType | null | undefined)
   }
 }
 
+export function getPropertyCategoryLabel(category: string | null | undefined): string {
+  if (!category) return 'Property';
+
+  return String(category)
+    .replace(/[_-]+/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export function getPropertyStatusLabel(status: PropertyStatus | string | null | undefined): string {
   if (!status) return 'Status unknown';
 

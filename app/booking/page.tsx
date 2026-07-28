@@ -8,10 +8,12 @@ import {
   formatArea,
   formatCurrency,
   formatLocation,
+  getPropertyCategoryLabel,
   getListingTypeLabel,
   getPrimaryImage,
 } from '@/lib/properties';
 import type {
+  InitiatePaymentDto,
   PropertyResponseDto,
   ConnectIpsInitiateResponseDto,
   EsewaInitiateResponseDto,
@@ -75,6 +77,48 @@ function redirectTo(url: string) {
   link.click();
 }
 
+function submitPaymentForm(
+  url: string,
+  fields: Record<string, string>,
+): void {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = url;
+  form.target = '_self';
+
+  Object.entries(fields).forEach(([name, value]) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
+  form.remove();
+}
+
+function redirectPaymentResponse(
+  response: Partial<EsewaInitiateResponseDto & ConnectIpsInitiateResponseDto> & {
+    gatewayUrl?: string;
+    formFields?: Record<string, string>;
+  },
+): void {
+  const url = response.esewaUrl ?? response.paymentUrl ?? response.gatewayUrl ?? response.checkoutUrl;
+
+  if (!url) {
+    throw new Error('Payment gateway URL is missing.');
+  }
+
+  if (response.formFields && Object.keys(response.formFields).length > 0) {
+    submitPaymentForm(url, response.formFields);
+    return;
+  }
+
+  redirectTo(url);
+}
+
 export default function Booking() {
   const [step, setStep] = useState<BookingStep>(1);
   const [selectedId, setSelectedId] = useState('');
@@ -133,18 +177,17 @@ export default function Booking() {
 
       // Real InitiatePaymentDto only accepts propertyId — amount and the
       // callback URL are computed server-side, not supplied by the client.
-      const payload = { propertyId: selected.id };
+      const payload: InitiatePaymentDto = { propertyId: selected.id };
 
       if (form.payMethod === 'esewa') {
-        const res: EsewaInitiateResponseDto = await paymentApi.initiateEsewa(payload, token);
-        redirectTo(res.paymentUrl);
+        const res = await paymentApi.initiateEsewa(payload, token);
+        redirectPaymentResponse(res);
       } else if (form.payMethod === 'khalti') {
         const res: KhaltiInitiateResponseDto = await paymentApi.initiateKhalti(payload, token);
         redirectTo(res.paymentUrl);
       } else {
-        // ConnectIPS uses a different response key: checkoutUrl, not paymentUrl.
-        const res: ConnectIpsInitiateResponseDto = await paymentApi.initiateConnectIps(payload, token);
-        redirectTo(res.checkoutUrl);
+        const res = await paymentApi.initiateConnectIps(payload, token);
+        redirectPaymentResponse(res);
       }
       // Execution stops here on success — the browser navigates away to
       // the payment gateway. The actual "booking confirmed" state should
@@ -223,7 +266,7 @@ export default function Booking() {
                           )}
                         </div>
                         <div className="p-5">
-                          <p className={`mb-3 text-[0.58rem] uppercase tracking-[0.18em] ${propertyFilterType(p) === 'house' ? 'text-[#3A5070]' : 'text-[#3A5830]'}`}>{p.category}</p>
+                          <p className={`mb-3 text-[0.58rem] uppercase tracking-[0.18em] ${propertyFilterType(p) === 'house' ? 'text-[#3A5070]' : 'text-[#3A5830]'}`}>{getPropertyCategoryLabel(p.category)}</p>
                           <h3 className="mb-1 text-lg font-semibold text-midnight">{p.title}</h3>
                           <p className="mb-3 text-sm text-slate-500">{locationLabel(p)}</p>
                           <div className="mb-3 flex flex-wrap gap-2">

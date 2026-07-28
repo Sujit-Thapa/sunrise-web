@@ -52,8 +52,8 @@ export interface AgentResponseDto {
 // ============================================
 // Shared / enums
 // ============================================
-export type ListingType = 'sale' | 'rent' | string;
-export type PropertyCategory = 'house' | 'apartment' | 'land' | 'commercial' | string;
+export type ListingType = 'SALE' | 'RENT' | string;
+export type PropertyCategory = 'HOUSE' | 'APARTMENT' | 'LAND' | 'COMMERCIAL' | string;
 export type AreaUnit = 'sqft' | 'sqm' | 'aana' | 'ropani' | string;
 
 export interface PaginationMeta {
@@ -259,6 +259,9 @@ export interface InitiatePaymentDto {
 export interface EsewaInitiateResponseDto {
   paymentUrl: string;
   paymentId: string;
+  esewaUrl?: string;
+  gatewayUrl?: string;
+  formFields?: Record<string, string>;
 }
 
 export interface KhaltiInitiateResponseDto {
@@ -269,6 +272,8 @@ export interface KhaltiInitiateResponseDto {
 export interface ConnectIpsInitiateResponseDto {
   checkoutUrl: string;
   paymentId: string;
+  gatewayUrl?: string;
+  formFields?: Record<string, string>;
 }
 
 // ============================================

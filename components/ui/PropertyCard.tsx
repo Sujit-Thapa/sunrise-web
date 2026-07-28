@@ -5,6 +5,7 @@ import {
   formatArea,
   formatCurrency,
   formatLocation,
+  getPropertyCategoryLabel,
   getListingTypeLabel,
   getPrimaryImage,
   getPropertyStatusLabel,
@@ -47,7 +48,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
             {property.category ? (
               <span className="rounded-full bg-midnight/80 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
-                {String(property.category).replace(/[_-]+/g, ' ')}
+                {getPropertyCategoryLabel(property.category)}
               </span>
             ) : null}
           </div>

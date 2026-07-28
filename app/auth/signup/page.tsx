@@ -1,39 +1,15 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
-import {
-  Mail,
-  Lock,
-  User,
-  Phone,
-  ArrowRight,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
-import { FcGoogle } from 'react-icons/fc';
-import { FaApple, FaFacebookF } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
+import { useState, type FormEvent, type ReactNode } from 'react';
+import { ArrowRight, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react';
 
+import AuthShell from '@/components/auth/AuthShell';
 import { auth, setAuthToken } from '@/lib/auth';
 import type { RegisterUserDto } from '@/types';
 
-const socials = [
-  {
-    name: 'Google',
-    icon: FcGoogle,
-  },
-  {
-    name: 'Apple',
-    icon: FaApple,
-  },
-  {
-    name: 'Facebook',
-    icon: FaFacebookF,
-  },
-];
-
 export default function SignupPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -42,7 +18,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -57,7 +33,7 @@ export default function SignupPage() {
     try {
       const response = await auth.register(payload);
       setAuthToken(response.accessToken);
-      window.location.href = '/';
+      router.replace('/');
     } catch (err) {
       setError((err as Error).message || 'Signup failed.');
     } finally {
@@ -66,321 +42,122 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="h-screen w-full overflow-hidden bg-white lg:grid lg:grid-cols-[0.92fr_1.08fr]">
-      {/* Left side */}
-      <section className="flex h-screen items-center justify-center overflow-hidden px-5 py-4 sm:px-8 lg:px-12 xl:px-16">
-        <div className="w-full max-w-[400px]">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="mb-3 inline-flex items-center transition-opacity hover:opacity-80"
-          >
-            <Image
-              src="/images/logo/sunrise2.png"
-              alt="Sunrise Realestate"
-              width={160}
-              height={65}
-              className="h-14 w-auto object-contain xl:h-16"
-              priority
+    <AuthShell
+      eyebrow="Create account"
+      title="Join Sunrise Realestate"
+      description="Create your account to save properties, book viewings, and manage your search."
+      footerText="Already have an account?"
+      footerHref="/auth/login"
+      footerLinkLabel="Sign in"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        ) : null}
+
+        <Field label="Full name" htmlFor="fullName">
+          <div className="relative">
+            <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              id="fullName"
+              type="text"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              placeholder="Jane Doe"
+              autoComplete="name"
+              required
+              className="h-11 w-full rounded-2xl border border-stone-200 bg-white pl-10 pr-3 text-sm text-stone-900 outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
             />
-          </Link>
-
-          {/* Heading */}
-          <div className="mb-4">
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#B89B4E]">
-              Welcome to Sunrise
-            </p>
-
-            <h1 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 xl:text-3xl">
-              Create your account
-            </h1>
-
-            <p className="mt-1.5 text-xs leading-5 text-slate-500 xl:text-sm">
-              Find properties, save favorites and manage your search in one
-              place.
-            </p>
           </div>
+        </Field>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {error && (
-              <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">
-                {error}
-              </div>
-            )}
+        <Field label="Email address" htmlFor="email">
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              required
+              className="h-11 w-full rounded-2xl border border-stone-200 bg-white pl-10 pr-3 text-sm text-stone-900 outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+            />
+          </div>
+        </Field>
 
-            {/* Full name */}
-            <div>
-              <label
-                htmlFor="fullName"
-                className="mb-1 block text-xs font-medium text-slate-700"
-              >
-                Full name
-              </label>
+        <Field label="Phone number" htmlFor="phoneNumber">
+          <div className="relative">
+            <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              id="phoneNumber"
+              type="tel"
+              value={phoneNumber}
+              onChange={(event) => setPhoneNumber(event.target.value)}
+              placeholder="98XXXXXXXX"
+              autoComplete="tel"
+              inputMode="tel"
+              required
+              className="h-11 w-full rounded-2xl border border-stone-200 bg-white pl-10 pr-3 text-sm text-stone-900 outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+            />
+          </div>
+        </Field>
 
-              <div className="group relative">
-                <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#B89B4E]" />
-
-                <input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Jane Doe"
-                  autoComplete="name"
-                  required
-                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/10"
-                />
-              </div>
-            </div>
-
-            {/* Email */}
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1 block text-xs font-medium text-slate-700"
-              >
-                Email address
-              </label>
-
-              <div className="group relative">
-                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#B89B4E]" />
-
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  required
-                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/10"
-                />
-              </div>
-            </div>
-
-            {/* Phone number */}
-            <div>
-              <label
-                htmlFor="phoneNumber"
-                className="mb-1 block text-xs font-medium text-slate-700"
-              >
-                Phone number
-              </label>
-
-              <div className="group relative">
-                <Phone className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#B89B4E]" />
-
-                <input
-                  id="phoneNumber"
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="98XXXXXXXX"
-                  autoComplete="tel"
-                  inputMode="tel"
-                  required
-                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/10"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1 block text-xs font-medium text-slate-700"
-              >
-                Password
-              </label>
-
-              <div className="group relative">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#B89B4E]" />
-
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password"
-                  autoComplete="new-password"
-                  required
-                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-10 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-[#B89B4E] focus:ring-2 focus:ring-[#B89B4E]/10"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Submit */}
+        <Field label="Password" htmlFor="password">
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Create a password"
+              autoComplete="new-password"
+              required
+              className="h-11 w-full rounded-2xl border border-stone-200 bg-white pl-10 pr-10 text-sm text-stone-900 outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+            />
             <button
-              type="submit"
-              disabled={loading}
-              className="group flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#B89B4E] px-5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#a88d45] hover:shadow-md hover:shadow-[#B89B4E]/15 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
             >
-              <span>
-                {loading ? 'Creating account…' : 'Create account'}
-              </span>
-
-              {!loading && (
-                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-          </form>
-
-          {/* Divider */}
-          <div className="my-4 flex items-center gap-3">
-            <div className="h-px flex-1 bg-slate-200" />
-
-            <span className="whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
-              Or continue with
-            </span>
-
-            <div className="h-px flex-1 bg-slate-200" />
           </div>
+        </Field>
 
-          {/* Social login */}
-          <div className="grid grid-cols-3 gap-2.5">
-            {socials.map((social) => {
-              const Icon = social.icon;
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-midnight px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <span>{loading ? 'Creating account…' : 'Create account'}</span>
+          {!loading ? <ArrowRight className="h-4 w-4" /> : null}
+        </button>
+      </form>
+    </AuthShell>
+  );
+}
 
-              return (
-                <button
-                  key={social.name}
-                  type="button"
-                  aria-label={`Continue with ${social.name}`}
-                  title={`Continue with ${social.name}`}
-                  className="group flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 active:scale-[0.97]"
-                >
-                  <Icon
-                    className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${
-                      social.name === 'Apple'
-                        ? 'text-black'
-                        : social.name === 'Facebook'
-                          ? 'text-[#1877F2]'
-                          : ''
-                    }`}
-                  />
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Login link */}
-          <p className="mt-4 text-center text-xs text-slate-500">
-            Already have an account?{' '}
-            <Link
-              href="/auth/login"
-              className="font-semibold text-slate-900 transition-colors hover:text-[#B89B4E]"
-            >
-              Sign in
-            </Link>
-          </p>
-
-          {/* Terms */}
-          <p className="mt-2 text-center text-[10px] leading-4 text-slate-400">
-            By creating an account, you agree to our{' '}
-            <Link
-              href="#"
-              className="text-slate-600 underline-offset-4 transition-colors hover:text-[#B89B4E] hover:underline"
-            >
-              terms of use
-            </Link>
-            .
-          </p>
-        </div>
-      </section>
-
-      {/* Right image panel */}
-      <section className="hidden h-screen overflow-hidden p-3 lg:block">
-        <div className="relative h-full w-full overflow-hidden rounded-[24px] bg-slate-900">
-          <Image
-            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=90"
-            alt="Modern luxury home"
-            fill
-            sizes="55vw"
-            className="object-cover"
-            priority
-          />
-
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/70" />
-
-          {/* Brand badge */}
-          <div className="absolute left-7 top-7">
-            <div className="flex items-center gap-2 rounded-full border border-white/20 bg-black/10 px-3 py-1.5 backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D5B967]" />
-
-              <span className="text-[11px] font-medium text-white">
-                Sunrise Realestate
-              </span>
-            </div>
-          </div>
-
-          {/* Bottom content */}
-          <div className="absolute bottom-0 left-0 right-0 p-8 xl:p-10">
-            <div className="max-w-lg">
-              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
-                Find your next home
-              </p>
-
-              <h2 className="text-3xl font-medium leading-[1.1] tracking-[-0.035em] text-white xl:text-4xl">
-                A better way to discover where you belong.
-              </h2>
-
-              <p className="mt-3 max-w-md text-xs leading-5 text-white/65 xl:text-sm">
-                Explore properties, save the homes you love and keep your
-                search organized in one simple place.
-              </p>
-
-              {/* Features */}
-              <div className="mt-5 flex items-center gap-5 border-t border-white/20 pt-5">
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    Simple
-                  </p>
-                  <p className="mt-0.5 text-[10px] text-white/50">
-                    Easy search
-                  </p>
-                </div>
-
-                <div className="h-7 w-px bg-white/20" />
-
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    Personal
-                  </p>
-                  <p className="mt-0.5 text-[10px] text-white/50">
-                    Save favorites
-                  </p>
-                </div>
-
-                <div className="h-7 w-px bg-white/20" />
-
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    Free
-                  </p>
-                  <p className="mt-0.5 text-[10px] text-white/50">
-                    Join today
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className="block" htmlFor={htmlFor}>
+      <span className="mb-2 block text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
