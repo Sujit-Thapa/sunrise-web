@@ -9,7 +9,7 @@ import {
   addBookedProperty,
   clearPendingBooking,
   getPendingBooking,
-} from '@/lib/account-storage';
+} from '@/lib/account-store';
 
 type ConfirmationStatus = 'success' | 'failed' | 'pending' | 'unknown';
 

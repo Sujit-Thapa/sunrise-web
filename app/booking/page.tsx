@@ -4,10 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
-import {
-  setPendingBooking,
-  snapshotProperty,
-} from '@/lib/account-storage';
+import { setPendingBooking, snapshotProperty } from '@/lib/account-store';
 import { propertiesApi, paymentApi } from '@/lib/backend';
 import {
   formatArea,

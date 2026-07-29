@@ -2,38 +2,21 @@
 
 import Link from 'next/link';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import {
-  ACCOUNT_STORAGE_EVENT,
-  isPropertySaved,
   snapshotProperty,
   toggleSavedProperty,
-} from '@/lib/account-storage';
+  useAccountStore,
+} from '@/lib/account-store';
 import type { PropertyResponseDto } from '@/types';
 
 export default function SavePropertyButton({ property }: { property: PropertyResponseDto }) {
   const { user } = useAuthSession();
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    if (!user) {
-      window.setTimeout(() => setSaved(false), 0);
-      return;
-    }
-
-    const sync = () => setSaved(isPropertySaved(user.id, property.id));
-    sync();
-
-    window.addEventListener(ACCOUNT_STORAGE_EVENT, sync);
-    window.addEventListener('storage', sync);
-
-    return () => {
-      window.removeEventListener(ACCOUNT_STORAGE_EVENT, sync);
-      window.removeEventListener('storage', sync);
-    };
-  }, [property.id, user]);
+  const hydrated = useAccountStore((state) => state.hydrated);
+  const saved = useAccountStore((state) =>
+    user ? (state.accounts[user.id]?.saved ?? []).some((item) => item.id === property.id) : false,
+  );
 
   if (!user) {
     return (
@@ -48,14 +31,14 @@ export default function SavePropertyButton({ property }: { property: PropertyRes
   }
 
   const handleToggle = () => {
-    const nextSaved = toggleSavedProperty(user.id, snapshotProperty(property));
-    setSaved(nextSaved);
+    toggleSavedProperty(user.id, snapshotProperty(property));
   };
 
   return (
     <button
       type="button"
       onClick={handleToggle}
+      disabled={!hydrated}
       className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${
         saved
           ? 'border border-gold-primary bg-gold-primary/10 text-gold-deep'

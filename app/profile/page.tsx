@@ -2,55 +2,34 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
 import { Bookmark, CalendarCheck2, LogOut, MapPin, Sparkles, type LucideIcon } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import {
-  ACCOUNT_STORAGE_EVENT,
-  getBookedProperties,
-  getSavedProperties,
   toggleSavedProperty,
-} from '@/lib/account-storage';
+  useAccountStore,
+  EMPTY_BOOKED_PROPERTIES,
+  EMPTY_SAVED_PROPERTIES,
+} from '@/lib/account-store';
 import {
   formatCurrency,
   getListingTypeLabel,
   getPropertyCategoryLabel,
   getPropertyStatusLabel,
 } from '@/lib/properties';
-import type { BookedPropertySnapshot, PropertySnapshot } from '@/lib/account-storage';
+import type { BookedPropertySnapshot, PropertySnapshot } from '@/lib/account-store';
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuthSession();
-  const [saved, setSaved] = useState<PropertySnapshot[]>([]);
-  const [booked, setBooked] = useState<BookedPropertySnapshot[]>([]);
+  const hydrated = useAccountStore((state) => state.hydrated);
+  const saved = useAccountStore((state) =>
+    user ? state.accounts[user.id]?.saved ?? EMPTY_SAVED_PROPERTIES : EMPTY_SAVED_PROPERTIES,
+  );
+  const booked = useAccountStore((state) =>
+    user ? state.accounts[user.id]?.booked ?? EMPTY_BOOKED_PROPERTIES : EMPTY_BOOKED_PROPERTIES,
+  );
 
-  const refreshLists = useCallback(() => {
-    if (!user) {
-      setSaved([]);
-      setBooked([]);
-      return;
-    }
-
-    setSaved(getSavedProperties(user.id));
-    setBooked(getBookedProperties(user.id));
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    window.setTimeout(refreshLists, 0);
-
-    window.addEventListener(ACCOUNT_STORAGE_EVENT, refreshLists);
-    window.addEventListener('storage', refreshLists);
-
-    return () => {
-      window.removeEventListener(ACCOUNT_STORAGE_EVENT, refreshLists);
-      window.removeEventListener('storage', refreshLists);
-    };
-  }, [user, refreshLists]);
-
-  if (loading) {
+  if (loading || (user && !hydrated)) {
     return (
       <main className="min-h-screen bg-white">
         <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
@@ -163,7 +142,6 @@ export default function ProfilePage() {
             onRemove={(item) => {
               if (!user) return;
               toggleSavedProperty(user.id, snapshotPropertyFromStored(item));
-              refreshLists();
             }}
             actionLabel="Remove"
             actionIcon={Bookmark}
