@@ -27,7 +27,7 @@ export default function LoginPage() {
     try {
       const response = await auth.login(payload);
       setAuthToken(response.accessToken);
-      router.replace('/');
+      router.replace(response.user.role === 'admin' ? '/admin' : '/');
     } catch (err) {
       setError((err as Error).message || 'Login failed.');
     } finally {

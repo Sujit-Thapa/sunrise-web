@@ -185,12 +185,6 @@ export default function Navbar() {
                   >
                     Login
                   </Link>
-                  <Link
-                    href="/auth/signup"
-                    className="rounded-full bg-gold-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gold-primary/90"
-                  >
-                    Sign up
-                  </Link>
                 </div>
               )}
             </div>
@@ -280,13 +274,6 @@ export default function Navbar() {
                     className="rounded-full border border-white/20 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white backdrop-blur-md transition hover:border-white/35 hover:bg-white/20"
                   >
                     Login
-                  </Link>
-                  <Link
-                    href="/auth/signup"
-                    onClick={handleNavClick}
-                    className="rounded-full bg-gold-primary px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-gold-primary/90"
-                  >
-                    Sign up
                   </Link>
                 </div>
               )}
