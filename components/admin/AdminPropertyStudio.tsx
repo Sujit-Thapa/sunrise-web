@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { auth, getAuthToken } from '@/lib/auth';
+import { isStaffRole } from '@/lib/auth-routing';
 import { propertiesApi } from '@/lib/backend';
 import {
   formatArea,
@@ -239,7 +240,7 @@ export default function AdminPropertyStudio() {
 
         if (!isMounted) return;
 
-        if (user.role !== 'admin' && user.role !== 'agent') {
+        if (!isStaffRole(user.role)) {
           setAuthMessage('This account does not have admin access.');
           setToken('');
           setLoadingProperties(false);

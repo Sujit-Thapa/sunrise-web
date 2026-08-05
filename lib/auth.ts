@@ -7,9 +7,14 @@ import type {
   LoginDto,
   RegisterUserDto,
 } from '@/types';
+import { AUTH_CHANGE_EVENT, AUTH_TOKEN_COOKIE, AUTH_TOKEN_KEY } from './auth-constants';
 
-const AUTH_TOKEN_KEY = 'sunrise_auth_token';
-export const AUTH_CHANGE_EVENT = 'sunrise-auth-changed';
+export { AUTH_CHANGE_EVENT, AUTH_TOKEN_COOKIE, AUTH_TOKEN_KEY };
+
+function getCookieOptions(maxAgeSeconds: number): string {
+  const secure = window.location.protocol === 'https:' ? '; secure' : '';
+  return `path=/; max-age=${maxAgeSeconds}; samesite=lax${secure}`;
+}
 
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -19,12 +24,14 @@ export function getAuthToken(): string | null {
 export function setAuthToken(token: string) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+  document.cookie = `${AUTH_TOKEN_COOKIE}=${encodeURIComponent(token)}; ${getCookieOptions(60 * 60 * 24 * 7)}`;
   window.dispatchEvent(new CustomEvent(AUTH_CHANGE_EVENT));
 }
 
 export function clearAuthToken() {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  document.cookie = `${AUTH_TOKEN_COOKIE}=; ${getCookieOptions(0)}`;
   window.dispatchEvent(new CustomEvent(AUTH_CHANGE_EVENT));
 }
 

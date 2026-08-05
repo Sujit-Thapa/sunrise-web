@@ -5,6 +5,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowRight, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react';
 
 import AuthShell from '@/components/auth/AuthShell';
+import { getRoleHomePath } from '@/lib/auth-routing';
 import { auth, setAuthToken } from '@/lib/auth';
 import type { RegisterUserDto } from '@/types';
 
@@ -33,7 +34,8 @@ export default function SignupPage() {
     try {
       const response = await auth.register(payload);
       setAuthToken(response.accessToken);
-      router.replace('/');
+      const currentUser = await auth.me(response.accessToken);
+      router.replace(getRoleHomePath(currentUser.role));
     } catch (err) {
       setError((err as Error).message || 'Signup failed.');
     } finally {

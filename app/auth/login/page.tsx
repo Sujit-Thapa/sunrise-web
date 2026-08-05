@@ -6,6 +6,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 
 import AuthShell from '@/components/auth/AuthShell';
+import { getRoleHomePath } from '@/lib/auth-routing';
 import { auth, setAuthToken } from '@/lib/auth';
 import type { LoginDto } from '@/types';
 
@@ -27,7 +28,8 @@ export default function LoginPage() {
     try {
       const response = await auth.login(payload);
       setAuthToken(response.accessToken);
-      router.replace(response.user.role === 'admin' ? '/admin' : '/');
+      const currentUser = await auth.me(response.accessToken);
+      router.replace(getRoleHomePath(currentUser.role));
     } catch (err) {
       setError((err as Error).message || 'Login failed.');
     } finally {

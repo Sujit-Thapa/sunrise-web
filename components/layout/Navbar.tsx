@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ChevronDown, LogOut, Menu, Shield, UserCircle2, X } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
+import { getRoleHomePath, isStaffRole } from '@/lib/auth-routing';
 
 const NAV_LINKS = [
   { label: 'Properties', href: '/properties' },
@@ -68,6 +69,7 @@ export default function Navbar() {
         .map((part) => part[0]?.toUpperCase())
         .join('')
     : 'U';
+  const dashboardHref = user ? getRoleHomePath(user.role) : '/';
 
   return (
     <>
@@ -156,14 +158,14 @@ export default function Navbar() {
                         <UserCircle2 className="h-4 w-4" />
                         Profile
                       </Link>
-                      {(user.role === 'admin' || user.role === 'agent') ? (
+                      {isStaffRole(user.role) ? (
                         <Link
-                          href="/admin"
+                          href={dashboardHref}
                           onClick={handleNavClick}
                           className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-stone-50 hover:text-midnight"
                         >
                           <Shield className="h-4 w-4" />
-                          Admin
+                          Dashboard
                         </Link>
                       ) : null}
                       <button
@@ -248,13 +250,13 @@ export default function Navbar() {
                     >
                       Profile
                     </Link>
-                    {(user.role === 'admin' || user.role === 'agent') ? (
+                    {isStaffRole(user.role) ? (
                       <Link
-                        href="/admin"
+                        href={dashboardHref}
                         onClick={handleNavClick}
                         className="rounded-full border border-white/20 bg-white/80 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
                       >
-                        Admin
+                        Dashboard
                       </Link>
                     ) : null}
                     <button
