@@ -18,6 +18,7 @@ import type {
   AreaUnit,
   CreateUserPropertyDto,
   ListingType,
+  PropertyCategory,
   UserPropertyResponseDto,
   UserPropertyStatus,
 } from '@/types';
@@ -25,12 +26,29 @@ import type {
 type CategoryFilter = 'all' | 'house' | 'land' | 'apartment' | 'commercial';
 type SortOption = 'newest' | 'price-asc' | 'price-desc';
 
-const EMPTY_FORM = {
+interface MarketplaceFormState {
+  title: string;
+  description: string;
+  price: string;
+  listingType: ListingType;
+  category: PropertyCategory;
+  city: string;
+  state: string;
+  country: string;
+  areaSize: string;
+  areaUnit: AreaUnit;
+  street: string;
+  postalCode: string;
+  latitude: string;
+  longitude: string;
+}
+
+const EMPTY_FORM: MarketplaceFormState = {
   title: '',
   description: '',
   price: '',
   listingType: 'SALE' as ListingType,
-  category: 'HOUSE' as Exclude<CategoryFilter, 'all'>,
+  category: 'HOUSE',
   city: '',
   state: '',
   country: '',
@@ -421,7 +439,7 @@ export default function Marketplace() {
                                   description: listing.description ?? '',
                                   price: String(listing.price ?? ''),
                                   listingType: listing.listingType,
-                                  category: listing.category,
+                                  category: listing.category as PropertyCategory,
                                   city: listing.city ?? '',
                                   state: listing.state ?? '',
                                   country: listing.country ?? '',
