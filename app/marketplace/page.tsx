@@ -194,6 +194,18 @@ export default function Marketplace() {
     }
   };
 
+  const handleHide = async (id: string) => {
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('You must be signed in to hide a listing.');
+      const updated = await userPropertiesApi.hide(id, token);
+      setMyListings((prev) => [updated, ...prev.filter((listing) => listing.id !== updated.id)]);
+      await fetchListings();
+    } catch (err) {
+      setApiError((err as Error).message || 'Unable to hide listing.');
+    }
+  };
+
   return (
     <>
       <main className="min-h-screen bg-white text-stone-900">
@@ -426,16 +438,23 @@ export default function Marketplace() {
                             >
                               Edit
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeleteId(listing.id)}
-                              className="flex-1 rounded-full border border-rose-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700 transition hover:bg-rose-50"
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteId(listing.id)}
+                            className="flex-1 rounded-full border border-rose-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700 transition hover:bg-rose-50"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleHide(listing.id)}
+                            className="flex-1 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                          >
+                            Hide
+                          </button>
                         </div>
-                      </article>
+                      </div>
+                    </article>
                     ))}
                   </div>
                 )}
