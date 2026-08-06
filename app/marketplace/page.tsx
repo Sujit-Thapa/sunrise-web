@@ -19,6 +19,7 @@ import type {
   CreateUserPropertyDto,
   ListingType,
   UserPropertyResponseDto,
+  UserPropertyStatus,
 } from '@/types';
 
 type CategoryFilter = 'all' | 'house' | 'land' | 'apartment' | 'commercial';
@@ -35,6 +36,10 @@ const EMPTY_FORM = {
   country: '',
   areaSize: '',
   areaUnit: 'sqft' as AreaUnit,
+  street: '',
+  postalCode: '',
+  latitude: '',
+  longitude: '',
 };
 
 const sortOptions: { value: SortOption; label: string }[] = [
@@ -53,8 +58,20 @@ function sizeLabel(item: UserPropertyResponseDto): string {
   return formatArea(item.areaSize, item.areaUnit);
 }
 
+function isPublicApproved(status: UserPropertyStatus): boolean {
+  return status === 'APPROVED';
+}
+
+function statusTone(status: UserPropertyStatus): string {
+  if (status === 'APPROVED') return 'bg-emerald-50 text-emerald-700';
+  if (status === 'REJECTED') return 'bg-rose-50 text-rose-700';
+  if (status === 'HIDDEN') return 'bg-slate-100 text-slate-600';
+  return 'bg-amber-50 text-amber-700';
+}
+
 export default function Marketplace() {
-  const [listings, setListings] = useState<UserPropertyResponseDto[]>([]);
+  const [publicListings, setPublicListings] = useState<UserPropertyResponseDto[]>([]);
+  const [myListings, setMyListings] = useState<UserPropertyResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -63,6 +80,7 @@ export default function Marketplace() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -74,7 +92,7 @@ export default function Marketplace() {
     setLoadError(null);
     try {
       const res = await userPropertiesApi.findAll({ page: 1, limit: 50 });
-      setListings(res.items);
+      setPublicListings((res.items ?? []).filter((listing) => isPublicApproved(listing.status)));
     } catch (err) {
       setLoadError((err as Error).message || 'Unable to load listings.');
     } finally {
@@ -82,11 +100,27 @@ export default function Marketplace() {
     }
   };
 
+  const fetchMine = async () => {
+    const token = getAuthToken();
+    if (!token) {
+      setMyListings([]);
+      return;
+    }
+
+    try {
+      const res = await userPropertiesApi.findMine(token, { page: 1, limit: 50 });
+      setMyListings(res.items ?? []);
+    } catch (err) {
+      setApiError((err as Error).message || 'Unable to load your submissions.');
+    }
+  };
+
   useEffect(() => {
-    fetchListings();
+    void fetchListings();
+    void fetchMine();
   }, []);
 
-  const filtered = (listings ?? [])
+  const filteredPublic = (publicListings ?? [])
     .filter((listing) => {
       const matchesType = filter === 'all' || listing.category?.toLowerCase() === filter;
       const haystack = `${listing.title ?? ''} ${locationLabel(listing)}`.toLowerCase();
@@ -112,21 +146,32 @@ export default function Marketplace() {
       price: Number(form.price),
       listingType: form.listingType,
       category: form.category,
+      street: form.street?.trim() || undefined,
       city: form.city,
       state: form.state,
       country: form.country,
+      postalCode: form.postalCode?.trim() || undefined,
       areaSize: form.areaSize ? Number(form.areaSize) : undefined,
       areaUnit: form.areaSize ? form.areaUnit : undefined,
+      latitude: form.latitude ? Number(form.latitude) : undefined,
+      longitude: form.longitude ? Number(form.longitude) : undefined,
     };
 
     try {
       if (!token) {
         throw new Error('You must be signed in to submit a property.');
       }
-      const created = await userPropertiesApi.submit(payload, token);
-      setListings((prev) => [created, ...prev]);
+      if (editingId) {
+        const updated = await userPropertiesApi.update(editingId, payload, token);
+        setMyListings((prev) => [updated, ...prev.filter((listing) => listing.id !== updated.id)]);
+        setEditingId(null);
+      } else {
+        const created = await userPropertiesApi.submit(payload, token);
+        setMyListings((prev) => [created, ...prev]);
+      }
       setForm(EMPTY_FORM);
       setShowForm(false);
+      await fetchListings();
     } catch (err) {
       setApiError((err as Error).message || 'Unable to submit listing.');
     } finally {
@@ -140,7 +185,7 @@ export default function Marketplace() {
       const token = getAuthToken();
       if (!token) throw new Error('You must be signed in to remove a listing.');
       await userPropertiesApi.remove(id, token);
-      setListings((prev) => prev.filter((listing) => listing.id !== id));
+      setMyListings((prev) => prev.filter((listing) => listing.id !== id));
     } catch (err) {
       setLoadError((err as Error).message || 'Unable to remove listing.');
     } finally {
@@ -160,9 +205,9 @@ export default function Marketplace() {
             <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
               Properties listed by <span className="text-slate-500">the community.</span>
             </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">
-              Browse land and homes posted directly by sellers. List your own property, connect
-              with buyers, and keep the marketplace moving in one place.
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">
+              Browse approved community listings, submit your own property for review, and manage
+              your submissions from one place.
             </p>
           </div>
 
@@ -226,17 +271,17 @@ export default function Marketplace() {
           ) : (
             <>
               <p className="mb-6 text-[0.72rem] uppercase tracking-[0.16em] text-slate-400">
-                {filtered.length} listing{filtered.length !== 1 ? 's' : ''} found
+              {filteredPublic.length} listing{filteredPublic.length !== 1 ? 's' : ''} found
               </p>
 
-              {filtered.length === 0 ? (
+              {filteredPublic.length === 0 ? (
                 <div className="rounded-[28px] border border-dashed border-stone-300 bg-white/70 px-8 py-16 text-center text-slate-500 shadow-brand-sm">
                   <p className="text-xl font-medium text-slate-700">No listings match your search.</p>
                   <p className="mt-2 text-sm">Try a different location or category to widen the search.</p>
                 </div>
               ) : (
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                  {filtered.map((listing) => (
+                  {filteredPublic.map((listing) => (
                     <article
                       key={listing.id}
                       onMouseEnter={() => setHoveredId(listing.id)}
@@ -262,7 +307,7 @@ export default function Marketplace() {
                           <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${String(listing.category).toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/90 text-midnight'} backdrop-blur`}>
                             {getPropertyCategoryLabel(listing.category)}
                           </span>
-                          <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${listing.status === 'pending' ? 'bg-amber-50 text-amber-700' : listing.status === 'rejected' ? 'bg-rose-50 text-rose-700' : 'bg-white/90 text-slate-500'} backdrop-blur`}>
+                          <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${statusTone(listing.status)} backdrop-blur`}>
                             {getPropertyStatusLabel(listing.status)}
                           </span>
                         </div>
@@ -293,25 +338,108 @@ export default function Marketplace() {
                             <p className="mt-1 text-[0.72rem] text-slate-400">Listed by {listing.submittedBy.fullName}</p>
                             <p className="text-[0.68rem] text-slate-400">{new Date(listing.createdAt).toLocaleDateString()}</p>
                           </div>
-                          <button
-                            onClick={() => setDeleteId(listing.id)}
-                            aria-label="Delete listing"
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 text-stone-400 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                          <a
+                            href="#my-submissions"
+                            className="rounded-full border border-stone-200 px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:border-gold-primary hover:text-gold-primary"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6l-1 14H6L5 6" />
-                              <path d="M10 11v6" />
-                              <path d="M14 11v6" />
-                              <path d="M9 6V4h6v2" />
-                            </svg>
-                          </button>
+                            View mine
+                          </a>
                         </div>
                       </div>
                     </article>
                   ))}
                 </div>
               )}
+
+              <div id="my-submissions" className="mt-12">
+                <div className="mb-5 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gold-primary">
+                      My submissions
+                    </p>
+                    <h2 className="mt-2 text-2xl font-semibold text-midnight">Your user properties</h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(null);
+                      setForm(EMPTY_FORM);
+                      setShowForm(true);
+                    }}
+                    className="rounded-full border border-midnight px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-midnight transition hover:bg-midnight hover:text-white"
+                  >
+                    Add new
+                  </button>
+                </div>
+
+                {myListings.length === 0 ? (
+                  <div className="rounded-[28px] border border-dashed border-stone-300 bg-white/70 px-8 py-12 text-center text-slate-500 shadow-brand-sm">
+                    <p className="text-lg font-medium text-slate-700">No submissions yet.</p>
+                    <p className="mt-2 text-sm">Use the form above to submit a property for review.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {myListings.map((listing) => (
+                      <article
+                        key={listing.id}
+                        className="overflow-hidden rounded-[28px] border border-stone-200 bg-white shadow-brand-sm"
+                      >
+                        <div className="p-5">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <p className={`inline-flex rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${statusTone(listing.status)}`}>
+                                {getPropertyStatusLabel(listing.status)}
+                              </p>
+                              <h3 className="mt-3 text-xl font-semibold text-midnight">{listing.title}</h3>
+                            </div>
+                            <span className="text-lg font-semibold text-gold-primary">{formatCurrency(listing.price)}</span>
+                          </div>
+                          <p className="mt-2 text-sm text-slate-500">{locationLabel(listing) || 'Location not specified'}</p>
+                          <div className="mt-5 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-slate-50 px-3 py-1 text-xs text-slate-600">{getListingTypeLabel(listing.listingType)}</span>
+                            <span className="rounded-full bg-slate-50 px-3 py-1 text-xs text-slate-600">{sizeLabel(listing)}</span>
+                          </div>
+                          <div className="mt-6 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingId(listing.id);
+                                setForm({
+                                  title: listing.title ?? '',
+                                  description: listing.description ?? '',
+                                  price: String(listing.price ?? ''),
+                                  listingType: listing.listingType,
+                                  category: listing.category,
+                                  city: listing.city ?? '',
+                                  state: listing.state ?? '',
+                                  country: listing.country ?? '',
+                                  areaSize: listing.areaSize != null ? String(listing.areaSize) : '',
+                                  areaUnit: listing.areaUnit ?? 'sqft',
+                                  street: listing.street ?? '',
+                                  postalCode: listing.postalCode ?? '',
+                                  latitude: listing.latitude != null ? String(listing.latitude) : '',
+                                  longitude: listing.longitude != null ? String(listing.longitude) : '',
+                                });
+                                setShowForm(true);
+                              }}
+                              className="flex-1 rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteId(listing.id)}
+                              className="flex-1 rounded-full border border-rose-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700 transition hover:bg-rose-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -320,7 +448,9 @@ export default function Marketplace() {
       {showForm ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 px-4 py-6" onClick={() => setShowForm(false)}>
           <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto border border-stone-300 bg-white p-8 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="mb-6 text-2xl font-light text-stone-900">List your property</h2>
+            <h2 className="mb-6 text-2xl font-light text-stone-900">
+              {editingId ? 'Edit your property' : 'List your property'}
+            </h2>
             <form onSubmit={handleAdd} className="space-y-4">
               {apiError ? (
                 <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -378,6 +508,28 @@ export default function Marketplace() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Street</label>
+                  <input value={form.street} onChange={(e) => setForm((prev) => ({ ...prev, street: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="Boudha Road" />
+                </div>
+                <div>
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Postal code</label>
+                  <input value={form.postalCode} onChange={(e) => setForm((prev) => ({ ...prev, postalCode: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="44600" />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Latitude</label>
+                  <input type="number" step="any" value={form.latitude} onChange={(e) => setForm((prev) => ({ ...prev, latitude: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="27.7172" />
+                </div>
+                <div>
+                  <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Longitude</label>
+                  <input type="number" step="any" value={form.longitude} onChange={(e) => setForm((prev) => ({ ...prev, longitude: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="85.324" />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
                   <label className="mb-2 block text-[0.62rem] uppercase tracking-[0.16em] text-stone-500">Area Size</label>
                   <input type="number" value={form.areaSize} onChange={(e) => setForm((prev) => ({ ...prev, areaSize: e.target.value }))} className="w-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-500" placeholder="e.g. 1500" />
                 </div>
@@ -393,9 +545,9 @@ export default function Marketplace() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 border border-stone-300 bg-transparent px-4 py-3 text-[0.72rem] uppercase tracking-[0.16em] text-stone-600 transition hover:bg-stone-100">Cancel</button>
+                <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="flex-1 border border-stone-300 bg-transparent px-4 py-3 text-[0.72rem] uppercase tracking-[0.16em] text-stone-600 transition hover:bg-stone-100">Cancel</button>
                 <button type="submit" disabled={submitting} className="flex-1 border border-stone-900 bg-stone-900 px-4 py-3 text-[0.72rem] uppercase tracking-[0.18em] text-stone-100 transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
-                  {submitting ? 'Submitting…' : 'Publish Listing →'}
+                  {submitting ? 'Submitting…' : editingId ? 'Update Listing →' : 'Publish Listing →'}
                 </button>
               </div>
             </form>

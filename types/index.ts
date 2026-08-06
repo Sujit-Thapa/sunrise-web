@@ -225,7 +225,7 @@ export interface PropertiesListResponseDto {
 // ============================================
 // User-submitted properties — REAL API SHAPE
 // ============================================
-export type UserPropertyStatus = 'pending' | 'approved' | 'rejected' | 'hidden';
+export type UserPropertyStatus = 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'HIDDEN';
 
 export interface CreateUserPropertyDto {
   title: string;
