@@ -3,22 +3,29 @@ import type {
   AgentResponseDto,
   CancelReservationDto,
   ConnectIpsInitiateResponseDto,
+  ConfirmPropertyImageDto,
   CreatePropertyDto,
   CreateUserPropertyDto,
   EsewaInitiateResponseDto,
   FinancePaymentsListResponseDto,
   FinanceSummaryResponseDto,
+  FinancePaymentsQueryParams,
   InitiatePaymentDto,
   KhaltiInitiateResponseDto,
+  PresignPropertyImageDto,
+  PresignPropertyImageResponseDto,
   PropertiesListResponseDto,
+  PropertyListQueryParams,
   PropertyResponseDto,
   RejectUserPropertyDto,
   ReservationResponseDto,
   ReservationsListResponseDto,
+  ReservationListQueryParams,
   SystemConfigResponseDto,
   UpdatePropertyDto,
   UpdateSystemConfigDto,
   UpdateUserPropertyDto,
+  UserPropertyListQueryParams,
   UserPropertiesListResponseDto,
   UserPropertyResponseDto,
 } from '@/types';
@@ -42,7 +49,7 @@ export const propertiesApi = {
     api.post<PropertyResponseDto>('/v1/properties', data, token),
 
   findAll: (
-    params?: { page?: number; limit?: number },
+    params?: PropertyListQueryParams,
     token?: string
   ) => api.get<PropertiesListResponseDto>(`/v1/properties${toQueryString(params)}`, token),
 
@@ -60,6 +67,12 @@ export const propertiesApi = {
 
   hide: (id: string, token: string) =>
     api.patch<PropertyResponseDto>(`/v1/properties/${id}/hide`, {}, token),
+
+  presignImage: (id: string, data: PresignPropertyImageDto, token: string) =>
+    api.post<PresignPropertyImageResponseDto>(`/v1/properties/${id}/images/presign`, data, token),
+
+  confirmImage: (id: string, data: ConfirmPropertyImageDto, token: string) =>
+    api.post<PropertyResponseDto>(`/v1/properties/${id}/images/confirm`, data, token),
 };
 
 // ============================================
@@ -70,11 +83,11 @@ export const userPropertiesApi = {
     api.post<UserPropertyResponseDto>('/v1/user-properties', data, token),
 
   findAll: (
-    params?: { page?: number; limit?: number },
+    params?: UserPropertyListQueryParams,
     token?: string
   ) => api.get<UserPropertiesListResponseDto>(`/v1/user-properties${toQueryString(params)}`, token),
 
-  findMine: (token: string, params?: { page?: number; limit?: number }) =>
+  findMine: (token: string, params?: UserPropertyListQueryParams) =>
     api.get<UserPropertiesListResponseDto>(`/v1/user-properties/mine${toQueryString(params)}`, token),
 
   findOne: (id: string, token?: string) =>
@@ -98,7 +111,7 @@ export const userPropertiesApi = {
   // Admin review queue
   admin: {
     findAll: (
-      params?: { page?: number; limit?: number },
+      params?: UserPropertyListQueryParams,
       token?: string
     ) => api.get<UserPropertiesListResponseDto>(`/v1/user-properties/admin${toQueryString(params)}`, token),
 
@@ -124,7 +137,7 @@ export const paymentApi = {
 // ============================================
 export const reservationsApi = {
   findAll: (
-    params?: { page?: number; limit?: number },
+    params?: ReservationListQueryParams,
     token?: string
   ) => api.get<ReservationsListResponseDto>(`/v1/reservations${toQueryString(params)}`, token),
 
@@ -143,7 +156,7 @@ export const financeApi = {
     api.get<FinanceSummaryResponseDto>('/v1/finance/summary', token),
 
   findPayments: (
-    params?: { page?: number; limit?: number },
+    params?: FinancePaymentsQueryParams,
     token?: string
   ) => api.get<FinancePaymentsListResponseDto>(`/v1/finance/payments${toQueryString(params)}`, token),
 };

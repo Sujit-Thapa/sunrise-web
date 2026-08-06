@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Villa', 'Land', 'Commercial'];
+const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
 const PRICE_RANGES = ['Any Price', 'Under Rs 50 L', 'Rs 50 L – 1 Cr', 'Rs 1 Cr – 2 Cr', 'Rs 2 Cr+'];
 
 interface DropdownProps {
@@ -69,13 +70,51 @@ function Dropdown({ label, options, value, onChange }: DropdownProps) {
   );
 }
 
+function buildSearchUrl(location: string, propertyType: string, priceRange: string): string {
+  const params = new URLSearchParams();
+
+  if (location.trim()) {
+    params.set('city', location.trim());
+  }
+
+  if (propertyType !== 'All Types') {
+    params.set('category', propertyType.toUpperCase());
+  }
+
+  if (priceRange === 'Under Rs 50 L') {
+    params.set('maxPrice', '5000000');
+  } else if (priceRange === 'Rs 50 L – 1 Cr') {
+    params.set('minPrice', '5000000');
+    params.set('maxPrice', '10000000');
+  } else if (priceRange === 'Rs 1 Cr – 2 Cr') {
+    params.set('minPrice', '10000000');
+    params.set('maxPrice', '20000000');
+  } else if (priceRange === 'Rs 2 Cr+') {
+    params.set('minPrice', '20000000');
+  }
+
+  const query = params.toString();
+  return query ? `/properties?${query}` : '/properties';
+}
+
 export default function SearchBar() {
+  const router = useRouter();
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState('All Types');
   const [priceRange, setPriceRange] = useState('Any Price');
 
+  const handleSearch = () => {
+    router.push(buildSearchUrl(location, propertyType, priceRange));
+  };
+
   return (
-    <div className="flex items-center w-full bg-white rounded-full shadow-brand-lg overflow-visible">
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleSearch();
+      }}
+      className="flex w-full items-center overflow-visible rounded-full bg-white shadow-brand-lg"
+    >
 
       {/* Location */}
       <div className="flex-1 px-6 py-[14px] min-w-0">
@@ -115,7 +154,7 @@ export default function SearchBar() {
 
       {/* Search button */}
       <button
-        type="button"
+        type="submit"
         aria-label="Search properties"
         className="w-[52px] h-[52px] m-[6px] rounded-full bg-gold-primary hover:bg-gold-deep hover:shadow-gold flex items-center justify-center shrink-0 transition-all duration-250 active:scale-95"
       >
@@ -126,6 +165,6 @@ export default function SearchBar() {
         </svg>
       </button>
 
-    </div>
+    </form>
   );
 }

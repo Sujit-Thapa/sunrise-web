@@ -14,8 +14,13 @@ const radikal = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Sunrise Realestate - Find Your Dream Home',
+  title: 'Sunrise Realestate',
   description: 'Discover the perfect property with Sunrise Realestate',
+  icons: {
+    icon: '/images/logo/sunrise1.png',
+    shortcut: '/images/logo/sunrise1.png',
+    apple: '/images/logo/sunrise1.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
