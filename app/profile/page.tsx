@@ -2,7 +2,17 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bookmark, CalendarCheck2, LogOut, MapPin, Sparkles, type LucideIcon } from 'lucide-react';
+import {
+  ArrowRight,
+  Bookmark,
+  CalendarCheck2,
+  House,
+  LogOut,
+  MapPin,
+  ShieldCheck,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import {
@@ -67,33 +77,18 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <section className="overflow-hidden rounded-[34px] border border-stone-200 bg-white shadow-brand-sm">
-          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="p-8 sm:p-10 lg:p-12">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f8f5ee_100%)]">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+        <section className="rounded-[32px] border border-stone-200 bg-white shadow-brand-sm">
+          <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="p-6 sm:p-8 lg:p-10">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
                 <Sparkles className="h-4 w-4" />
-                Account overview
+                Account
               </div>
-              <h1 className="mt-6 text-4xl font-semibold tracking-tight text-midnight sm:text-5xl">
-                Welcome back, {user.fullName.split(' ')[0] || 'there'}.
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">
-                This is your saved and booked property hub. What you save here follows your
-                account on this browser until the backend profile endpoints are connected.
-              </p>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                <Stat label="Saved" value={saved.length} />
-                <Stat label="Booked" value={booked.length} />
-                <Stat label="Role" value={user.role} />
-              </div>
-            </div>
-
-            <aside className="border-t border-stone-200 bg-stone-50 p-8 sm:p-10 lg:border-l lg:border-t-0 lg:p-12">
-              <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-midnight text-lg font-semibold text-white">
+              <div className="mt-5 flex flex-wrap items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-midnight text-lg font-semibold text-white">
                   {user.fullName
                     .split(' ')
                     .filter(Boolean)
@@ -101,43 +96,96 @@ export default function ProfilePage() {
                     .map((part) => part[0]?.toUpperCase())
                     .join('')}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-midnight">{user.fullName}</p>
-                  <p className="text-sm text-slate-500">{user.email}</p>
+
+                <div className="min-w-0">
+                  <h1 className="text-3xl font-semibold tracking-tight text-midnight sm:text-4xl">
+                    {user.fullName}
+                  </h1>
+                  <p className="mt-1 text-sm text-slate-500">{user.email}</p>
                 </div>
               </div>
 
-              <dl className="mt-8 space-y-4">
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Pill>{user.role}</Pill>
+                <Pill>{saved.length} saved</Pill>
+                <Pill>{booked.length} booked</Pill>
+              </div>
+
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-500">
+                A compact overview of your account, saved properties, and booking history. Reset
+                your password or jump to the dashboard from here.
+              </p>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <MiniStat label="Saved" value={saved.length} />
+                <MiniStat label="Booked" value={booked.length} />
+                <MiniStat label="Role" value={user.role} />
+                <MiniStat label="Account" value={user.id.slice(0, 8)} />
+              </div>
+            </div>
+
+            <aside className="border-t border-stone-200 bg-stone-50 p-6 sm:p-8 lg:border-l lg:border-t-0 lg:p-10">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <ShieldCheck className="h-4 w-4" />
+                Quick actions
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {user.role === 'ADMIN' || user.role === 'AGENT' ? (
+                  <ActionLink
+                    href={user.role === 'ADMIN' ? '/admin' : '/agent'}
+                    label={user.role === 'ADMIN' ? 'Open admin dashboard' : 'Open agent studio'}
+                    description="Manage listings, reservations, and account tools."
+                    icon={House}
+                  />
+                ) : null}
+
+                <ActionLink
+                  href="/auth/forgot-password"
+                  label="Reset password"
+                  description="Start the password reset flow."
+                  icon={ArrowRight}
+                />
+
+                <ActionLink
+                  href="/properties"
+                  label="Browse properties"
+                  description="Continue exploring the marketplace."
+                  icon={House}
+                />
+
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-stone-200 bg-white px-4 py-4 text-left transition hover:border-gold-primary"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-midnight text-white">
+                      <LogOut className="h-4 w-4" />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-midnight">Sign out</span>
+                      <span className="block text-xs text-slate-500">End this session on this device.</span>
+                    </span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                </button>
+              </div>
+
+              <dl className="mt-8 space-y-3">
                 <Row label="Account ID" value={user.id} />
                 <Row label="Email" value={user.email} />
                 <Row label="Role" value={user.role} />
               </dl>
-
-              <div className="mt-8 flex flex-col gap-3">
-                <Link
-                  href="/properties"
-                  className="inline-flex items-center justify-center rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
-                >
-                  Browse properties
-                </Link>
-                <button
-                  type="button"
-                  onClick={signOut}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign out
-                </button>
-              </div>
             </aside>
           </div>
         </section>
 
-        <section className="mt-10 grid gap-8 xl:grid-cols-2">
+        <section className="mt-8 grid gap-6 xl:grid-cols-2">
           <PropertyShelf
-            title="Saved properties"
-            description="Listings you bookmarked for later."
-            emptyText="You have not saved any properties yet."
+            title="Saved"
+            description="Properties you bookmarked."
+            emptyText="No saved properties yet."
             items={saved}
             onRemove={(item) => {
               if (!user) return;
@@ -148,9 +196,9 @@ export default function ProfilePage() {
           />
 
           <PropertyShelf
-            title="Booked properties"
-            description="Properties that were booked from this browser."
-            emptyText="You have not completed a booking yet."
+            title="Booked"
+            description="Properties booked from this browser."
+            emptyText="No bookings yet."
             items={booked}
             actionLabel="Booked"
             actionIcon={CalendarCheck2}
@@ -182,8 +230,8 @@ function PropertyShelf({
   readOnly?: boolean;
 }) {
   return (
-    <section className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-8">
-      <div className="flex items-center justify-between gap-4">
+    <section className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
             {title}
@@ -199,7 +247,10 @@ function PropertyShelf({
             const isBooked = 'bookedAt' in item;
 
             return (
-              <article key={item.id} className="overflow-hidden rounded-[28px] border border-stone-200 bg-white">
+              <article
+                key={item.id}
+                className="overflow-hidden rounded-[26px] border border-stone-200 bg-white"
+              >
                 <div className="grid gap-0 sm:grid-cols-[120px_1fr]">
                   <div className="relative min-h-[120px] bg-stone-100">
                     <Image
@@ -217,7 +268,7 @@ function PropertyShelf({
                         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
                           {getPropertyCategoryLabel(item.category)}
                         </p>
-                        <h3 className="mt-1 truncate text-lg font-semibold text-midnight">
+                        <h3 className="mt-1 truncate text-base font-semibold text-midnight">
                           {item.title}
                         </h3>
                         <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
@@ -226,12 +277,12 @@ function PropertyShelf({
                         </p>
                       </div>
 
-                      <p className="shrink-0 text-lg font-semibold text-gold-primary">
+                      <p className="shrink-0 text-base font-semibold text-gold-primary">
                         {formatCurrency(item.price)}
                       </p>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium">
+                    <div className="mt-4 flex flex-wrap gap-2 text-[0.7rem] font-medium">
                       <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
                         {getListingTypeLabel(item.listingType)}
                       </span>
@@ -285,14 +336,52 @@ function PropertyShelf({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Pill({ children }: { children: string }) {
   return (
-    <div className="rounded-[24px] border border-stone-200 bg-stone-50 px-4 py-4">
+    <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+      {children}
+    </span>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-[22px] border border-stone-200 bg-stone-50 px-4 py-4">
       <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
         {label}
       </p>
-      <p className="mt-1 text-lg font-semibold text-midnight">{value}</p>
+      <p className="mt-1 text-base font-semibold text-midnight">{value}</p>
     </div>
+  );
+}
+
+function ActionLink({
+  href,
+  label,
+  description,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between gap-4 rounded-[24px] border border-stone-200 bg-white px-4 py-4 transition hover:border-gold-primary"
+    >
+      <span className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-midnight text-white">
+          <Icon className="h-4 w-4" />
+        </span>
+        <span>
+          <span className="block text-sm font-semibold text-midnight">{label}</span>
+          <span className="block text-xs text-slate-500">{description}</span>
+        </span>
+      </span>
+      <ArrowRight className="h-4 w-4 text-slate-400" />
+    </Link>
   );
 }
 
