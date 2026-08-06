@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import mapboxgl from 'mapbox-gl';
 import type { PropertyResponseDto } from '@/types';
 import {
@@ -16,13 +17,16 @@ import {
 } from '@/lib/properties';
 
 const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
+const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
+const PRICE_RANGES = ['Any Price', 'Under Rs 50 L', 'Rs 50 L – 1 Cr', 'Rs 1 Cr – 2 Cr', 'Rs 2 Cr+'];
 
 interface PropertiesListingProps {
   properties?: PropertyResponseDto[];
   total?: number;
+  searchQuery?: string;
 }
 
-export default function PropertiesListing({ properties, total }: PropertiesListingProps) {
+export default function PropertiesListing({ properties, total, searchQuery }: PropertiesListingProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const items = Array.isArray(properties) ? properties : [];
   const resultCount = total ?? items.length;
@@ -43,8 +47,9 @@ export default function PropertiesListing({ properties, total }: PropertiesListi
             {resultCount} Properties Found
           </h1>
           <p className="mt-2 max-w-xl text-base text-slate-500">
-            Hover a listing to spotlight it on the map. The experience stays useful even when the
-            map token is missing.
+            {searchQuery
+              ? `Showing matches for “${searchQuery}”. Hover a listing to spotlight it on the map.`
+              : 'Hover a listing to spotlight it on the map. The experience stays useful even when the map token is missing.'}
           </p>
         </div>
 
@@ -225,31 +230,89 @@ function PropertiesMap({
 }
 
 function SearchPanel() {
-  const fields = [
-    { label: 'Location', value: 'Where are you looking?' },
-    { label: 'Property Type', value: 'All Types', showChevron: true },
-    { label: 'Price Range', value: 'Any Price' },
-  ];
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentLocation = searchParams.get('city') ?? '';
+  const currentCategory = searchParams.get('category') ?? 'All Types';
+  const currentMinPrice = searchParams.get('minPrice');
+  const currentMaxPrice = searchParams.get('maxPrice');
+
+  const currentPriceRange = useMemo(() => {
+    if (currentMinPrice === '20000000') return 'Rs 2 Cr+';
+    if (currentMinPrice === '10000000' && currentMaxPrice === '20000000') return 'Rs 1 Cr – 2 Cr';
+    if (currentMinPrice === '5000000' && currentMaxPrice === '10000000') return 'Rs 50 L – 1 Cr';
+    if (currentMaxPrice === '5000000') return 'Under Rs 50 L';
+    return 'Any Price';
+  }, [currentMaxPrice, currentMinPrice]);
+
+  const pushSearch = (form: HTMLFormElement) => {
+    const formData = new FormData(form);
+    const location = String(formData.get('location') ?? '').trim();
+    const category = String(formData.get('category') ?? 'All Types');
+    const priceRange = String(formData.get('priceRange') ?? 'Any Price');
+
+    const params = new URLSearchParams();
+
+    if (location) {
+      params.set('city', location);
+    }
+
+    if (category !== 'All Types') {
+      params.set('category', category.toUpperCase());
+    }
+
+    if (priceRange === 'Under Rs 50 L') {
+      params.set('maxPrice', '5000000');
+    } else if (priceRange === 'Rs 50 L – 1 Cr') {
+      params.set('minPrice', '5000000');
+      params.set('maxPrice', '10000000');
+    } else if (priceRange === 'Rs 1 Cr – 2 Cr') {
+      params.set('minPrice', '10000000');
+      params.set('maxPrice', '20000000');
+    } else if (priceRange === 'Rs 2 Cr+') {
+      params.set('minPrice', '20000000');
+    }
+
+    const query = params.toString();
+    router.push(query ? `/properties?${query}` : '/properties');
+  };
 
   return (
-    <div className="absolute left-4 right-4 top-5 z-30 rounded-full bg-white shadow-xl sm:left-6 sm:right-6">
-      <div className="grid grid-cols-[1fr_auto] items-center gap-2 p-2 md:grid-cols-[1fr_1fr_1fr_auto]">
-        <div className="min-w-0 px-5 md:hidden">
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        pushSearch(event.currentTarget);
+      }}
+      className="absolute left-4 right-4 top-5 z-30 rounded-full bg-white shadow-xl sm:left-6 sm:right-6"
+    >
+      <div className="grid grid-cols-[1fr_auto] items-center gap-2 p-2 md:grid-cols-[1.15fr_0.9fr_0.9fr_auto]">
+        <div className="min-w-0 px-5 md:block">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Location</p>
-          <p className="mt-1 truncate text-sm font-bold text-slate-500">Where are you looking?</p>
+          <input
+            name="location"
+            defaultValue={currentLocation}
+            placeholder="Where are you looking?"
+            className="mt-1 w-full border-none bg-transparent text-sm font-bold text-slate-500 outline-none placeholder:text-slate-300"
+          />
         </div>
 
-        {fields.map((field) => (
-          <SearchField
-            key={field.label}
-            label={field.label}
-            value={field.value}
-            showChevron={field.showChevron}
-          />
-        ))}
+        <SearchField
+          label="Property Type"
+          name="category"
+          options={PROPERTY_TYPES}
+          defaultValue={currentCategory}
+          showChevron
+        />
+
+        <SearchField
+          label="Price Range"
+          name="priceRange"
+          options={PRICE_RANGES}
+          defaultValue={currentPriceRange}
+        />
 
         <button
-          type="button"
+          type="submit"
           aria-label="Search properties"
           className="flex h-14 w-14 items-center justify-center rounded-full bg-gold-primary text-white transition-colors duration-200 hover:bg-gold-deep"
         >
@@ -268,24 +331,38 @@ function SearchPanel() {
           </svg>
         </button>
       </div>
-    </div>
+    </form>
   );
 }
 
 function SearchField({
   label,
-  value,
+  name,
+  options,
+  defaultValue,
   showChevron = false,
 }: {
   label: string;
-  value: string;
+  name: string;
+  options: string[];
+  defaultValue: string;
   showChevron?: boolean;
 }) {
   return (
-    <div className="hidden min-w-0 border-r border-slate-200 px-6 py-2 last:border-r-0 md:block">
+    <div className="hidden min-w-0 border-r border-slate-200 px-6 py-2 md:block">
       <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
       <div className="mt-2 flex items-center justify-between gap-3">
-        <p className="truncate text-sm font-bold text-slate-500">{value}</p>
+        <select
+          name={name}
+          defaultValue={defaultValue}
+          className="w-full appearance-none border-none bg-transparent text-sm font-bold text-slate-500 outline-none"
+        >
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
         {showChevron ? (
           <svg width="12" height="8" viewBox="0 0 12 8" fill="none" className="shrink-0 text-slate-800">
             <path

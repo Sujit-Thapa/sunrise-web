@@ -1,7 +1,19 @@
-import Image from 'next/image';
-import { notFound } from 'next/navigation';
-import { MapPin, Ruler, Sparkles, Tag, Wallet, BadgeInfo, ImageOff } from 'lucide-react';
+'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
+import { use, useEffect, useState } from 'react';
+import {
+  BadgeInfo,
+  ImageOff,
+  MapPin,
+  Ruler,
+  Sparkles,
+  Tag,
+  Wallet,
+} from 'lucide-react';
+
+import { auth, getAuthToken } from '@/lib/auth';
 import { propertiesApi } from '@/lib/backend';
 import {
   formatArea,
@@ -13,20 +25,12 @@ import {
   getPropertyStatusLabel,
 } from '@/lib/properties';
 import SavePropertyButton from '@/components/ui/SavePropertyButton';
-import type { PropertyResponseDto } from '@/types';
+import type { PropertyResponseDto, UserRole } from '@/types';
 
 interface PropertyDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
-}
-
-function locationLabel(property: PropertyResponseDto): string {
-  return formatLocation(property);
-}
-
-function sizeLabel(property: PropertyResponseDto): string {
-  return formatArea(property.areaSize, property.areaUnit);
+  }>;
 }
 
 const statusStyles: Record<string, string> = {
@@ -37,22 +41,155 @@ const statusStyles: Record<string, string> = {
   COMPLETED: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200/80',
 };
 
-export default async function PropertyDetailPage({ params }: PropertyDetailPageProps) {
-  const { id } = params;
-  let property: PropertyResponseDto | null = null;
+type LoadState =
+  | { kind: 'loading' }
+  | { kind: 'ready'; property: PropertyResponseDto }
+  | { kind: 'error'; message: string; isPrivate: boolean };
 
-  try {
-    property = await propertiesApi.findOne(id);
-  } catch {
-    property = null;
+function locationLabel(property: PropertyResponseDto): string {
+  return formatLocation(property);
+}
+
+function sizeLabel(property: PropertyResponseDto): string {
+  return formatArea(property.areaSize, property.areaUnit);
+}
+
+function isPrivileged(role: UserRole): boolean {
+  return role === 'ADMIN' || role === 'AGENT';
+}
+
+export default function PropertyDetailPage({ params }: PropertyDetailPageProps) {
+  const { id } = use(params);
+  const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const [retryIndex, setRetryIndex] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadProperty() {
+      setState({ kind: 'loading' });
+
+      const token = getAuthToken();
+      let role: UserRole | null = null;
+      let authTokenToUse: string | undefined;
+
+      if (token) {
+        try {
+          const me = await auth.me(token);
+          role = me.role;
+          if (isPrivileged(me.role)) {
+            authTokenToUse = token;
+          }
+        } catch {
+          authTokenToUse = undefined;
+        }
+      }
+
+      try {
+        const property = await propertiesApi.findOne(id, authTokenToUse);
+        if (!active) return;
+        setState({ kind: 'ready', property });
+      } catch (error) {
+        if (!active) return;
+
+        const message = (error as Error).message || 'Unable to load property.';
+        const isPrivate =
+          !authTokenToUse &&
+          (message.includes('404') ||
+            message.toLowerCase().includes('not found') ||
+            message.toLowerCase().includes('not have permission') ||
+            message.toLowerCase().includes('forbidden'));
+
+        setState({
+          kind: 'error',
+          message,
+          isPrivate: isPrivate || role === 'USER',
+        });
+      }
+    }
+
+    void loadProperty();
+
+    return () => {
+      active = false;
+    };
+  }, [id, retryIndex]);
+
+  if (state.kind === 'loading') {
+    return (
+      <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+          <div className="animate-pulse space-y-6">
+            <div className="h-4 w-40 rounded-full bg-stone-200" />
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="space-y-8">
+                <div className="h-[520px] rounded-[34px] bg-stone-200" />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="h-28 rounded-[24px] bg-stone-200" />
+                  <div className="h-28 rounded-[24px] bg-stone-200" />
+                  <div className="h-28 rounded-[24px] bg-stone-200" />
+                </div>
+                <div className="h-72 rounded-[28px] bg-stone-200" />
+              </div>
+              <div className="h-[520px] rounded-[32px] bg-stone-200" />
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
-  if (!property) {
-    notFound();
+  if (state.kind === 'error') {
+    return (
+      <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+          <div className="w-full rounded-[32px] border border-stone-200 bg-white p-8 text-center shadow-brand-sm sm:p-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
+              Property details
+            </p>
+            <h1 className="mt-3 text-3xl font-semibold text-midnight">
+              {state.isPrivate ? 'This property is not public' : 'We could not load this property'}
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-slate-500">
+              {state.isPrivate
+                ? 'This listing is hidden or still in draft. Agent and admin accounts can view it after signing in.'
+                : 'The backend returned an error while loading this listing. Please try again or go back to the property list.'}
+            </p>
+            <p className="mt-4 text-xs text-slate-400">{state.message}</p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/properties"
+                className="inline-flex items-center justify-center rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Back to properties
+              </Link>
+              {state.isPrivate ? (
+                <Link
+                  href="/auth/login"
+                  className="inline-flex items-center justify-center rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                >
+                  Sign in
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setRetryIndex((current) => current + 1)}
+                  className="inline-flex items-center justify-center rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                >
+                  Try again
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
-  const hero = getPrimaryImage(property.images);
-  const gallery = property.images.filter((img) => img.id !== hero?.id);
+  const property = state.property;
+  const images = Array.isArray(property.images) ? property.images : [];
+  const hero = getPrimaryImage(images);
+  const gallery = images.filter((img) => img.id !== hero?.id);
   const location = locationLabel(property);
   const size = sizeLabel(property);
 
@@ -124,10 +261,18 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
                     <div
                       key={img.id}
                       className={`relative aspect-[4/3] overflow-hidden rounded-2xl bg-stone-100 ${
-                        index === 3 && gallery.length > 4 ? 'after:absolute after:inset-0 after:bg-midnight/35 after:content-[""]' : ''
+                        index === 3 && gallery.length > 4
+                          ? 'after:absolute after:inset-0 after:bg-midnight/35 after:content-[""]'
+                          : ''
                       }`}
                     >
-                      <Image src={img.url} alt="" fill sizes="(min-width: 1024px) 240px, 50vw" className="object-cover" />
+                      <Image
+                        src={img.url}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 240px, 50vw"
+                        className="object-cover"
+                      />
                       {index === 3 && gallery.length > 4 ? (
                         <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white">
                           +{gallery.length - 4} more
@@ -236,7 +381,9 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                   Location summary
                 </p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{location || 'Location not specified'}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {location || 'Location not specified'}
+                </p>
               </div>
             </div>
           </aside>
@@ -279,24 +426,24 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ActionRow({ label, value }: { label: string; value: string }) {
+function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
-      <span className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+    <div className="rounded-[22px] border border-stone-200 bg-stone-50 px-4 py-4">
+      <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
         {label}
-      </span>
-      <span className="text-sm font-medium text-midnight">{value}</span>
+      </p>
+      <p className="mt-1 text-sm font-semibold text-midnight">{value}</p>
     </div>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+function ActionRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
-      <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-stone-200 bg-white px-4 py-3">
+      <span className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
         {label}
-      </p>
-      <p className="mt-1 text-sm font-semibold text-midnight">{value}</p>
+      </span>
+      <span className="text-sm font-medium text-midnight">{value}</span>
     </div>
   );
 }

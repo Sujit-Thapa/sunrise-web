@@ -27,10 +27,13 @@ import {
 } from '@/lib/properties';
 import type {
   AreaUnit,
+  ConfirmPropertyImageDto,
   CreatePropertyDto,
   ListingType,
+  PresignPropertyImageDto,
   PropertyCategory,
   PropertyResponseDto,
+  PresignPropertyImageResponseDto,
   UpdatePropertyDto,
 } from '@/types';
 
@@ -70,8 +73,6 @@ const LISTING_OPTIONS: Array<{ value: ListingType; label: string }> = [
 const AREA_OPTIONS: Array<{ value: AreaUnit; label: string }> = [
   { value: 'sqft', label: 'Sq ft' },
   { value: 'sqm', label: 'Sq m' },
-  { value: 'aana', label: 'Aana' },
-  { value: 'ropani', label: 'Ropani' },
 ];
 
 const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
@@ -108,6 +109,22 @@ function parseOptionalNumber(value: string): number | undefined {
   if (!value.trim()) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function validateLatitude(value: string): string | null {
+  if (!value.trim()) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 'Latitude must be a valid number.';
+  if (parsed < -90 || parsed > 90) return 'Latitude must be between -90 and 90.';
+  return null;
+}
+
+function validateDescription(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed.length < 10) {
+    return 'Description must be at least 10 characters long.';
+  }
+  return null;
 }
 
 function formFromProperty(property: PropertyResponseDto): PropertyFormState {
@@ -151,6 +168,73 @@ function buildPropertyPayload(form: PropertyFormState): CreatePropertyDto | Upda
     longitude: parseOptionalNumber(form.longitude),
     reservationFeeOverride: parseOptionalNumber(form.reservationFeeOverride),
   };
+}
+
+function createPresignImagePayload(file: File): PresignPropertyImageDto {
+  const mimeType = file.type as PresignPropertyImageDto['mimeType'];
+
+  if (mimeType !== 'image/jpeg' && mimeType !== 'image/png' && mimeType !== 'image/webp') {
+    throw new Error('Only JPG, PNG, and WEBP images are supported.');
+  }
+
+  return {
+    mimeType,
+  };
+}
+
+function createConfirmImagePayload(
+  s3Key: string,
+  publicUrl: string,
+  isPrimary: boolean,
+  sortOrder: number,
+): ConfirmPropertyImageDto {
+  return {
+    s3Key,
+    publicUrl,
+    isPrimary,
+    sortOrder,
+  };
+}
+
+async function uploadPropertyImages(
+  propertyId: string,
+  files: File[],
+  token: string,
+): Promise<PropertyResponseDto> {
+  let latestProperty = await propertiesApi.findOne(propertyId, token);
+
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index];
+    const presign = await propertiesApi.presignImage(
+      propertyId,
+      createPresignImagePayload(file),
+      token,
+    );
+
+    const presignResponse = presign as PresignPropertyImageResponseDto;
+    const uploadResponse = await fetch(presignResponse.uploadUrl, {
+      method: 'PUT',
+      headers: file.type ? { 'Content-Type': file.type } : undefined,
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Unable to upload ${file.name}.`);
+    }
+
+    latestProperty = await propertiesApi.confirmImage(
+      propertyId,
+      createConfirmImagePayload(
+        presignResponse.s3Key,
+        presignResponse.publicUrl,
+        index === 0,
+        index,
+      ),
+      token,
+    );
+  }
+
+  return latestProperty;
 }
 
 function statusValue(status: string): Exclude<StatusFilter, 'all'> | null {
@@ -199,12 +283,22 @@ export default function AdminPropertyStudio() {
   const [mode, setMode] = useState<AdminMode>('create');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PropertyFormState>(EMPTY_FORM);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imageInputKey, setImageInputKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ kind: 'success' | 'error'; message: string } | null>(
     null,
   );
   const [deleteTarget, setDeleteTarget] = useState<PropertyResponseDto | null>(null);
+
+  const resetForm = () => {
+    setMode('create');
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setSelectedImages([]);
+    setImageInputKey((current) => current + 1);
+  };
 
   async function refreshProperties(tokenValue?: string) {
     setLoadingProperties(true);
@@ -354,9 +448,21 @@ export default function AdminPropertyStudio() {
     setNotice(null);
 
     const payload = buildPropertyPayload(form);
+    const descriptionError = validateDescription(form.description);
+    const latitudeError = validateLatitude(form.latitude);
 
     if (!payload.title || !payload.description || !payload.city || !payload.state || !payload.country) {
       setNotice({ kind: 'error', message: 'Please complete the required property fields.' });
+      return;
+    }
+
+    if (descriptionError) {
+      setNotice({ kind: 'error', message: descriptionError });
+      return;
+    }
+
+    if (latitudeError) {
+      setNotice({ kind: 'error', message: latitudeError });
       return;
     }
 
@@ -376,21 +482,47 @@ export default function AdminPropertyStudio() {
     setSaving(true);
 
     try {
+      let savedProperty: PropertyResponseDto;
+
       if (isEditing && editingId) {
-        const updated = await propertiesApi.update(editingId, payload as UpdatePropertyDto, token);
-        setProperties((current) =>
-          current.map((property) => (property.id === updated.id ? updated : property)),
-        );
-        setNotice({ kind: 'success', message: 'Property updated successfully.' });
+        savedProperty = await propertiesApi.update(editingId, payload as UpdatePropertyDto, token);
       } else {
-        const created = await propertiesApi.create(payload as CreatePropertyDto, token);
-        setProperties((current) => [created, ...current]);
-        setNotice({ kind: 'success', message: 'Property created and saved.' });
+        savedProperty = await propertiesApi.create(payload as CreatePropertyDto, token);
       }
 
-      setMode('create');
-      setEditingId(null);
-      setForm(EMPTY_FORM);
+      setProperties((current) => {
+        const next = current.filter((property) => property.id !== savedProperty.id);
+        return [savedProperty, ...next];
+      });
+
+      if (selectedImages.length > 0) {
+        try {
+          savedProperty = await uploadPropertyImages(savedProperty.id, selectedImages, token);
+          setProperties((current) =>
+            current.map((property) => (property.id === savedProperty.id ? savedProperty : property)),
+          );
+        } catch (imageError) {
+          setNotice({
+            kind: 'error',
+            message: `${isEditing ? 'Property updated' : 'Property saved as a draft'}, but image upload failed: ${
+              (imageError as Error).message || 'Unable to upload images.'
+            }`,
+          });
+          resetForm();
+          return;
+        }
+      }
+
+      setNotice({
+        kind: 'success',
+        message: isEditing
+          ? 'Property updated successfully.'
+          : selectedImages.length > 0
+            ? 'Property draft saved and images attached.'
+            : 'Property draft saved successfully.',
+      });
+
+      resetForm();
     } catch (error) {
       setNotice({
         kind: 'error',
@@ -405,14 +537,14 @@ export default function AdminPropertyStudio() {
     setMode('edit');
     setEditingId(property.id);
     setForm(formFromProperty(property));
+    setSelectedImages([]);
+    setImageInputKey((current) => current + 1);
     setNotice(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancelEdit = () => {
-    setMode('create');
-    setEditingId(null);
-    setForm(EMPTY_FORM);
+    resetForm();
     setNotice(null);
   };
 
@@ -489,8 +621,8 @@ export default function AdminPropertyStudio() {
                 Manage your property inventory from one place.
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
-                Sign in with an admin or agent account to create, update, publish, and remove
-                properties in the live backend.
+                Sign in with an admin or agent account to create draft listings, update them,
+                publish when ready, and manage images against the live backend.
               </p>
             </div>
 
@@ -504,9 +636,7 @@ export default function AdminPropertyStudio() {
               <button
                 type="button"
                 onClick={() => {
-                  setMode('create');
-                  setEditingId(null);
-                  setForm(EMPTY_FORM);
+                  resetForm();
                   setNotice(null);
                 }}
                 className="inline-flex items-center gap-2 rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
@@ -518,7 +648,8 @@ export default function AdminPropertyStudio() {
           </div>
 
           <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
-            Admin actions now persist to the backend when you are signed in with a valid token.
+            New properties are saved in DRAFT status first. Images are uploaded through the
+            presign/confirm flow after the draft is created.
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -547,10 +678,10 @@ export default function AdminPropertyStudio() {
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
-                  {isEditing ? 'Edit property' : 'Create property'}
+                  {isEditing ? 'Edit property' : 'Create draft'}
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-midnight">
-                  {isEditing ? 'Update listing details' : 'Add a new property'}
+                  {isEditing ? 'Update listing details' : 'Add a new draft listing'}
                 </h2>
               </div>
 
@@ -582,10 +713,45 @@ export default function AdminPropertyStudio() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, description: event.target.value }))
                   }
+                  minLength={10}
                   className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
                   placeholder="Describe the property, features, and selling points."
                   required
                 />
+              </Field>
+
+              <Field label="Property images">
+                <input
+                  key={imageInputKey}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []).filter((file) =>
+                      file.type.startsWith('image/'),
+                    );
+                    setSelectedImages(files);
+                  }}
+                  className="w-full cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-600 outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:border-gold-primary focus:border-gold-primary"
+                />
+                <p className="mt-2 text-xs leading-6 text-slate-500">
+                  Selected files are uploaded after the property draft is created. The first image
+                  becomes the primary image.
+                </p>
+                {selectedImages.length > 0 ? (
+                  <ul className="mt-3 space-y-1 text-xs text-slate-600">
+                    {selectedImages.map((file, index) => (
+                      <li key={`${file.name}-${file.lastModified}-${index}`} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
+                        <span className="truncate">{file.name}</span>
+                        {index === 0 ? (
+                          <span className="rounded-full bg-gold-primary/10 px-2 py-1 font-semibold text-gold-deep">
+                            Primary
+                          </span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -754,6 +920,8 @@ export default function AdminPropertyStudio() {
                 <Field label="Latitude">
                   <input
                     type="number"
+                    min="-90"
+                    max="90"
                     step="any"
                     value={form.latitude}
                     onChange={(event) =>
@@ -790,7 +958,7 @@ export default function AdminPropertyStudio() {
                   disabled={saving}
                   className="flex-1 rounded-full bg-midnight px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? 'Saving…' : isEditing ? 'Update property' : 'Publish property'}
+                  {saving ? 'Saving…' : isEditing ? 'Update property' : 'Save draft'}
                 </button>
               </div>
             </form>

@@ -7,14 +7,24 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ChevronDown, LogOut, Menu, Shield, UserCircle2, X } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
-import { getRoleHomePath, isStaffRole } from '@/lib/auth-routing';
+import { isStaffRole } from '@/lib/auth-routing';
 
-const NAV_LINKS = [
+const PUBLIC_NAV_LINKS = [
   { label: 'Properties', href: '/properties' },
   { label: 'Marketplace', href: '/marketplace' },
   { label: 'Booking', href: '/booking' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
+];
+
+const ADMIN_NAV_LINKS = [
+  { label: 'Dashboard', href: '/admin' },
+  { label: 'Preview Site', href: '/properties' },
+];
+
+const AGENT_NAV_LINKS = [
+  { label: 'Studio', href: '/agent' },
+  { label: 'Preview Site', href: '/properties' },
 ];
 
 export default function Navbar() {
@@ -60,6 +70,18 @@ export default function Navbar() {
     router.push('/');
   };
 
+  const roleDashboardHref =
+    user?.role === 'ADMIN' ? '/admin' : user?.role === 'AGENT' ? '/agent' : null;
+  const roleDashboardLabel =
+    user?.role === 'ADMIN' ? 'Dashboard' : user?.role === 'AGENT' ? 'Studio' : null;
+  const navLinks = !user
+    ? PUBLIC_NAV_LINKS
+    : user.role === 'ADMIN'
+      ? ADMIN_NAV_LINKS
+      : user.role === 'AGENT'
+        ? AGENT_NAV_LINKS
+        : PUBLIC_NAV_LINKS;
+
   const isActiveLink = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const initials = user
     ? user.fullName
@@ -69,8 +91,6 @@ export default function Navbar() {
         .map((part) => part[0]?.toUpperCase())
         .join('')
     : 'U';
-  const dashboardHref = user ? getRoleHomePath(user.role) : '/';
-
   return (
     <>
       <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/15 bg-white/10 backdrop-blur-xl backdrop-saturate-200 shadow-[0_1px_20px_rgba(0,0,0,0.04)]">
@@ -93,7 +113,7 @@ export default function Navbar() {
 
             <div className="hidden items-center gap-6 lg:flex">
               <ul className="flex items-center gap-8">
-                {NAV_LINKS.map((link) => {
+                {navLinks.map((link) => {
                   const isActive = isActiveLink(link.href);
 
                   return (
@@ -160,12 +180,12 @@ export default function Navbar() {
                       </Link>
                       {isStaffRole(user.role) ? (
                         <Link
-                          href={dashboardHref}
+                          href={roleDashboardHref ?? '/'}
                           onClick={handleNavClick}
                           className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-stone-50 hover:text-midnight"
                         >
                           <Shield className="h-4 w-4" />
-                          Dashboard
+                          {roleDashboardLabel}
                         </Link>
                       ) : null}
                       <button
@@ -183,7 +203,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-3">
                   <Link
                     href="/auth/login"
-                    className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-md transition hover:border-white/35 hover:bg-white/20"
+                    className="rounded-full bg-gold-primary px-5 py-2.5 text-sm font-semibold text-midnight shadow-[0_10px_24px_rgba(172,149,62,0.24)] transition hover:bg-gold-deep"
                   >
                     Login
                   </Link>
@@ -208,7 +228,7 @@ export default function Navbar() {
           <div className="relative flex h-full flex-col">
             <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
               <ul className="divide-y divide-white/15 rounded-[28px] border border-white/20 bg-white/70 shadow-sm backdrop-blur-xl">
-                {NAV_LINKS.map((link) => {
+                {navLinks.map((link) => {
                   const isActive = isActiveLink(link.href);
 
                   return (
@@ -252,11 +272,11 @@ export default function Navbar() {
                     </Link>
                     {isStaffRole(user.role) ? (
                       <Link
-                        href={dashboardHref}
+                        href={roleDashboardHref ?? '/'}
                         onClick={handleNavClick}
                         className="rounded-full border border-white/20 bg-white/80 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
                       >
-                        Dashboard
+                        {roleDashboardLabel}
                       </Link>
                     ) : null}
                     <button
@@ -273,7 +293,7 @@ export default function Navbar() {
                   <Link
                     href="/auth/login"
                     onClick={handleNavClick}
-                    className="rounded-full border border-white/20 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white backdrop-blur-md transition hover:border-white/35 hover:bg-white/20"
+                    className="rounded-full bg-gold-primary px-5 py-3 text-center text-sm font-semibold text-midnight shadow-[0_10px_24px_rgba(172,149,62,0.24)] transition hover:bg-gold-deep"
                   >
                     Login
                   </Link>

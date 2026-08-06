@@ -7,7 +7,7 @@
 // ============================================
 // Auth
 // ============================================
-export type UserRole = 'user' | 'agent' | 'admin';
+export type UserRole = 'USER' | 'AGENT' | 'ADMIN';
 
 export interface RegisterUserDto {
   email: string;
@@ -52,9 +52,9 @@ export interface AgentResponseDto {
 // ============================================
 // Shared / enums
 // ============================================
-export type ListingType = 'SALE' | 'RENT' | string;
-export type PropertyCategory = 'HOUSE' | 'APARTMENT' | 'LAND' | 'COMMERCIAL' | string;
-export type AreaUnit = 'sqft' | 'sqm' | 'aana' | 'ropani' | string;
+export type ListingType = 'SALE' | 'RENT';
+export type PropertyCategory = 'HOUSE' | 'APARTMENT' | 'LAND' | 'COMMERCIAL';
+export type AreaUnit = 'sqft' | 'sqm' | 'aana' | 'ropani';
 
 export interface PaginationMeta {
   page: number;
@@ -108,6 +108,48 @@ export interface CreatePropertyDto {
   reservationFeeOverride?: number;
 }
 
+export interface PropertyListQueryParams {
+  status?: PropertyStatus;
+  listingType?: ListingType;
+  category?: PropertyCategory;
+  city?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface UserPropertyListQueryParams {
+  status?: UserPropertyStatus | string;
+  listingType?: ListingType;
+  category?: PropertyCategory;
+  city?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface ReservationListQueryParams {
+  status?: ReservationStatus;
+  propertyId?: string;
+  userId?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface FinancePaymentsQueryParams {
+  status?: string;
+  provider?: string;
+  propertyId?: string;
+  userId?: string;
+  agentId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  limit?: number;
+}
+
 export interface UpdatePropertyDto {
   title?: string;
   description?: string;
@@ -131,6 +173,23 @@ export interface PropertyImageResponseDto {
   url: string;
   isPrimary: boolean;
   sortOrder: number;
+}
+
+export interface PresignPropertyImageDto {
+  mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
+}
+
+export interface PresignPropertyImageResponseDto {
+  uploadUrl: string;
+  s3Key: string;
+  publicUrl: string;
+}
+
+export interface ConfirmPropertyImageDto {
+  s3Key: string;
+  publicUrl: string;
+  isPrimary?: boolean;
+  sortOrder?: number;
 }
 
 export interface PropertyResponseDto {

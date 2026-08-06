@@ -10,6 +10,123 @@ interface ApiOptions extends RequestInit {
   next?: { revalidate?: number | false; tags?: string[] };
 }
 
+const STATUS_FALLBACK_MESSAGES: Record<number, string> = {
+  400: 'The request was invalid.',
+  401: 'You are not signed in or your session has expired.',
+  403: 'You do not have permission to perform this action.',
+  404: 'The requested resource was not found.',
+  408: 'The request timed out. Please try again.',
+  409: 'This request could not be completed because of a conflict.',
+  422: 'Some of the submitted information is invalid.',
+  429: 'Too many requests were sent. Please wait a moment and try again.',
+  500: 'The server encountered an error. Please try again later.',
+  502: 'The server is temporarily unavailable. Please try again later.',
+  503: 'The service is temporarily unavailable. Please try again later.',
+  504: 'The server took too long to respond. Please try again later.',
+};
+
+async function readResponseBody(res: Response): Promise<unknown> {
+  const contentType = res.headers.get('content-type') || '';
+  const text = await res.text().catch(() => '');
+
+  if (!text) {
+    return null;
+  }
+
+  if (contentType.includes('application/json')) {
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      return text;
+    }
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+function getBodyMessage(body: unknown): string | null {
+  if (!body) return null;
+
+  if (typeof body === 'string') {
+    const trimmed = body.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (Array.isArray(body)) {
+    const parts = body
+      .map((value) => (typeof value === 'string' ? value.trim() : ''))
+      .filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : null;
+  }
+
+  if (typeof body === 'object') {
+    const candidate = body as {
+      message?: unknown;
+      error?: unknown;
+      detail?: unknown;
+      title?: unknown;
+      details?: unknown;
+    };
+
+    return (
+      getBodyMessage(candidate.message) ||
+      getBodyMessage(candidate.error) ||
+      getBodyMessage(candidate.detail) ||
+      getBodyMessage(candidate.title) ||
+      getBodyMessage(candidate.details)
+    );
+  }
+
+  return null;
+}
+
+function getValidationDetails(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+
+  const error = body as { error?: unknown; details?: unknown };
+  const details = error.details ?? (error.error && typeof error.error === 'object'
+    ? (error.error as { details?: unknown }).details
+    : undefined);
+
+  if (!Array.isArray(details)) return null;
+
+  const messages = details
+    .map((value) => {
+      if (typeof value === 'string') return value.trim();
+
+      if (value && typeof value === 'object') {
+        const nested = value as {
+          message?: unknown;
+          detail?: unknown;
+          error?: unknown;
+          property?: unknown;
+          field?: unknown;
+        };
+
+        return (
+          getBodyMessage(nested.message) ||
+          getBodyMessage(nested.detail) ||
+          getBodyMessage(nested.error) ||
+          (typeof nested.property === 'string' ? nested.property.trim() : '') ||
+          (typeof nested.field === 'string' ? nested.field.trim() : '')
+        );
+      }
+
+      return '';
+    })
+    .filter(Boolean);
+
+  return messages.length > 0 ? messages.join('; ') : null;
+}
+
+function getFriendlyHttpErrorMessage(status: number): string {
+  return STATUS_FALLBACK_MESSAGES[status] || `The request could not be completed (${status}).`;
+}
+
 async function apiFetch<T>(
   path: string,
   options: ApiOptions = {},
@@ -26,13 +143,17 @@ async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    // NestJS validation errors return `message` as an array of strings,
-    // e.g. ["email must be a valid email", "phoneNumber should not be empty"]
-    const message = Array.isArray(err.message)
-      ? err.message.join(', ')
-      : err.message;
-    throw new Error(message || `Request failed: ${res.status}`);
+    const body = await readResponseBody(res);
+    const bodyMessage = getBodyMessage(body);
+    const validationDetails = getValidationDetails(body);
+    const friendly = getFriendlyHttpErrorMessage(res.status);
+
+    if (bodyMessage || validationDetails) {
+      const suffix = [bodyMessage, validationDetails].filter(Boolean).join(' - ');
+      throw new Error(`${friendly}${suffix ? ` ${suffix}` : ''}`.trim());
+    }
+
+    throw new Error(friendly);
   }
 
   // DELETE endpoints often return 204 No Content — guard against
@@ -51,10 +172,8 @@ async function apiFetch<T>(
     'data' in payload
   ) {
     if (payload.success === false) {
-      const message = Array.isArray(payload.message)
-        ? payload.message.join(', ')
-        : payload.message;
-      throw new Error(message || 'Request failed');
+      const message = getBodyMessage(payload.message) || getBodyMessage(payload.error);
+      throw new Error(message || 'The request could not be completed.');
     }
     return payload.data as T;
   }

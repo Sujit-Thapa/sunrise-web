@@ -1,37 +1,69 @@
 import PropertiesListing from '@/components/sections/PropertiesListing';
-import { api } from '@/lib/api';
+import { propertiesApi } from '@/lib/backend';
 
-import type {
-  PropertyResponseDto,
-  PropertiesListResponseDto,
-} from '@/types';
+import type { PropertyListQueryParams, PropertyResponseDto } from '@/types';
 
-type PropertiesApiResponse =
-  PropertiesListResponseDto & {
-    total?: number;
-    page?: number;
-    limit?: number;
-    totalPages?: number;
-  };
+type PropertiesPageProps = {
+  searchParams: Promise<
+    Record<string, string | string[] | undefined>
+  >;
+};
 
-export default async function Properties() {
+function singleValue(
+  value: string | string[] | undefined,
+): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+function parseNumber(
+  value: string | undefined,
+): number | undefined {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export default async function Properties({ searchParams }: PropertiesPageProps) {
+  const resolvedSearchParams = await searchParams;
   let properties: PropertyResponseDto[] = [];
   let total = 0;
 
   try {
-    const response =
-      await api.get<PropertiesApiResponse>(
-        '/v1/properties',
-      );
+    const filters: PropertyListQueryParams = {
+      city: singleValue(resolvedSearchParams.city),
+      category: (() => {
+        const raw = singleValue(resolvedSearchParams.category);
+        if (!raw) return undefined;
 
-    properties = Array.isArray(response?.items)
-      ? response.items
-      : [];
+        const normalized = raw.toUpperCase();
+        return normalized === 'HOUSE' ||
+          normalized === 'APARTMENT' ||
+          normalized === 'LAND' ||
+          normalized === 'COMMERCIAL'
+          ? normalized
+          : undefined;
+      })(),
+      listingType: (() => {
+        const raw = singleValue(resolvedSearchParams.listingType);
+        if (!raw) return undefined;
+        const normalized = raw.toUpperCase();
+        return normalized === 'SALE' || normalized === 'RENT'
+          ? normalized
+          : undefined;
+      })(),
+      minPrice: parseNumber(singleValue(resolvedSearchParams.minPrice)),
+      maxPrice: parseNumber(singleValue(resolvedSearchParams.maxPrice)),
+      page: 1,
+      limit: 50,
+    };
 
-    total =
-      response?.pagination?.total ??
-      response?.total ??
-      properties.length;
+    const response = await propertiesApi.findAll(filters);
+    properties = Array.isArray(response?.items) ? response.items : [];
+    total = response?.pagination?.total ?? properties.length;
   } catch (error) {
     console.error(
       'Failed to fetch properties:',
@@ -44,6 +76,7 @@ export default async function Properties() {
       <PropertiesListing
         properties={properties}
         total={total}
+        searchQuery={singleValue(resolvedSearchParams.city) ?? ''}
       />
     </div>
   );
