@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import AdminPropertyStudio from '@/components/admin/AdminPropertyStudio';
+import AdminDashboard from '@/components/admin/AdminDashboard';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard | Sunrise Realestate',
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminPropertyStudio />;
+  return <AdminDashboard />;
 }
