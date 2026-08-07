@@ -590,6 +590,16 @@ export default function AdminPropertyStudio() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    const deletableStatus = deleteTarget.status === 'DRAFT' || deleteTarget.status === 'HIDDEN';
+    if (!deletableStatus) {
+      setNotice({
+        kind: 'error',
+        message: 'Only DRAFT or HIDDEN properties can be deleted.',
+      });
+      setDeleteTarget(null);
+      return;
+    }
+
     setBusyId(deleteTarget.id);
 
     try {
@@ -1005,6 +1015,7 @@ export default function AdminPropertyStudio() {
                 filteredProperties.map((property) => {
                   const primaryImage = getPrimaryImage(property.images);
                   const isBusy = busyId === property.id;
+                  const canDelete = property.status === 'DRAFT' || property.status === 'HIDDEN';
                   const statusLabel = getPropertyStatusLabel(property.status);
                   const listingLabel = getListingTypeLabel(property.listingType);
                   const location = formatLocation(property) || 'Location not provided';
@@ -1125,7 +1136,16 @@ export default function AdminPropertyStudio() {
                             )}
                             <button
                               type="button"
-                              onClick={() => setDeleteTarget(property)}
+                              onClick={() => {
+                                if (!canDelete) {
+                                  setNotice({
+                                    kind: 'error',
+                                    message: 'Only DRAFT or HIDDEN properties can be deleted.',
+                                  });
+                                  return;
+                                }
+                                setDeleteTarget(property);
+                              }}
                               disabled={isBusy}
                               className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
                             >
@@ -1168,7 +1188,19 @@ export default function AdminPropertyStudio() {
             </div>
 
             <p className="text-sm leading-7 text-slate-500">
-              This will permanently remove <span className="font-semibold text-slate-800">{deleteTarget.title}</span> from the admin list and the public site.
+              {deleteTarget.status === 'DRAFT' || deleteTarget.status === 'HIDDEN' ? (
+                <>
+                  This will permanently remove{' '}
+                  <span className="font-semibold text-slate-800">{deleteTarget.title}</span>{' '}
+                  from the admin list and the public site.
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold text-slate-800">{deleteTarget.title}</span> cannot
+                  be deleted right now. The backend only allows deleting properties that are in
+                  DRAFT or HIDDEN status.
+                </>
+              )}
             </p>
 
             <div className="mt-6 flex gap-3">
@@ -1182,7 +1214,10 @@ export default function AdminPropertyStudio() {
               <button
                 type="button"
                 onClick={handleDelete}
-                disabled={busyId === deleteTarget.id}
+                disabled={
+                  busyId === deleteTarget.id ||
+                  !(deleteTarget.status === 'DRAFT' || deleteTarget.status === 'HIDDEN')
+                }
                 className="flex-1 rounded-full bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busyId === deleteTarget.id ? 'Deleting…' : 'Delete property'}
