@@ -183,6 +183,25 @@ export default function AdminDashboard() {
   const [configForm, setConfigForm] = useState<UpdateSystemConfigDto>(emptyConfigForm);
   const [configSaving, setConfigSaving] = useState(false);
   const [notice, setNotice] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const userPropertySummary = useMemo(() => {
+    const summary = {
+      total: userProperties.length,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      hidden: 0,
+    };
+
+    for (const property of userProperties) {
+      const status = String(property.status).toUpperCase();
+      if (status === 'PENDING_REVIEW') summary.pending += 1;
+      else if (status === 'APPROVED') summary.approved += 1;
+      else if (status === 'REJECTED') summary.rejected += 1;
+      else if (status === 'HIDDEN') summary.hidden += 1;
+    }
+
+    return summary;
+  }, [userProperties]);
 
   useEffect(() => {
     const authToken = getAuthToken();
@@ -571,7 +590,13 @@ export default function AdminDashboard() {
                 description="Quick access to the main backend areas covered by the admin endpoints."
               >
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <Metric label="Property drafts" value={String(userProperties.length)} />
+                  <Metric label="User listings" value={String(userPropertySummary.total)} />
+                  <Metric label="Pending reviews" value={String(userPropertySummary.pending)} />
+                  <Metric label="Approved" value={String(userPropertySummary.approved)} />
+                  <Metric label="Rejected" value={String(userPropertySummary.rejected)} />
+                </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <Metric label="Hidden" value={String(userPropertySummary.hidden)} />
                   <Metric label="Reservations" value={String(reservations.length)} />
                   <Metric label="Payments" value={String(financePayments.length)} />
                   <Metric label="Reservation fee" value={systemConfig ? money(systemConfig.reservationFeeAmount) : 'Loading…'} />

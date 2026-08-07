@@ -2,16 +2,19 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState, type LucideIcon } from 'react';
 import {
+  AlertTriangle,
   ArrowRight,
   Bookmark,
   CalendarCheck2,
+  Clock3,
   House,
   LogOut,
   MapPin,
+  PencilLine,
   ShieldCheck,
   Sparkles,
-  type LucideIcon,
 } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
@@ -21,13 +24,17 @@ import {
   EMPTY_BOOKED_PROPERTIES,
   EMPTY_SAVED_PROPERTIES,
 } from '@/lib/account-store';
+import { getAuthToken } from '@/lib/auth';
+import { userPropertiesApi } from '@/lib/backend';
 import {
+  formatArea,
   formatCurrency,
+  formatLocation,
   getListingTypeLabel,
   getPropertyCategoryLabel,
   getPropertyStatusLabel,
 } from '@/lib/properties';
-import type { BookedPropertySnapshot, PropertySnapshot } from '@/lib/account-store';
+import type { BookedPropertySnapshot, PropertySnapshot, UserPropertyResponseDto } from '@/types';
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuthSession();
@@ -38,6 +45,50 @@ export default function ProfilePage() {
   const booked = useAccountStore((state) =>
     user ? state.accounts[user.id]?.booked ?? EMPTY_BOOKED_PROPERTIES : EMPTY_BOOKED_PROPERTIES,
   );
+  const [mySubmissions, setMySubmissions] = useState<UserPropertyResponseDto[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadMySubmissions = async () => {
+      if (!user) {
+        setMySubmissions([]);
+        setSubmissionsLoading(false);
+        setSubmissionsError(null);
+        return;
+      }
+
+      const token = getAuthToken();
+      if (!token) {
+        setMySubmissions([]);
+        setSubmissionsError('Sign in again to load your submissions.');
+        setSubmissionsLoading(false);
+        return;
+      }
+
+      setSubmissionsLoading(true);
+      setSubmissionsError(null);
+
+      try {
+        const response = await userPropertiesApi.findMine(token, { page: 1, limit: 20 });
+        if (!active) return;
+        setMySubmissions(response.items ?? []);
+      } catch (error) {
+        if (!active) return;
+        setSubmissionsError((error as Error).message || 'Unable to load your submissions.');
+      } finally {
+        if (active) setSubmissionsLoading(false);
+      }
+    };
+
+    void loadMySubmissions();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   if (loading || (user && !hydrated)) {
     return (
@@ -109,6 +160,7 @@ export default function ProfilePage() {
                 <Pill>{user.role}</Pill>
                 <Pill>{saved.length} saved</Pill>
                 <Pill>{booked.length} booked</Pill>
+                <Pill>{mySubmissions.length} submissions</Pill>
               </div>
 
               <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-500">
@@ -119,6 +171,7 @@ export default function ProfilePage() {
               <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <MiniStat label="Saved" value={saved.length} />
                 <MiniStat label="Booked" value={booked.length} />
+                <MiniStat label="Submissions" value={mySubmissions.length} />
                 <MiniStat label="Role" value={user.role} />
                 <MiniStat label="Account" value={user.id.slice(0, 8)} />
               </div>
@@ -204,6 +257,117 @@ export default function ProfilePage() {
             actionIcon={CalendarCheck2}
             readOnly
           />
+        </section>
+
+        <section className="mt-8 rounded-[32px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
+                My submissions
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-midnight">Properties you added</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500">
+                These come from the `GET /v1/user-properties/mine` endpoint. New submissions wait for
+                admin review, approved listings can appear in the marketplace, and rejected items
+                show the reason here.
+              </p>
+            </div>
+            <Link
+              href="/marketplace#my-submissions"
+              className="inline-flex items-center justify-center rounded-full border border-midnight px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-midnight transition hover:bg-midnight hover:text-white"
+            >
+              Manage in marketplace
+            </Link>
+          </div>
+
+          {submissionsError ? (
+            <p className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {submissionsError}
+            </p>
+          ) : null}
+
+          {submissionsLoading ? (
+            <div className="mt-6 rounded-[28px] border border-stone-200 bg-stone-50 p-8 text-center text-slate-500">
+              Loading your submissions…
+            </div>
+          ) : mySubmissions.length === 0 ? (
+            <div className="mt-6 rounded-[28px] border border-dashed border-stone-200 bg-stone-50 p-8 text-center text-slate-500">
+              <p className="text-lg font-medium text-slate-700">You have not added any properties yet.</p>
+              <p className="mt-2 text-sm">Use the marketplace form to submit a property for admin review.</p>
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-5 xl:grid-cols-2">
+              {mySubmissions.map((property) => {
+                const rejectionReason = property.rejectionReason?.trim();
+                return (
+                  <article
+                    key={property.id}
+                    className="rounded-[28px] border border-stone-200 bg-white p-5 shadow-brand-sm"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          {getPropertyCategoryLabel(property.category)}
+                        </p>
+                        <h3 className="mt-1 truncate text-xl font-semibold text-midnight">
+                          {property.title}
+                        </h3>
+                        <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
+                          <MapPin className="h-4 w-4" />
+                          {formatLocation(property) || 'Location not specified'}
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-lg font-semibold text-gold-primary">
+                        {formatCurrency(property.price)}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2 text-[0.7rem] font-medium">
+                      <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
+                        {getListingTypeLabel(property.listingType)}
+                      </span>
+                      <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
+                        {formatArea(property.areaSize, property.areaUnit)}
+                      </span>
+                      <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
+                        {getPropertyStatusLabel(property.status)}
+                      </span>
+                    </div>
+
+                    <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">
+                      Submitted {new Date(property.createdAt).toLocaleDateString()}
+                    </p>
+
+                    {rejectionReason ? (
+                      <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <p className="font-semibold">Rejection reason</p>
+                            <p className="mt-1 leading-6">{rejectionReason}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <Link
+                        href="/marketplace#my-submissions"
+                        className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                      >
+                        <PencilLine className="h-4 w-4" />
+                        Manage
+                      </Link>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        <Clock3 className="h-4 w-4" />
+                        Admin review
+                      </span>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
     </main>

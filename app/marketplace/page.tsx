@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
 import {
@@ -88,6 +89,7 @@ function statusTone(status: UserPropertyStatus): string {
 }
 
 export default function Marketplace() {
+  const { user } = useAuthSession();
   const [publicListings, setPublicListings] = useState<UserPropertyResponseDto[]>([]);
   const [myListings, setMyListings] = useState<UserPropertyResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -239,6 +241,10 @@ export default function Marketplace() {
               Browse approved community listings, submit your own property for review, and manage
               your submissions from one place.
             </p>
+            <div className="mt-5 rounded-[24px] border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-slate-600">
+              New submissions are sent to the admin review queue. Approved listings appear here,
+              while your personal submissions stay in <a href="#my-submissions" className="font-semibold text-gold-primary underline-offset-4 hover:underline">My submissions</a>.
+            </div>
           </div>
 
           {/* Sticky filter bar */}
@@ -311,7 +317,10 @@ export default function Marketplace() {
                 </div>
               ) : (
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredPublic.map((listing) => (
+                  {filteredPublic.map((listing) => {
+                    const isMine = user?.id ? listing.submittedBy.id === user.id : false;
+
+                    return (
                     <article
                       key={listing.id}
                       onMouseEnter={() => setHoveredId(listing.id)}
@@ -340,6 +349,11 @@ export default function Marketplace() {
                           <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${statusTone(listing.status)} backdrop-blur`}>
                             {getPropertyStatusLabel(listing.status)}
                           </span>
+                          {isMine ? (
+                            <span className="rounded-full bg-midnight/90 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                              Your listing
+                            </span>
+                          ) : null}
                         </div>
                       </div>
 
@@ -368,16 +382,23 @@ export default function Marketplace() {
                             <p className="mt-1 text-[0.72rem] text-slate-400">Listed by {listing.submittedBy.fullName}</p>
                             <p className="text-[0.68rem] text-slate-400">{new Date(listing.createdAt).toLocaleDateString()}</p>
                           </div>
-                          <a
-                            href="#my-submissions"
-                            className="rounded-full border border-stone-200 px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:border-gold-primary hover:text-gold-primary"
-                          >
-                            View mine
-                          </a>
+                          {isMine ? (
+                            <span className="rounded-full border border-stone-200 bg-stone-50 px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              Manage in My submissions
+                            </span>
+                          ) : (
+                            <a
+                              href="#my-submissions"
+                              className="rounded-full border border-stone-200 px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:border-gold-primary hover:text-gold-primary"
+                            >
+                              View mine
+                            </a>
+                          )}
                         </div>
                       </div>
                     </article>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
