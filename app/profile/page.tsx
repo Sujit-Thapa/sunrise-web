@@ -27,6 +27,7 @@ import {
 } from '@/lib/account-store';
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
+import type { BookedPropertySnapshot, PropertySnapshot } from '@/lib/account-store';
 import {
   formatArea,
   formatCurrency,
@@ -35,7 +36,7 @@ import {
   getPropertyCategoryLabel,
   getPropertyStatusLabel,
 } from '@/lib/properties';
-import type { BookedPropertySnapshot, PropertySnapshot, UserPropertyResponseDto } from '@/types';
+import type { UserPropertyResponseDto } from '@/types';
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuthSession();
@@ -501,7 +502,7 @@ function PropertyShelf({
   );
 }
 
-function Pill({ children }: { children: string }) {
+function Pill({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
       {children}

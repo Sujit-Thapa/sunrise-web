@@ -54,7 +54,7 @@ export function getPrimaryImage(
   );
 }
 
-export function getListingTypeLabel(listingType: ListingType | null | undefined): string {
+export function getListingTypeLabel(listingType: ListingType | string | null | undefined): string {
   if (!listingType) return 'Listing';
 
   switch (String(listingType).toLowerCase()) {
