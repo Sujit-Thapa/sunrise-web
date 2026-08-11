@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState, type LucideIcon } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -15,6 +15,7 @@ import {
   PencilLine,
   ShieldCheck,
   Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
