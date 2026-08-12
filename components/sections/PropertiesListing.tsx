@@ -24,9 +24,15 @@ interface PropertiesListingProps {
   properties?: PropertyResponseDto[];
   total?: number;
   searchQuery?: string;
+  loadError?: string | null;
 }
 
-export default function PropertiesListing({ properties, total, searchQuery }: PropertiesListingProps) {
+export default function PropertiesListing({
+  properties,
+  total,
+  searchQuery,
+  loadError,
+}: PropertiesListingProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const items = Array.isArray(properties) ? properties : [];
   const resultCount = total ?? items.length;
@@ -51,6 +57,11 @@ export default function PropertiesListing({ properties, total, searchQuery }: Pr
               ? `Showing matches for “${searchQuery}”. Hover a listing to spotlight it on the map.`
               : 'Hover a listing to spotlight it on the map. The experience stays useful even when the map token is missing.'}
           </p>
+          {loadError ? (
+            <div className="mt-4 rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Live listings are unavailable right now. Showing the page shell so you can keep browsing.
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-5">

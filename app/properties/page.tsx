@@ -31,6 +31,7 @@ export default async function Properties({ searchParams }: PropertiesPageProps) 
   const resolvedSearchParams = await searchParams;
   let properties: PropertyResponseDto[] = [];
   let total = 0;
+  let loadError: string | null = null;
 
   try {
     const filters: PropertyListQueryParams = {
@@ -65,10 +66,10 @@ export default async function Properties({ searchParams }: PropertiesPageProps) 
     properties = Array.isArray(response?.items) ? response.items : [];
     total = response?.pagination?.total ?? properties.length;
   } catch (error) {
-    console.error(
-      'Failed to fetch properties:',
-      error,
-    );
+    loadError =
+      error instanceof Error
+        ? error.message
+        : 'Property listings are temporarily unavailable.';
   }
 
   return (
@@ -77,6 +78,7 @@ export default async function Properties({ searchParams }: PropertiesPageProps) 
         properties={properties}
         total={total}
         searchQuery={singleValue(resolvedSearchParams.city) ?? ''}
+        loadError={loadError}
       />
     </div>
   );
