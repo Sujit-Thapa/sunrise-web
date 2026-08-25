@@ -6,14 +6,13 @@ import Image from 'next/image';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
-import { resolveImageSrc } from '@/lib/image';
+import { resolveImageSrcFromProperty } from '@/lib/image';
 import {
   formatArea,
   formatCurrency,
   formatLocation,
   getPropertyCategoryLabel,
   getListingTypeLabel,
-  getPrimaryImage,
   getPropertyStatusLabel,
 } from '@/lib/properties';
 import type {
@@ -329,19 +328,13 @@ export default function Marketplace() {
                       className={`group overflow-hidden rounded-[28px] border border-stone-200 bg-white shadow-brand-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-brand-md ${hoveredId === listing.id ? 'border-gold-primary/40' : ''}`}
                     >
                       <div className="relative aspect-[4/3] bg-slate-100">
-                        {getPrimaryImage(listing.images)?.url ? (
-                          <Image
-                            src={resolveImageSrc(getPrimaryImage(listing.images)!.url)}
-                            alt={listing.title || 'Property'}
-                            fill
-                            sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,rgba(184,155,78,0.12),rgba(15,23,42,0.05))] text-sm font-medium text-slate-500">
-                            No image yet
-                          </div>
-                        )}
+                        <Image
+                          src={resolveImageSrcFromProperty(listing)}
+                          alt={listing.title || 'Property'}
+                          fill
+                          sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-midnight/35 via-transparent to-transparent" />
                         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                           <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${String(listing.category).toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/90 text-midnight'} backdrop-blur`}>

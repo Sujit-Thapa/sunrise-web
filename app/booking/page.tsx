@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
-import { resolveImageSrc } from '@/lib/image';
+import { resolveImageSrcFromProperty } from '@/lib/image';
 import { setPendingBooking, snapshotProperty } from '@/lib/account-store';
 import { propertiesApi, paymentApi } from '@/lib/backend';
 import {
@@ -13,7 +13,6 @@ import {
   formatLocation,
   getPropertyCategoryLabel,
   getListingTypeLabel,
-  getPrimaryImage,
 } from '@/lib/properties';
 import type {
   InitiatePaymentDto,
@@ -258,19 +257,13 @@ export default function Booking() {
                     {filteredProps.map((p) => (
                       <button key={p.id} type="button" className={`overflow-hidden rounded-[24px] border text-left transition ${selectedId === p.id ? 'border-midnight bg-white shadow-brand-md' : 'border-stone-200 bg-white hover:border-gold-primary/60 hover:shadow-brand-sm'}`} onClick={() => setSelectedId(p.id)}>
                         <div className="relative aspect-[4/3] bg-slate-100">
-                          {getPrimaryImage(p.images)?.url ? (
                           <Image
-                              src={resolveImageSrc(getPrimaryImage(p.images)!.url)}
-                              alt={p.title || 'Property'}
-                              fill
-                              sizes="(min-width: 768px) 50vw, 100vw"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,rgba(184,155,78,0.12),rgba(15,23,42,0.05))] text-sm font-medium text-slate-500">
-                              No image yet
-                            </div>
-                          )}
+                            src={resolveImageSrcFromProperty(p)}
+                            alt={p.title || 'Property'}
+                            fill
+                            sizes="(min-width: 768px) 50vw, 100vw"
+                            className="object-cover"
+                          />
                         </div>
                         <div className="p-5">
                           <p className={`mb-3 text-[0.58rem] uppercase tracking-[0.18em] ${propertyFilterType(p) === 'house' ? 'text-[#3A5070]' : 'text-[#3A5830]'}`}>{getPropertyCategoryLabel(p.category)}</p>
@@ -395,19 +388,13 @@ export default function Booking() {
               ) : (
                 <>
                   <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-[24px] bg-slate-100">
-                    {getPrimaryImage(selected.images)?.url ? (
-                      <Image
-                        src={resolveImageSrc(getPrimaryImage(selected.images)!.url)}
-                        alt={selected.title || 'Property'}
-                        fill
-                        sizes="320px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,rgba(184,155,78,0.12),rgba(15,23,42,0.05))] text-sm font-medium text-slate-500">
-                        No image yet
-                      </div>
-                    )}
+                    <Image
+                      src={resolveImageSrcFromProperty(selected)}
+                      alt={selected.title || 'Property'}
+                      fill
+                      sizes="320px"
+                      className="object-cover"
+                    />
                   </div>
                   <p className="text-xl font-semibold text-midnight">{selected.title}</p>
                   <p className="mb-5 text-sm text-slate-500">{locationLabel(selected)}</p>
