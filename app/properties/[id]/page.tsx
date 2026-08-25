@@ -260,7 +260,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
                       }`}
                     >
                       <Image
-                        src={resolveImageSrc(img.url)}
+                        src={resolveImageSrcFromProperty(img.url)}
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 240px, 50vw"
