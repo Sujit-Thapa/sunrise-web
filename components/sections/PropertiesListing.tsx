@@ -12,10 +12,9 @@ import {
   formatLocation,
   getPropertyCategoryLabel,
   getListingTypeLabel,
-  getPrimaryImage,
   getPropertyStatusLabel,
 } from '@/lib/properties';
-import { resolveImageSrc } from '@/lib/image';
+import { resolveImageSrcFromProperty } from '@/lib/image';
 
 const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
 const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
@@ -417,7 +416,6 @@ function PropertyResult({
   isHovered: boolean;
   onHoverChange: (id: string | null) => void;
 }) {
-  const primaryImage = getPrimaryImage(property.images);
   const location = formatLocation(property) || 'Location not provided';
   const price = formatCurrency(property.price);
   const areaSize = formatArea(property.areaSize, property.areaUnit);
@@ -437,17 +435,13 @@ function PropertyResult({
       }`}
     >
       <div className="relative h-28 overflow-hidden rounded-brand-md bg-slate-100 sm:h-32">
-        {primaryImage?.url ? (
-          <Image
-            src={resolveImageSrc(primaryImage.url)}
-            alt={property.title || 'Property'}
-            fill
-            sizes="150px"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-slate-400">No image</div>
-        )}
+        <Image
+          src={resolveImageSrcFromProperty(property)}
+          alt={property.title || 'Property'}
+          fill
+          sizes="150px"
+          className="object-cover"
+        />
       </div>
 
       <div className="min-w-0 py-1">

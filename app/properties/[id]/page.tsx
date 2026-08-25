@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
 import {
   BadgeInfo,
-  ImageOff,
   MapPin,
   Ruler,
   Sparkles,
@@ -15,7 +14,7 @@ import {
 
 import { auth, getAuthToken } from '@/lib/auth';
 import { propertiesApi } from '@/lib/backend';
-import { resolveImageSrc } from '@/lib/image';
+import { resolveImageSrcFromProperty } from '@/lib/image';
 import {
   formatArea,
   formatCurrency,
@@ -207,21 +206,14 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
           <section className="space-y-8">
             <div className="overflow-hidden rounded-[34px] border border-stone-200 bg-white shadow-brand-sm">
               <div className="relative aspect-[16/10] min-h-[340px] bg-stone-100 sm:aspect-[16/9]">
-                {hero ? (
-                  <Image
-                    src={resolveImageSrc(hero.url)}
-                    alt={property.title}
-                    fill
-                    sizes="(min-width: 1024px) 900px, 100vw"
-                    className="object-cover"
-                    priority
-                  />
-                ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-stone-400">
-                    <ImageOff className="h-8 w-8" />
-                    <p className="text-sm font-medium">No image available</p>
-                  </div>
-                )}
+                <Image
+                  src={resolveImageSrcFromProperty(property)}
+                  alt={property.title}
+                  fill
+                  sizes="(min-width: 1024px) 900px, 100vw"
+                  className="object-cover"
+                  priority
+                />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-midnight/55 via-midnight/10 to-transparent" />
 

@@ -7,10 +7,9 @@ import {
   formatLocation,
   getPropertyCategoryLabel,
   getListingTypeLabel,
-  getPrimaryImage,
   getPropertyStatusLabel,
 } from '@/lib/properties';
-import { resolveImageSrc } from '@/lib/image';
+import { resolveImageSrcFromProperty } from '@/lib/image';
 import SavePropertyButton from '@/components/ui/SavePropertyButton';
 
 interface PropertyCardProps {
@@ -18,7 +17,6 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
-  const primaryImage = getPrimaryImage(property.images);
   const location = formatLocation(property);
   const price = formatCurrency(property.price);
   const area = formatArea(property.areaSize, property.areaUnit);
@@ -40,7 +38,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       <div className="relative z-0">
         <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           <Image
-            src={resolveImageSrc(primaryImage?.url)}
+            src={resolveImageSrcFromProperty(property)}
             alt={property.title || 'Property'}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"

@@ -16,14 +16,13 @@ import {
 import { auth, getAuthToken } from '@/lib/auth';
 import { isStaffRole } from '@/lib/auth-routing';
 import { propertiesApi } from '@/lib/backend';
-import { resolveImageSrc } from '@/lib/image';
+import { resolveImageSrcFromProperty } from '@/lib/image';
 import {
   formatArea,
   formatCurrency,
   formatLocation,
   getPropertyCategoryLabel,
   getListingTypeLabel,
-  getPrimaryImage,
   getPropertyStatusLabel,
 } from '@/lib/properties';
 import type {
@@ -1014,7 +1013,6 @@ export default function AdminPropertyStudio() {
                 </div>
               ) : filteredProperties.length > 0 ? (
                 filteredProperties.map((property) => {
-                  const primaryImage = getPrimaryImage(property.images);
                   const isBusy = busyId === property.id;
                   const canDelete = property.status === 'DRAFT' || property.status === 'HIDDEN';
                   const statusLabel = getPropertyStatusLabel(property.status);
@@ -1033,19 +1031,13 @@ export default function AdminPropertyStudio() {
                     >
                       <div className="grid gap-0 lg:grid-cols-[240px_1fr]">
                         <div className="relative min-h-[220px] bg-slate-100">
-                          {primaryImage?.url ? (
-                            <Image
-                              src={resolveImageSrc(primaryImage.url)}
-                              alt={property.title || 'Property'}
-                              fill
-                              sizes="(min-width: 1024px) 240px, 100vw"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,rgba(184,155,78,0.15),rgba(15,23,42,0.08))] text-sm font-medium text-slate-500">
-                              No image yet
-                            </div>
-                          )}
+                          <Image
+                            src={resolveImageSrcFromProperty(property)}
+                            alt={property.title || 'Property'}
+                            fill
+                            sizes="(min-width: 1024px) 240px, 100vw"
+                            className="object-cover"
+                          />
                         </div>
 
                         <div className="p-5 sm:p-6">
