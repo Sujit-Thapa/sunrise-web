@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
+import { resolveImageSrc } from '@/lib/image';
 import { setPendingBooking, snapshotProperty } from '@/lib/account-store';
 import { propertiesApi, paymentApi } from '@/lib/backend';
 import {
@@ -258,8 +259,8 @@ export default function Booking() {
                       <button key={p.id} type="button" className={`overflow-hidden rounded-[24px] border text-left transition ${selectedId === p.id ? 'border-midnight bg-white shadow-brand-md' : 'border-stone-200 bg-white hover:border-gold-primary/60 hover:shadow-brand-sm'}`} onClick={() => setSelectedId(p.id)}>
                         <div className="relative aspect-[4/3] bg-slate-100">
                           {getPrimaryImage(p.images)?.url ? (
-                            <Image
-                              src={getPrimaryImage(p.images)!.url}
+                          <Image
+                              src={resolveImageSrc(getPrimaryImage(p.images)!.url)}
                               alt={p.title || 'Property'}
                               fill
                               sizes="(min-width: 768px) 50vw, 100vw"
@@ -396,7 +397,7 @@ export default function Booking() {
                   <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-[24px] bg-slate-100">
                     {getPrimaryImage(selected.images)?.url ? (
                       <Image
-                        src={getPrimaryImage(selected.images)!.url}
+                        src={resolveImageSrc(getPrimaryImage(selected.images)!.url)}
                         alt={selected.title || 'Property'}
                         fill
                         sizes="320px"

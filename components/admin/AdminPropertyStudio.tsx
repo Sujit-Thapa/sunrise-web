@@ -16,6 +16,7 @@ import {
 import { auth, getAuthToken } from '@/lib/auth';
 import { isStaffRole } from '@/lib/auth-routing';
 import { propertiesApi } from '@/lib/backend';
+import { resolveImageSrc } from '@/lib/image';
 import {
   formatArea,
   formatCurrency,
@@ -1034,7 +1035,7 @@ export default function AdminPropertyStudio() {
                         <div className="relative min-h-[220px] bg-slate-100">
                           {primaryImage?.url ? (
                             <Image
-                              src={primaryImage.url}
+                              src={resolveImageSrc(primaryImage.url)}
                               alt={property.title || 'Property'}
                               fill
                               sizes="(min-width: 1024px) 240px, 100vw"

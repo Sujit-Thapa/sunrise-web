@@ -28,6 +28,7 @@ import {
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
 import type { BookedPropertySnapshot, PropertySnapshot } from '@/lib/account-store';
+import { resolveImageSrc } from '@/lib/image';
 import {
   formatArea,
   formatCurrency,
@@ -420,7 +421,7 @@ function PropertyShelf({
                 <div className="grid gap-0 sm:grid-cols-[120px_1fr]">
                   <div className="relative min-h-[120px] bg-stone-100">
                     <Image
-                      src={imageUrl}
+                      src={resolveImageSrc(imageUrl)}
                       alt={item.title}
                       fill
                       sizes="120px"

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
+import { resolveImageSrc } from '@/lib/image';
 import {
   formatArea,
   formatCurrency,
@@ -330,7 +331,7 @@ export default function Marketplace() {
                       <div className="relative aspect-[4/3] bg-slate-100">
                         {getPrimaryImage(listing.images)?.url ? (
                           <Image
-                            src={getPrimaryImage(listing.images)!.url}
+                            src={resolveImageSrc(getPrimaryImage(listing.images)!.url)}
                             alt={listing.title || 'Property'}
                             fill
                             sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"

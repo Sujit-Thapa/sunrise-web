@@ -15,6 +15,7 @@ import {
   getPrimaryImage,
   getPropertyStatusLabel,
 } from '@/lib/properties';
+import { resolveImageSrc } from '@/lib/image';
 
 const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
 const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
@@ -438,7 +439,7 @@ function PropertyResult({
       <div className="relative h-28 overflow-hidden rounded-brand-md bg-slate-100 sm:h-32">
         {primaryImage?.url ? (
           <Image
-            src={primaryImage.url}
+            src={resolveImageSrc(primaryImage.url)}
             alt={property.title || 'Property'}
             fill
             sizes="150px"

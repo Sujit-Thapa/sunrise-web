@@ -15,6 +15,7 @@ import {
 
 import { auth, getAuthToken } from '@/lib/auth';
 import { propertiesApi } from '@/lib/backend';
+import { resolveImageSrc } from '@/lib/image';
 import {
   formatArea,
   formatCurrency,
@@ -208,7 +209,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               <div className="relative aspect-[16/10] min-h-[340px] bg-stone-100 sm:aspect-[16/9]">
                 {hero ? (
                   <Image
-                    src={hero.url}
+                    src={resolveImageSrc(hero.url)}
                     alt={property.title}
                     fill
                     sizes="(min-width: 1024px) 900px, 100vw"
@@ -267,7 +268,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
                       }`}
                     >
                       <Image
-                        src={img.url}
+                        src={resolveImageSrc(img.url)}
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 240px, 50vw"

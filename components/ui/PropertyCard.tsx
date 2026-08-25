@@ -10,6 +10,7 @@ import {
   getPrimaryImage,
   getPropertyStatusLabel,
 } from '@/lib/properties';
+import { resolveImageSrc } from '@/lib/image';
 import SavePropertyButton from '@/components/ui/SavePropertyButton';
 
 interface PropertyCardProps {
@@ -39,7 +40,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       <div className="relative z-0">
         <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           <Image
-            src={primaryImage?.url || '/images/sunrise.png'}
+            src={resolveImageSrc(primaryImage?.url)}
             alt={property.title || 'Property'}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
