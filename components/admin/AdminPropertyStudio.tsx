@@ -217,10 +217,19 @@ async function uploadPropertyImages(
       headers: file.type ? { 'Content-Type': file.type } : undefined,
       body: file,
     });
+if (!uploadResponse.ok) {
+  const errorText = await uploadResponse.text();
 
-    if (!uploadResponse.ok) {
-      throw new Error(`Unable to upload ${file.name}.`);
-    }
+  console.error('S3 upload failed:', {
+    status: uploadResponse.status,
+    statusText: uploadResponse.statusText,
+    body: errorText,
+  });
+
+  throw new Error(
+    `Unable to upload ${file.name}: ${uploadResponse.status} ${errorText}`,
+  );
+}
 
     latestProperty = await propertiesApi.confirmImage(
       propertyId,
