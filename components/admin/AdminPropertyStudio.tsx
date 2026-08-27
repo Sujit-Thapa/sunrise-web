@@ -227,7 +227,7 @@ if (!uploadResponse.ok) {
   });
 
   throw new Error(
-    `Unable to upload ${file.name}: ${uploadResponse.status} ${errorText}`,
+    `Unable to uploadd ${file.name}: ${uploadResponse.status} ${errorText}`,
   );
 }
 
