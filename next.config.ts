@@ -24,9 +24,15 @@ if (apiUrl) {
 }
 
 const nextConfig: NextConfig = {
-  images: {
-    remotePatterns,
-  },
+images: {
+  remotePatterns: [
+    {
+      protocol: 'https',
+      hostname: 'realestate-images-mumbai-sunrise.s3.ap-south-1.amazonaws.com',
+      pathname: '/properties/**',
+    },
+  ],
+}
 };
 
 export default nextConfig;
