@@ -461,10 +461,10 @@ export default function Marketplace() {
                               </span>
                             ) : (
                               <a
-                                href="#my-submissions"
-                                className="rounded-full border border-stone-200 px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:border-gold-primary hover:text-gold-primary"
+                                href={`/marketplace/${listing.id}`}
+                                className="rounded-full border border-midnight bg-midnight px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-stone-800"
                               >
-                                View mine
+                                View listing
                               </a>
                             )}
                           </div>

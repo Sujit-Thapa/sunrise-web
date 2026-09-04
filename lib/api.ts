@@ -123,6 +123,16 @@ function getValidationDetails(body: unknown): string | null {
   return messages.length > 0 ? messages.join('; ') : null;
 }
 
+function getRequestId(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+
+  const meta = (body as { meta?: unknown }).meta;
+  if (!meta || typeof meta !== 'object') return null;
+
+  const requestId = (meta as { requestId?: unknown }).requestId;
+  return typeof requestId === 'string' && requestId.trim() ? requestId.trim() : null;
+}
+
 function getFriendlyHttpErrorMessage(status: number): string {
   return STATUS_FALLBACK_MESSAGES[status] || `The request could not be completed (${status}).`;
 }
@@ -146,14 +156,17 @@ async function apiFetch<T>(
     const body = await readResponseBody(res);
     const bodyMessage = getBodyMessage(body);
     const validationDetails = getValidationDetails(body);
+    const requestId = getRequestId(body);
     const friendly = getFriendlyHttpErrorMessage(res.status);
 
     if (bodyMessage || validationDetails) {
-      const suffix = [bodyMessage, validationDetails].filter(Boolean).join(' - ');
+      const suffix = [bodyMessage, validationDetails, requestId ? `Request ID: ${requestId}` : null]
+        .filter(Boolean)
+        .join(' - ');
       throw new Error(`${friendly}${suffix ? ` ${suffix}` : ''}`.trim());
     }
 
-    throw new Error(friendly);
+    throw new Error(`${friendly}${requestId ? ` Request ID: ${requestId}` : ''}`);
   }
 
   // DELETE endpoints often return 204 No Content — guard against
