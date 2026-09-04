@@ -3,6 +3,7 @@
 import { cubicBezier, motion } from 'framer-motion';
 import Image from 'next/image';
 import { useEffect, useState, type ComponentType, type FormEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -148,8 +149,10 @@ function SummaryChip({
 
 export default function Booking() {
   const { user } = useAuthSession();
+  const searchParams = useSearchParams();
+  const requestedPropertyId = searchParams.get('propertyId');
   const [step, setStep] = useState<BookingStep>(1);
-  const [selectedId, setSelectedId] = useState('');
+  const [selectedId, setSelectedId] = useState(requestedPropertyId ?? '');
   const [form, setForm] = useState<FormState>({
     firstName: '',
     lastName: '',
@@ -186,7 +189,14 @@ export default function Booking() {
 
   const safeProperties = properties ?? [];
   const selected = safeProperties.find((p) => p.id === selectedId);
-  const deposit = selected ? Math.round(selected.price * DEPOSIT_PERCENT) : 0;
+  const deposit = selected
+    ? selected.reservationFeeOverride != null
+      ? Number(selected.reservationFeeOverride)
+      : Math.round(selected.price * DEPOSIT_PERCENT)
+    : 0;
+  const depositLabel = selected?.reservationFeeOverride != null
+    ? 'Reservation deposit'
+    : 'Estimated deposit';
   const filteredProps = safeProperties.filter((p) => filterType === 'all' || propertyFilterType(p) === filterType);
 
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -259,7 +269,7 @@ export default function Booking() {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <SummaryChip icon={RiHome4Line} label="Selected" value={selected ? selected.title : 'Pick a property'} />
-            <SummaryChip icon={RiPriceTag3Line} label="Estimated deposit" value={selected ? formatCurrency(deposit) : 'Calculated after selection'} />
+            <SummaryChip icon={RiPriceTag3Line} label={depositLabel} value={selected ? formatCurrency(deposit) : 'Calculated after selection'} />
             <SummaryChip icon={RiShieldCheckLine} label="Flow" value="Secure gateway checkout" />
           </div>
         </motion.section>
@@ -551,7 +561,7 @@ export default function Booking() {
                     ['Location', locationLabel(selected)],
                     ['Reference', selected.id.slice(0, 8).toUpperCase()],
                     ['Purchase price', formatCurrency(selected.price)],
-                    ['Estimated deposit', formatCurrency(deposit)],
+                    [depositLabel, formatCurrency(deposit)],
                     ['Payment method', paymentOptions.find((o) => o.value === form.payMethod)?.label ?? ''],
                     ['Appointment', form.date],
                     ['Name', `${form.firstName} ${form.lastName}`],
@@ -644,7 +654,7 @@ export default function Booking() {
                   </div>
                   <div className="mt-5 flex items-center justify-between rounded-[22px] border border-stone-200 bg-stone-50 px-4 py-4">
                     <span className="text-[0.72rem] uppercase tracking-[0.1em] text-slate-500">
-                      Est. deposit
+                      {depositLabel}
                     </span>
                     <span className="text-[1.3rem] font-semibold text-midnight">{formatCurrency(deposit)}</span>
                   </div>

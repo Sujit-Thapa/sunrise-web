@@ -357,6 +357,12 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               </div>
 
               <div className="mt-8 space-y-3">
+                <Link
+                  href={`/booking?propertyId=${encodeURIComponent(property.id)}`}
+                  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-gold-primary px-5 text-sm font-semibold text-midnight transition hover:bg-gold-deep"
+                >
+                  Book this property
+                </Link>
                 <button className="inline-flex h-12 w-full items-center justify-center rounded-full bg-midnight px-5 text-sm font-semibold text-white transition hover:bg-slate-800">
                   Contact Agent
                 </button>
