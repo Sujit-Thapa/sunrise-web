@@ -46,6 +46,36 @@ function extractCandidateFromValue(value: ImageSourceLike): string | null {
   return null;
 }
 
+function extractCandidateFromImages(value: unknown): string | null {
+  if (!Array.isArray(value)) {
+    return extractCandidateFromValue(value);
+  }
+
+  const orderedImages = value
+    .map((image, index) => ({
+      image,
+      index,
+      isPrimary: isRecord(image) && image.isPrimary === true,
+      sortOrder:
+        isRecord(image) && Number.isFinite(Number(image.sortOrder))
+          ? Number(image.sortOrder)
+          : Number.POSITIVE_INFINITY,
+    }))
+    .sort(
+      (a, b) =>
+        Number(b.isPrimary) - Number(a.isPrimary) ||
+        a.sortOrder - b.sortOrder ||
+        a.index - b.index,
+    );
+
+  for (const { image } of orderedImages) {
+    const candidate = extractCandidateFromValue(image);
+    if (candidate) return candidate;
+  }
+
+  return null;
+}
+
 export function getImageSourceCandidate(source: ImageSourceLike): string | null {
   return extractCandidateFromValue(source);
 }
@@ -56,7 +86,7 @@ export function getPropertyImageSource(property: ImageSourceLike): string | null
   }
 
   return (
-    getImageSourceCandidate(property.images) ||
+    extractCandidateFromImages(property.images) ||
     getImageSourceCandidate(property.image) ||
     getImageSourceCandidate(property.imageUrl) ||
     getImageSourceCandidate(property.thumbnailUrl) ||
