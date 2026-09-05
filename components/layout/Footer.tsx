@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowUpRight, Mail, MapPin } from "lucide-react";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -10,9 +10,10 @@ const NAV_LINKS = [
 
 const QUICK_LINKS = [
   { label: "Buy a Property", href: "/properties" },
-  { label: "Sell Your Home", href: "/contact" },
+  { label: "Sell or List Property", href: "/contact" },
   { label: "Rental Listings", href: "/properties" },
-  { label: "Market Insights", href: "/about" },
+  { label: "Property Consultation", href: "/contact" },
+  { label: "Investment Support", href: "/contact" },
 ];
 
 const SOCIALS = [
@@ -46,12 +47,28 @@ export default function Footer() {
                       className="group inline-flex items-center gap-1.5 text-sm text-stone-600 transition-colors duration-200 hover:text-[#B89B4E]"
                     >
                       <span>{link.label}</span>
-
                       <ArrowUpRight className="h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
                     </Link>
                   </li>
                 ))}
               </ul>
+            </div>
+
+            {/* Socials */}
+            <div className="sm:col-span-2 lg:col-span-1 lg:text-right">
+              <FooterHeading className="lg:text-right">Follow</FooterHeading>
+              <div className="flex flex-wrap gap-x-5 gap-y-2 lg:justify-end">
+                {SOCIALS.map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    className="group inline-flex items-center gap-1 text-sm text-stone-600 transition-colors duration-200 hover:text-[#B89B4E]"
+                  >
+                    {social.label}
+                    <ArrowUpRight className="h-3.5 w-3.5 opacity-50 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </a>
+                ))}
+              </div>
             </div>
 
             {/* Services */}
@@ -85,39 +102,10 @@ export default function Footer() {
                   <span>info@sunrisembh.com</span>
                 </a>
 
-                <a
-                  href="tel:5551234567"
-                  className="group flex w-fit items-start gap-2.5 transition-colors duration-200 hover:text-[#B89B4E]"
-                >
-                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#B89B4E]" />
-                  <span>(555) 123-4567</span>
-                </a>
-
                 <div className="flex items-start gap-2.5">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#B89B4E]" />
-                  <span className="max-w-[220px] leading-relaxed">
-                    84 Meridian Ave, Suite 200
-                  </span>
+                  <span className="max-w-[220px] leading-relaxed">Kathmandu, Nepal</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Socials */}
-            <div className="sm:col-span-2 lg:col-span-1 lg:text-right">
-              <FooterHeading className="lg:text-right">Follow</FooterHeading>
-
-              <div className="flex flex-wrap gap-x-5 gap-y-2 lg:justify-end">
-                {SOCIALS.map((social) => (
-                  <a
-                    key={social.label}
-                    href={social.href}
-                    className="group inline-flex items-center gap-1 text-sm text-stone-600 transition-colors duration-200 hover:text-[#B89B4E]"
-                  >
-                    {social.label}
-
-                    <ArrowUpRight className="h-3.5 w-3.5 opacity-50 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                  </a>
-                ))}
               </div>
             </div>
           </div>
