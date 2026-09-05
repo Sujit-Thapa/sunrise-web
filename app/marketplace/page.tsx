@@ -3,7 +3,7 @@
 
 import { AnimatePresence, cubicBezier, motion } from 'framer-motion';
 import Image from 'next/image';
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import {
   RiAddLine,
   RiCalendarCheckLine,
@@ -31,10 +31,30 @@ import {
   getListingTypeLabel,
   getPropertyStatusLabel,
 } from '@/lib/properties';
-import type { AreaUnit, CreateUserPropertyDto, ListingType, PropertyCategory, UserPropertyResponseDto, UserPropertyStatus } from '@/types';
+import type {
+  AreaUnit,
+  CreateUserPropertyDto,
+  ListingType,
+  PresignUserPropertyImageResponseDto,
+  PropertyCategory,
+  UserPropertyResponseDto,
+  UserPropertyStatus,
+} from '@/types';
 
 type CategoryFilter = 'all' | 'house' | 'land' | 'apartment' | 'commercial';
 type SortOption = 'newest' | 'price-asc' | 'price-desc';
+type ImageUploadStatus = 'pending' | 'uploading' | 'confirming' | 'done' | 'error';
+
+interface PendingImage {
+  file: File;
+  previewUrl: string;
+  status: ImageUploadStatus;
+  error?: string;
+}
+
+const MAX_MARKETPLACE_IMAGES = 10;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
 interface MarketplaceFormState {
   title: string;
@@ -90,6 +110,62 @@ function locationLabel(item: UserPropertyResponseDto): string {
 
 function sizeLabel(item: UserPropertyResponseDto): string {
   return formatArea(item.areaSize, item.areaUnit);
+}
+
+async function uploadMarketplaceImages(
+  listingId: string,
+  images: PendingImage[],
+  token: string,
+  onStatusChange: (index: number, status: ImageUploadStatus, error?: string) => void,
+): Promise<UserPropertyResponseDto> {
+  let latestListing: UserPropertyResponseDto | undefined;
+
+  for (let index = 0; index < images.length; index += 1) {
+    const image = images[index];
+
+    try {
+      onStatusChange(index, 'uploading');
+      const presign = await userPropertiesApi.presignImage(
+        listingId,
+        { mimeType: image.file.type as 'image/jpeg' | 'image/png' | 'image/webp' },
+        token,
+      );
+      const presignResponse = presign as PresignUserPropertyImageResponseDto;
+
+      const uploadResponse = await fetch(presignResponse.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': image.file.type },
+        body: image.file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`S3 upload failed: ${uploadResponse.status} ${await uploadResponse.text()}`);
+      }
+
+      onStatusChange(index, 'confirming');
+      latestListing = await userPropertiesApi.confirmImage(
+        listingId,
+        {
+          s3Key: presignResponse.s3Key,
+          publicUrl: presignResponse.publicUrl,
+          isPrimary: index === 0,
+          sortOrder: index,
+        },
+        token,
+      );
+      onStatusChange(index, 'done');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to upload image.';
+      onStatusChange(index, 'error', message);
+      throw new Error(`Image ${index + 1} failed: ${message}`);
+    }
+  }
+
+  if (!latestListing) {
+    throw new Error('No marketplace images were uploaded.');
+  }
+
+  return latestListing;
 }
 
 function isPublicApproved(status: UserPropertyStatus): boolean {
@@ -149,6 +225,7 @@ export default function Marketplace() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
 
   const fetchListings = async () => {
     setLoading(true);
@@ -182,6 +259,41 @@ export default function Marketplace() {
     void fetchListings();
     void fetchMine();
   }, []);
+
+  const handleImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    event.target.value = '';
+
+    if (selectedFiles.length === 0) return;
+    if (pendingImages.length + selectedFiles.length > MAX_MARKETPLACE_IMAGES) {
+      setApiError(`You can upload a maximum of ${MAX_MARKETPLACE_IMAGES} images per listing.`);
+      return;
+    }
+
+    const nextImages: PendingImage[] = [];
+    for (const file of selectedFiles) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type as typeof ALLOWED_IMAGE_TYPES[number])) {
+        setApiError(`${file.name}: only JPG, PNG, and WEBP images are supported.`);
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        setApiError(`${file.name}: image must be 5 MB or smaller.`);
+        return;
+      }
+      nextImages.push({ file, previewUrl: URL.createObjectURL(file), status: 'pending' });
+    }
+
+    setApiError(null);
+    setPendingImages((current) => [...current, ...nextImages]);
+  };
+
+  const removePendingImage = (index: number) => {
+    setPendingImages((current) => {
+      const image = current[index];
+      if (image) URL.revokeObjectURL(image.previewUrl);
+      return current.filter((_, imageIndex) => imageIndex !== index);
+    });
+  };
 
   const filteredPublic = (publicListings ?? [])
     .filter((listing) => {
@@ -224,14 +336,33 @@ export default function Marketplace() {
       if (!token) {
         throw new Error('You must be signed in to submit a property.');
       }
+      let savedListing: UserPropertyResponseDto;
       if (editingId) {
         const updated = await userPropertiesApi.update(editingId, payload, token);
+        savedListing = updated;
         setMyListings((prev) => [updated, ...prev.filter((listing) => listing.id !== updated.id)]);
         setEditingId(null);
       } else {
         const created = await userPropertiesApi.submit(payload, token);
+        savedListing = created;
         setMyListings((prev) => [created, ...prev]);
       }
+
+      if (pendingImages.length > 0) {
+        const listingWithImages = await uploadMarketplaceImages(
+          savedListing.id,
+          pendingImages,
+          token,
+          (index, status, error) => {
+            setPendingImages((current) => current.map((image, imageIndex) => (
+              imageIndex === index ? { ...image, status, error } : image
+            )));
+          },
+        );
+        setMyListings((prev) => [listingWithImages, ...prev.filter((listing) => listing.id !== listingWithImages.id)]);
+      }
+      pendingImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      setPendingImages([]);
       setForm(EMPTY_FORM);
       setShowForm(false);
       await fetchListings();
@@ -665,6 +796,56 @@ export default function Marketplace() {
                     className="min-h-[120px] w-full resize-none rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
                     placeholder="Describe the property…"
                   />
+                </Field>
+
+                <Field label="Property images">
+                  <div className="rounded-[20px] border border-dashed border-stone-300 bg-stone-50 p-4">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={handleImageSelection}
+                      disabled={submitting || pendingImages.length >= MAX_MARKETPLACE_IMAGES}
+                      className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-midnight file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
+                    />
+                    <p className="mt-3 text-xs leading-5 text-slate-500">
+                      Add up to {MAX_MARKETPLACE_IMAGES} JPG, PNG, or WEBP images. Each file must be 5 MB or smaller.
+                      Adding images to an approved listing sends it back for review.
+                    </p>
+
+                    {pendingImages.length > 0 ? (
+                      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {pendingImages.map((image, index) => (
+                          <div key={`${image.file.name}-${index}`} className="overflow-hidden rounded-[16px] border border-stone-200 bg-white">
+                            <div className="relative aspect-square bg-stone-100">
+                              <Image
+                                src={image.previewUrl}
+                                alt={image.file.name}
+                                fill
+                                unoptimized
+                                className="object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removePendingImage(index)}
+                                disabled={submitting || image.status === 'uploading' || image.status === 'confirming'}
+                                className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm disabled:opacity-50"
+                                aria-label={`Remove ${image.file.name}`}
+                              >
+                                <RiCloseLine className="h-4 w-4" />
+                              </button>
+                            </div>
+                            <div className="p-2">
+                              <p className="truncate text-[0.68rem] font-medium text-midnight">{image.file.name}</p>
+                              <p className={`mt-1 text-[0.62rem] ${image.status === 'error' ? 'text-rose-600' : image.status === 'done' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                {image.status === 'pending' ? 'Ready to upload' : image.status === 'uploading' ? 'Uploading…' : image.status === 'confirming' ? 'Saving image…' : image.status === 'done' ? 'Uploaded' : image.error ?? 'Upload failed'}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 </Field>
 
                 <div className="grid gap-4 sm:grid-cols-2">
