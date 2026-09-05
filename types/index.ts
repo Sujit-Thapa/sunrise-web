@@ -261,6 +261,23 @@ export interface UpdateUserPropertyDto {
   longitude?: number;
 }
 
+export interface PresignUserPropertyImageDto {
+  mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
+}
+
+export interface PresignUserPropertyImageResponseDto {
+  uploadUrl: string;
+  s3Key: string;
+  publicUrl: string;
+}
+
+export interface ConfirmUserPropertyImageDto {
+  s3Key: string;
+  publicUrl: string;
+  isPrimary?: boolean;
+  sortOrder?: number;
+}
+
 export interface RejectUserPropertyDto {
   rejectionReason: string;
 }

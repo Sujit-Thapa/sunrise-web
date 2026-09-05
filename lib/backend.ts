@@ -14,6 +14,9 @@ import type {
   KhaltiInitiateResponseDto,
   PresignPropertyImageDto,
   PresignPropertyImageResponseDto,
+  PresignUserPropertyImageDto,
+  PresignUserPropertyImageResponseDto,
+  ConfirmUserPropertyImageDto,
   PropertiesListResponseDto,
   PropertyListQueryParams,
   PropertyResponseDto,
@@ -95,6 +98,12 @@ export const userPropertiesApi = {
 
   update: (id: string, data: UpdateUserPropertyDto, token: string) =>
     api.patch<UserPropertyResponseDto>(`/v1/user-properties/${id}`, data, token),
+
+  presignImage: (id: string, data: PresignUserPropertyImageDto, token: string) =>
+    api.post<PresignUserPropertyImageResponseDto>(`/v1/user-properties/${id}/images/presign`, data, token),
+
+  confirmImage: (id: string, data: ConfirmUserPropertyImageDto, token: string) =>
+    api.post<UserPropertyResponseDto>(`/v1/user-properties/${id}/images/confirm`, data, token),
 
   remove: (id: string, token: string) =>
     api.delete<void>(`/v1/user-properties/${id}`, token),
