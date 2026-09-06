@@ -2,6 +2,30 @@ import { type NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
 
+function getImageContentType(url: URL, upstreamType: string | null): string {
+  if (upstreamType?.toLowerCase().startsWith('image/')) {
+    return upstreamType;
+  }
+
+  switch (url.pathname.toLowerCase().split('.').pop()) {
+    case 'avif':
+      return 'image/avif';
+    case 'gif':
+      return 'image/gif';
+    case 'jpeg':
+    case 'jpg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'webp':
+      return 'image/webp';
+    case 'svg':
+      return 'image/svg+xml';
+    default:
+      return upstreamType || 'application/octet-stream';
+  }
+}
+
 export async function GET(request: NextRequest) {
   const target = request.nextUrl.searchParams.get('url');
 
@@ -29,11 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     const headers = new Headers();
-    const contentType = upstream.headers.get('content-type');
-
-    if (contentType) {
-      headers.set('content-type', contentType);
-    }
+    headers.set('content-type', getImageContentType(url, upstream.headers.get('content-type')));
 
     headers.set('cache-control', 'public, max-age=86400, stale-while-revalidate=604800');
 

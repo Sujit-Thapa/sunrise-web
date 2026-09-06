@@ -148,7 +148,7 @@ async function uploadMarketplaceImages(
         {
           s3Key: presignResponse.s3Key,
           publicUrl: presignResponse.publicUrl,
-          isPrimary: index === 0,
+          isPrimary: false,
           sortOrder: index,
         },
         token,
@@ -265,7 +265,11 @@ export default function Marketplace() {
     event.target.value = '';
 
     if (selectedFiles.length === 0) return;
-    if (pendingImages.length + selectedFiles.length > MAX_MARKETPLACE_IMAGES) {
+    const existingImageCount = editingId
+      ? myListings.find((listing) => listing.id === editingId)?.images?.length ?? 0
+      : 0;
+
+    if (existingImageCount + pendingImages.length + selectedFiles.length > MAX_MARKETPLACE_IMAGES) {
       setApiError(`You can upload a maximum of ${MAX_MARKETPLACE_IMAGES} images per listing.`);
       return;
     }

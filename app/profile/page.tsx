@@ -410,7 +410,7 @@ function PropertyShelf({
       <div className="mt-6 space-y-4">
         {items.length > 0 ? (
           items.map((item) => {
-            const imageUrl = item.imageUrl || '/images/sunrise.png';
+            const imageUrl = item.imageUrl || '/images/logo/sunrise.png';
             const isBooked = 'bookedAt' in item;
 
             return (

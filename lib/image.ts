@@ -1,4 +1,5 @@
 const IMAGE_PROXY_PATH = '/api/image-proxy';
+const DEFAULT_IMAGE_FALLBACK = '/images/logo/sunrise.png';
 
 type ImageSourceLike = unknown;
 
@@ -96,7 +97,7 @@ export function getPropertyImageSource(property: ImageSourceLike): string | null
   );
 }
 
-export function resolveImageSrc(src?: string | null, fallback = '/images/sunrise.png'): string {
+export function resolveImageSrc(src?: string | null, fallback = DEFAULT_IMAGE_FALLBACK): string {
   const value = src?.trim();
 
   if (!value) {
@@ -127,7 +128,7 @@ export function resolveImageSrc(src?: string | null, fallback = '/images/sunrise
 
 export function resolveImageSrcFromProperty(
   property: ImageSourceLike,
-  fallback = '/images/sunrise.png',
+  fallback = DEFAULT_IMAGE_FALLBACK,
 ): string {
   return resolveImageSrc(getPropertyImageSource(property), fallback);
 }
