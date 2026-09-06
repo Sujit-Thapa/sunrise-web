@@ -5,6 +5,16 @@ const remotePatterns: NonNullable<NextConfig['images']>['remotePatterns'] = [
     protocol: 'https',
     hostname: 'images.unsplash.com',
   },
+  {
+    protocol: 'https',
+    hostname: 'realestate-images-mumbai-sunrise.s3.ap-south-1.amazonaws.com',
+    pathname: '/properties/**',
+  },
+  {
+    protocol: 'https',
+    hostname: 'realestate-images-mumbai-sunrise.s3.ap-south-1.amazonaws.com',
+    pathname: '/user-properties/**',
+  },
 ];
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;

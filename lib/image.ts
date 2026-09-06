@@ -1,4 +1,5 @@
 const IMAGE_PROXY_PATH = '/api/image-proxy';
+const PUBLIC_S3_HOST = 'realestate-images-mumbai-sunrise.s3.ap-south-1.amazonaws.com';
 
 type ImageSourceLike = unknown;
 
@@ -114,6 +115,14 @@ export function resolveImageSrc(src?: string | null, fallback = '/images/sunrise
 
   try {
     const url = new URL(value);
+
+    if (
+      url.protocol === 'https:' &&
+      url.hostname === PUBLIC_S3_HOST &&
+      (url.pathname.startsWith('/properties/') || url.pathname.startsWith('/user-properties/'))
+    ) {
+      return url.toString();
+    }
 
     if (url.protocol === 'http:' || url.protocol === 'https:') {
       return `${IMAGE_PROXY_PATH}?url=${encodeURIComponent(url.toString())}`;
