@@ -2,7 +2,7 @@
 
 import { cubicBezier, motion } from 'framer-motion';
 import Image from 'next/image';
-import { useEffect, useState, type ComponentType, type FormEvent } from 'react';
+import { Suspense, useEffect, useState, type ComponentType, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   RiArrowLeftLine,
@@ -147,7 +147,23 @@ function SummaryChip({
   );
 }
 
-export default function Booking() {
+export default function BookingPage() {
+  return (
+    <Suspense fallback={<BookingLoadingState />}>
+      <Booking />
+    </Suspense>
+  );
+}
+
+function BookingLoadingState() {
+  return (
+    <main className="min-h-screen bg-[linear-gradient(180deg,#fcfbf7_0%,#f4efe5_100%)] px-4 py-16 text-center text-sm text-slate-500">
+      Loading booking...
+    </main>
+  );
+}
+
+function Booking() {
   const { user } = useAuthSession();
   const searchParams = useSearchParams();
   const requestedPropertyId = searchParams.get('propertyId');
