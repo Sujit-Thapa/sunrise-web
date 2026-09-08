@@ -186,7 +186,10 @@ async function apiFetch<T>(
   ) {
     if (payload.success === false) {
       const message = getBodyMessage(payload.message) || getBodyMessage(payload.error);
-      throw new Error(message || 'The request could not be completed.');
+      const requestId = getRequestId(payload);
+      throw new Error(
+        `${message || 'The request could not be completed.'}${requestId ? ` Request ID: ${requestId}` : ''}`,
+      );
     }
     return payload.data as T;
   }

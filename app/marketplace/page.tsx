@@ -3,6 +3,7 @@
 
 import { AnimatePresence, cubicBezier, motion } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import {
   RiAddLine,
@@ -624,18 +625,23 @@ export default function Marketplace() {
                     </p>
                     <h2 className="mt-2 text-2xl font-semibold text-midnight">Your user properties</h2>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingId(null);
-                      setForm(EMPTY_FORM);
-                      setShowForm(true);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-full border border-midnight px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-midnight transition hover:bg-midnight hover:text-white"
-                  >
-                    <RiAddLine className="h-4 w-4" />
-                    Add new
-                  </button>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Link href="/marketplace/manage" className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary">
+                      Manage listings
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingId(null);
+                        setForm(EMPTY_FORM);
+                        setShowForm(true);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-full border border-midnight px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-midnight transition hover:bg-midnight hover:text-white"
+                    >
+                      <RiAddLine className="h-4 w-4" />
+                      Add new
+                    </button>
+                  </div>
                 </div>
 
                 {myListings.length === 0 ? (

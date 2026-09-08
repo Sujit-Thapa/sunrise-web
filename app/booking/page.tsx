@@ -44,11 +44,7 @@ interface FormState {
   payMethod: PaymentMethod;
 }
 
-// Client-side estimate only. The backend is the source of truth for the
-// actual reservation fee (see SystemConfigResponseDto.reservationFeeAmount
-// / PropertyResponseDto.reservationFeeOverride) — this percentage is just
-// used to show the user an estimate before payment is initiated.
-const DEPOSIT_PERCENT = 0.05;
+const BOOKING_DEPOSIT = 5000;
 
 const filterOptions: FilterType[] = ['all', 'house', 'land'];
 
@@ -205,14 +201,8 @@ function Booking() {
 
   const safeProperties = properties ?? [];
   const selected = safeProperties.find((p) => p.id === selectedId);
-  const deposit = selected
-    ? selected.reservationFeeOverride != null
-      ? Number(selected.reservationFeeOverride)
-      : Math.round(selected.price * DEPOSIT_PERCENT)
-    : 0;
-  const depositLabel = selected?.reservationFeeOverride != null
-    ? 'Reservation deposit'
-    : 'Estimated deposit';
+  const deposit = selected ? BOOKING_DEPOSIT : 0;
+  const depositLabel = 'Reservation deposit';
   const filteredProps = safeProperties.filter((p) => filterType === 'all' || propertyFilterType(p) === filterType);
 
   const [paymentError, setPaymentError] = useState<string | null>(null);

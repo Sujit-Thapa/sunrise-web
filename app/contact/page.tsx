@@ -1,21 +1,40 @@
 'use client';
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [error, setError] = useState('');
 
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [event.target.name]: event.target.value }));
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    setSubmitted(true);
-    setFormData({ name: '', email: '', message: '' });
-    window.setTimeout(() => setSubmitted(false), 5000);
+    setStatus('sending');
+    setError('');
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Unable to send your message. Please try again.');
+      }
+
+      setStatus('sent');
+      setFormData({ name: '', email: '', message: '' });
+    } catch (submitError) {
+      setStatus('error');
+      setError(submitError instanceof Error ? submitError.message : 'Unable to send your message. Please try again.');
+    }
   };
 
   return (
@@ -26,7 +45,7 @@ export default function Contact() {
             Get in touch
           </h1>
           <p className="text-[0.9rem] font-light text-stone-500">
-            Have a question or want to schedule a viewing? Send us a message.
+            Have a question about property buying, selling, renting, or investment in Nepal? Send us a message.
           </p>
         </div>
 
@@ -38,23 +57,22 @@ export default function Contact() {
             <Mail className="h-4 w-4 text-[#B89B4E]" />
             info@sunrisembh.com
           </a>
-          <a
-            href="tel:5551234567"
-            className="flex items-center gap-2 transition hover:text-[#B89B4E]"
-          >
-            <Phone className="h-4 w-4 text-[#B89B4E]" />
-            (555) 123-4567
-          </a>
           <span className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-[#B89B4E]" />
-            84 Meridian Ave, Suite 200
+            Kathmandu, Nepal
           </span>
         </div>
 
-        {submitted ? (
+        {status === 'sent' ? (
           <div className="mb-6 flex items-center gap-3 rounded-md border border-stone-200 bg-stone-50 px-5 py-4 text-[0.85rem] text-stone-600">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#B89B4E]" />
             Thank you - we&apos;ll be in touch shortly.
+          </div>
+        ) : null}
+
+        {status === 'error' ? (
+          <div className="mb-6 rounded-md border border-rose-200 bg-rose-50 px-5 py-4 text-[0.85rem] text-rose-700">
+            {error}
           </div>
         ) : null}
 
@@ -87,9 +105,10 @@ export default function Contact() {
           />
           <button
             type="submit"
+            disabled={status === 'sending'}
             className="w-full rounded-md bg-stone-900 py-3.5 text-[0.8rem] font-medium uppercase tracking-[0.15em] text-stone-100 transition-colors hover:bg-[#B89B4E]"
           >
-            Send Message
+            {status === 'sending' ? 'Sending...' : 'Send Message'}
           </button>
         </form>
       </div>

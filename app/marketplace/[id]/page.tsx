@@ -79,16 +79,32 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
   const emailBody = encodeURIComponent(`Hello ${listing.submittedBy.fullName},\n\nI am interested in your marketplace listing: ${listing.title}.\n\nPlease let me know when it would be convenient to discuss it.`);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fcfbf7_0%,#f5f1e8_100%)] text-stone-900">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(184,155,78,0.13),transparent_28%),linear-gradient(180deg,#fcfbf7_0%,#f5f1e8_100%)] text-stone-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <Link href="/marketplace" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-midnight">
           <RiArrowLeftLine className="h-4 w-4" />
           Back to marketplace
         </Link>
 
+        <header className="mt-8 grid gap-5 border-b border-stone-200 pb-8 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-gold-deep">
+              <span>{getPropertyCategoryLabel(listing.category)}</span>
+              <span className="h-1 w-1 rounded-full bg-gold-primary" />
+              <span>{getListingTypeLabel(listing.listingType)}</span>
+            </div>
+            <h1 className="mt-3 max-w-4xl text-4xl font-semibold leading-[1.05] tracking-tight text-midnight sm:text-6xl">{listing.title}</h1>
+            <p className="mt-4 flex items-center gap-2 text-sm text-slate-500"><RiMapPinLine className="h-4 w-4 text-gold-primary" />{location}</p>
+          </div>
+          <div className="sm:text-right">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">Asking price</p>
+            <p className="mt-1 font-serif text-4xl font-semibold text-midnight sm:text-5xl">{formatCurrency(listing.price)}</p>
+          </div>
+        </header>
+
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <section>
-            <div className="overflow-hidden border border-stone-200 bg-white shadow-brand-sm">
+            <div className="overflow-hidden border border-stone-200 bg-white p-2 shadow-[0_24px_70px_rgba(15,23,42,0.1)] sm:p-3">
               <div className="relative aspect-[16/10] min-h-[340px] bg-stone-100 sm:aspect-[16/9]">
                 <Image
                   src={resolveImageSrcFromProperty(heroImage?.url ?? listing)}
@@ -98,19 +114,10 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
                   sizes="(min-width: 1024px) 900px, 100vw"
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-midnight/55 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white sm:p-8">
-                  <p className="text-sm text-white/75">{getPropertyCategoryLabel(listing.category)} · {getListingTypeLabel(listing.listingType)}</p>
-                  <h1 className="mt-2 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">{listing.title}</h1>
-                  <p className="mt-3 flex items-center gap-2 text-sm text-white/80">
-                    <RiMapPinLine className="h-4 w-4 shrink-0" />
-                    {location}
-                  </p>
-                </div>
               </div>
 
               {gallery.length > 0 ? (
-                <div className="grid gap-3 border-t border-stone-200 bg-white p-4 sm:grid-cols-3">
+                <div className="grid gap-3 bg-white pt-3 sm:grid-cols-3">
                   {gallery.slice(0, 3).map((image) => (
                     <div key={image.id} className="relative aspect-[4/3] overflow-hidden bg-stone-100">
                       <Image
@@ -127,8 +134,8 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <Fact label="Asking price" value={formatCurrency(listing.price)} />
               <Fact label="Area" value={formatArea(listing.areaSize, listing.areaUnit)} />
+              <Fact label="Listing type" value={getListingTypeLabel(listing.listingType)} />
               <Fact label="Availability" value={getPropertyStatusLabel(listing.status)} />
             </div>
 
@@ -139,8 +146,9 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
           </section>
 
           <aside className="lg:sticky lg:top-24">
-            <div className="border border-midnight/10 bg-midnight p-6 text-white shadow-brand-md sm:p-8">
-              <p className="text-sm text-gold-highlight">Listed by</p>
+            <div className="border border-midnight/10 bg-midnight p-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.2)] sm:p-8">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-gold-highlight">Direct contact</p>
+              <p className="mt-6 text-sm text-slate-300">Listed by</p>
               <h2 className="mt-3 text-3xl font-semibold">{listing.submittedBy.fullName}</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
                 Contact the person who listed this property directly to ask questions, arrange a viewing, or discuss the next step.
@@ -154,13 +162,15 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
                   <RiMailLine className="h-5 w-5" />
                   <span className="truncate">{listing.submittedBy.email}</span>
                 </a>
-                <a
-                  href={`tel:${listing.submittedBy.phoneNumber}`}
-                  className="flex items-center gap-3 border border-white/20 px-4 py-3 text-sm transition hover:border-gold-highlight hover:text-gold-highlight"
-                >
-                  <RiPhoneLine className="h-5 w-5" />
-                  <span>{listing.submittedBy.phoneNumber}</span>
-                </a>
+                {listing.submittedBy.phoneNumber ? (
+                  <a
+                    href={`tel:${listing.submittedBy.phoneNumber}`}
+                    className="flex items-center gap-3 border border-white/20 px-4 py-3 text-sm transition hover:border-gold-highlight hover:text-gold-highlight"
+                  >
+                    <RiPhoneLine className="h-5 w-5" />
+                    <span>{listing.submittedBy.phoneNumber}</span>
+                  </a>
+                ) : null}
               </div>
 
               <a
