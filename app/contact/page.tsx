@@ -26,7 +26,11 @@ export default function Contact() {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.message || 'Unable to send your message. Please try again.');
+        throw new Error(
+          response.status >= 500
+            ? 'We could not send your message right now. Please try again later.'
+            : payload?.message || 'Please check your information and try again.',
+        );
       }
 
       setStatus('sent');
