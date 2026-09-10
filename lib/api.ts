@@ -11,13 +11,13 @@ interface ApiOptions extends RequestInit {
 }
 
 const STATUS_FALLBACK_MESSAGES: Record<number, string> = {
-  400: 'The request was invalid.',
-  401: 'You are not signed in or your session has expired.',
+  400: 'Please check the entered information and try again.',
+  401: 'Your email or password is incorrect.',
   403: 'You do not have permission to perform this action.',
   404: 'The requested resource was not found.',
   408: 'The request timed out. Please try again.',
   409: 'This request could not be completed because of a conflict.',
-  422: 'Some of the submitted information is invalid.',
+  422: 'Please check the entered information and try again.',
   429: 'Too many requests were sent. Please wait a moment and try again.',
   500: 'The server encountered an error. Please try again later.',
   502: 'The server is temporarily unavailable. Please try again later.',
@@ -84,57 +84,33 @@ function getBodyMessage(body: unknown): string | null {
   return null;
 }
 
-function getValidationDetails(body: unknown): string | null {
-  if (!body || typeof body !== 'object') return null;
-
-  const error = body as { error?: unknown; details?: unknown };
-  const details = error.details ?? (error.error && typeof error.error === 'object'
-    ? (error.error as { details?: unknown }).details
-    : undefined);
-
-  if (!Array.isArray(details)) return null;
-
-  const messages = details
-    .map((value) => {
-      if (typeof value === 'string') return value.trim();
-
-      if (value && typeof value === 'object') {
-        const nested = value as {
-          message?: unknown;
-          detail?: unknown;
-          error?: unknown;
-          property?: unknown;
-          field?: unknown;
-        };
-
-        return (
-          getBodyMessage(nested.message) ||
-          getBodyMessage(nested.detail) ||
-          getBodyMessage(nested.error) ||
-          (typeof nested.property === 'string' ? nested.property.trim() : '') ||
-          (typeof nested.field === 'string' ? nested.field.trim() : '')
-        );
-      }
-
-      return '';
-    })
-    .filter(Boolean);
-
-  return messages.length > 0 ? messages.join('; ') : null;
-}
-
-function getRequestId(body: unknown): string | null {
-  if (!body || typeof body !== 'object') return null;
-
-  const meta = (body as { meta?: unknown }).meta;
-  if (!meta || typeof meta !== 'object') return null;
-
-  const requestId = (meta as { requestId?: unknown }).requestId;
-  return typeof requestId === 'string' && requestId.trim() ? requestId.trim() : null;
-}
-
 function getFriendlyHttpErrorMessage(status: number): string {
   return STATUS_FALLBACK_MESSAGES[status] || `The request could not be completed (${status}).`;
+}
+
+function isSafeBackendMessage(message: string | null): message is string {
+  if (!message) return false;
+
+  const normalized = message.toLowerCase();
+  return ![
+    'internal_server_error',
+    'unexpected error',
+    'stack trace',
+    'requestid',
+    'request id:',
+    'prisma',
+    'postgres',
+    'sql error',
+  ].some((fragment) => normalized.includes(fragment));
+}
+
+function getUserFacingError(status: number, body: unknown): string {
+  if (status === 401) return STATUS_FALLBACK_MESSAGES[401];
+  if (status === 400 || status === 422) return STATUS_FALLBACK_MESSAGES[status];
+  if (status >= 500) return getFriendlyHttpErrorMessage(status);
+
+  const message = getBodyMessage(body);
+  return isSafeBackendMessage(message) ? message : getFriendlyHttpErrorMessage(status);
 }
 
 async function apiFetch<T>(
@@ -154,19 +130,7 @@ async function apiFetch<T>(
 
   if (!res.ok) {
     const body = await readResponseBody(res);
-    const bodyMessage = getBodyMessage(body);
-    const validationDetails = getValidationDetails(body);
-    const requestId = getRequestId(body);
-    const friendly = getFriendlyHttpErrorMessage(res.status);
-
-    if (bodyMessage || validationDetails) {
-      const suffix = [bodyMessage, validationDetails, requestId ? `Request ID: ${requestId}` : null]
-        .filter(Boolean)
-        .join(' - ');
-      throw new Error(`${friendly}${suffix ? ` ${suffix}` : ''}`.trim());
-    }
-
-    throw new Error(`${friendly}${requestId ? ` Request ID: ${requestId}` : ''}`);
+    throw new Error(getUserFacingError(res.status, body));
   }
 
   // DELETE endpoints often return 204 No Content — guard against
@@ -185,11 +149,12 @@ async function apiFetch<T>(
     'data' in payload
   ) {
     if (payload.success === false) {
-      const message = getBodyMessage(payload.message) || getBodyMessage(payload.error);
-      const requestId = getRequestId(payload);
-      throw new Error(
-        `${message || 'The request could not be completed.'}${requestId ? ` Request ID: ${requestId}` : ''}`,
-      );
+      const errorCode =
+        payload.error && typeof payload.error === 'object'
+          ? (payload.error as { code?: unknown }).code
+          : undefined;
+      const status = errorCode === 'INTERNAL_SERVER_ERROR' ? 500 : res.status;
+      throw new Error(getUserFacingError(status, payload));
     }
     return payload.data as T;
   }
