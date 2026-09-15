@@ -192,6 +192,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
   const gallery = images.filter((img) => img.id !== hero?.id);
   const location = locationLabel(property);
   const size = sizeLabel(property);
+  const isReserved = property.status === 'RESERVED';
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
@@ -357,12 +358,18 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               </div>
 
               <div className="mt-8 space-y-3">
-                <Link
-                  href={`/booking?propertyId=${encodeURIComponent(property.id)}`}
-                  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-gold-primary px-5 text-sm font-semibold text-midnight transition hover:bg-gold-deep"
-                >
-                  Book this property
-                </Link>
+                {isReserved ? (
+                  <div className="inline-flex h-12 w-full items-center justify-center rounded-full bg-amber-50 px-5 text-sm font-semibold text-amber-800 ring-1 ring-amber-200">
+                    Property reserved
+                  </div>
+                ) : (
+                  <Link
+                    href={`/booking?propertyId=${encodeURIComponent(property.id)}`}
+                    className="inline-flex h-12 w-full items-center justify-center rounded-full bg-gold-primary px-5 text-sm font-semibold text-midnight transition hover:bg-gold-deep"
+                  >
+                    Book this property
+                  </Link>
+                )}
                 <button className="inline-flex h-12 w-full items-center justify-center rounded-full bg-midnight px-5 text-sm font-semibold text-white transition hover:bg-slate-800">
                   Contact Agent
                 </button>

@@ -22,6 +22,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const area = formatArea(property.areaSize, property.areaUnit);
   const listingTypeLabel = getListingTypeLabel(property.listingType);
   const statusLabel = getPropertyStatusLabel(property.status);
+  const isReserved = property.status === 'RESERVED';
 
   return (
     <article className="group relative overflow-hidden rounded-brand-lg border border-slate-100 bg-white shadow-brand-sm transition-all duration-250 hover:-translate-y-1 hover:border-gold-highlight/50 hover:shadow-brand-md">
@@ -82,7 +83,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               {area}
             </span>
 
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+            <span className={`rounded-full px-2.5 py-1 text-xs font-medium uppercase tracking-[0.14em] ${isReserved ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'bg-slate-100 text-slate-500'}`}>
               {statusLabel}
             </span>
           </div>

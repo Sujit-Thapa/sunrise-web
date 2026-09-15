@@ -341,19 +341,26 @@ function Booking() {
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
                     {filteredProps.map((p) => {
                       const selectedCard = selectedId === p.id;
+                      const isReserved = p.status === 'RESERVED';
 
                       return (
                         <motion.button
                           key={p.id}
                           type="button"
-                          whileHover={{ y: -4 }}
-                          whileTap={{ scale: 0.99 }}
+                          disabled={isReserved}
+                          whileHover={isReserved ? undefined : { y: -4 }}
+                          whileTap={isReserved ? undefined : { scale: 0.99 }}
                           className={`overflow-hidden rounded-[24px] border text-left transition ${
-                            selectedCard
+                            isReserved
+                              ? 'cursor-not-allowed border-amber-200 bg-amber-50/40 opacity-80'
+                              : selectedCard
                               ? 'border-midnight bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]'
                               : 'border-stone-200 bg-white hover:border-gold-primary/60 hover:shadow-[0_18px_50px_rgba(15,23,42,0.06)]'
                           }`}
-                          onClick={() => setSelectedId(p.id)}
+                          onClick={() => {
+                            if (!isReserved) setSelectedId(p.id);
+                          }}
+                          aria-label={isReserved ? `${p.title} is reserved` : `Select ${p.title}`}
                         >
                           <div className="relative aspect-[4/3] bg-slate-100">
                             <Image
@@ -366,6 +373,11 @@ function Booking() {
                             <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-midnight backdrop-blur">
                               {propertyFilterType(p) === 'house' ? 'House' : 'Land'}
                             </div>
+                            {isReserved ? (
+                              <div className="absolute right-4 top-4 rounded-full bg-amber-100 px-3 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-amber-800">
+                                Reserved
+                              </div>
+                            ) : null}
                           </div>
                           <div className="p-5">
                             <p className="mb-3 text-[0.58rem] uppercase tracking-[0.18em] text-slate-400">
@@ -385,6 +397,9 @@ function Booking() {
                               </span>
                             </div>
                             <p className="text-[1.3rem] font-semibold text-midnight">{formatCurrency(p.price)}</p>
+                            {isReserved ? (
+                              <p className="mt-2 text-xs font-semibold text-amber-700">This property is no longer available for booking.</p>
+                            ) : null}
                             <p className="mt-2 text-[0.62rem] uppercase tracking-[0.12em] text-slate-400">
                               {p.id.slice(0, 8).toUpperCase()}
                             </p>
@@ -395,11 +410,17 @@ function Booking() {
                   </div>
                 )}
 
+                {selected?.status === 'RESERVED' ? (
+                  <p className="mt-6 rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    This property has already been reserved. Please choose another property to continue.
+                  </p>
+                ) : null}
+
                 <div className="mt-8 flex justify-end">
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 rounded-full bg-midnight px-5 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!selectedId}
+                    disabled={!selectedId || selected?.status === 'RESERVED'}
                     onClick={() => setStep(2)}
                   >
                     Continue
