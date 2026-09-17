@@ -253,7 +253,7 @@ export default function ProfilePage() {
 
           <PropertyShelf
             title="Booked"
-            description="Properties booked from this browser."
+            description="Properties reserved through your Sunrise account."
             emptyText="No bookings yet."
             items={booked}
             actionLabel="Booked"
@@ -472,7 +472,15 @@ function PropertyShelf({
                             : 'Saved recently'}
                       </p>
 
-                      {onRemove && !readOnly ? (
+                      {isBooked ? (
+                        <Link
+                          href={`/properties/${item.id}`}
+                          className="inline-flex items-center gap-2 rounded-full bg-midnight px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-stone-800"
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                          View property
+                        </Link>
+                      ) : onRemove && !readOnly ? (
                         <button
                           type="button"
                           onClick={() => onRemove(item)}
@@ -488,6 +496,12 @@ function PropertyShelf({
                         </span>
                       )}
                     </div>
+
+                    {isBooked && item.paymentId ? (
+                      <p className="mt-3 border-t border-stone-100 pt-3 text-xs text-slate-400">
+                        Payment reference: <span className="font-medium text-slate-600">{item.paymentId}</span>
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </article>
