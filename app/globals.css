@@ -13,3 +13,8 @@ body {
   background: rgba(184, 155, 78, 0.22);
   color: #0d1b2a;
 }
+
+/* Keep the custom eye button as the only password reveal control. */
+input[data-custom-password-toggle]::-ms-reveal {
+  display: none;
+}

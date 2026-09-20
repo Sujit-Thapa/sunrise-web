@@ -8,9 +8,9 @@ export default function PropertyNotFound() {
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
             Property details
           </p>
-          <h1 className="mt-3 text-3xl font-semibold text-midnight">Property not found</h1>
+          <h1 className="mt-3 text-3xl font-semibold text-midnight">This property is no longer available</h1>
           <p className="mt-3 text-sm leading-7 text-slate-500">
-            The listing you opened may have been removed, hidden, or the link may be incorrect.
+            This property may have been reserved, sold, or removed. Browse our available listings to find another property.
           </p>
           <Link
             href="/properties"
