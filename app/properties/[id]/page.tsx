@@ -12,6 +12,7 @@ import {
   Wallet,
 } from 'lucide-react';
 
+import { ApiError } from '@/lib/api';
 import { auth, getAuthToken } from '@/lib/auth';
 import { propertiesApi } from '@/lib/backend';
 import { resolveImageSrcFromProperty } from '@/lib/image';
@@ -44,7 +45,7 @@ const statusStyles: Record<string, string> = {
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'ready'; property: PropertyResponseDto }
-  | { kind: 'error'; message: string; isPrivate: boolean };
+  | { kind: 'error'; message: string; isUnavailable: boolean };
 
 function locationLabel(property: PropertyResponseDto): string {
   return formatLocation(property);
@@ -70,13 +71,11 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
       setState({ kind: 'loading' });
 
       const token = getAuthToken();
-      let role: UserRole | null = null;
       let authTokenToUse: string | undefined;
 
       if (token) {
         try {
           const me = await auth.me(token);
-          role = me.role;
           if (isPrivileged(me.role)) {
             authTokenToUse = token;
           }
@@ -93,17 +92,10 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
         if (!active) return;
 
         const message = (error as Error).message || 'Unable to load property.';
-        const isPrivate =
-          !authTokenToUse &&
-          (message.includes('404') ||
-            message.toLowerCase().includes('not found') ||
-            message.toLowerCase().includes('not have permission') ||
-            message.toLowerCase().includes('forbidden'));
-
         setState({
           kind: 'error',
           message,
-          isPrivate: isPrivate || role === 'USER',
+          isUnavailable: error instanceof ApiError && error.status === 404,
         });
       }
     }
@@ -148,14 +140,14 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               Property details
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-midnight">
-              {state.isPrivate ? 'This property is not public' : 'We could not load this property'}
+              {state.isUnavailable ? 'This property is no longer available' : 'We could not load this property'}
             </h1>
             <p className="mt-3 text-sm leading-7 text-slate-500">
-              {state.isPrivate
-                ? 'This listing is hidden or still in draft. Agent and admin accounts can view it after signing in.'
-                : 'The backend returned an error while loading this listing. Please try again or go back to the property list.'}
+              {state.isUnavailable
+                ? 'This property may have been reserved, sold, or removed. Browse our available listings to find another property.'
+                : 'Please try again or return to the property list.'}
             </p>
-            <p className="mt-4 text-xs text-slate-400">{state.message}</p>
+            {!state.isUnavailable && <p className="mt-4 text-xs text-slate-400">{state.message}</p>}
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
                 href="/properties"
@@ -163,14 +155,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               >
                 Back to properties
               </Link>
-              {state.isPrivate ? (
-                <Link
-                  href="/auth/login"
-                  className="inline-flex items-center justify-center rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
-                >
-                  Sign in
-                </Link>
-              ) : (
+              {!state.isUnavailable && (
                 <button
                   type="button"
                   onClick={() => setRetryIndex((current) => current + 1)}
@@ -192,7 +177,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
   const gallery = images.filter((img) => img.id !== hero?.id);
   const location = locationLabel(property);
   const size = sizeLabel(property);
-  const isReserved = property.status === 'RESERVED';
+  const canReserve = property.status === 'ACTIVE';
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
@@ -358,18 +343,14 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               </div>
 
               <div className="mt-8 space-y-3">
-                {isReserved ? (
-                  <div className="inline-flex h-12 w-full items-center justify-center rounded-full bg-amber-50 px-5 text-sm font-semibold text-amber-800 ring-1 ring-amber-200">
-                    Property reserved
-                  </div>
-                ) : (
+                {canReserve ? (
                   <Link
                     href={`/booking?propertyId=${encodeURIComponent(property.id)}`}
                     className="inline-flex h-12 w-full items-center justify-center rounded-full bg-gold-primary px-5 text-sm font-semibold text-midnight transition hover:bg-gold-deep"
                   >
-                    Book this property
+                    Reserve this property
                   </Link>
-                )}
+                ) : null}
                 <button className="inline-flex h-12 w-full items-center justify-center rounded-full bg-midnight px-5 text-sm font-semibold text-white transition hover:bg-slate-800">
                   Contact Agent
                 </button>
