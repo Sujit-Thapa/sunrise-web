@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ChevronDown, LogOut, Menu, Shield, UserCircle2, X } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
-import { isStaffRole } from '@/lib/auth-routing';
+import { isStaffRole, normalizeUserRole } from '@/lib/auth-routing';
 
 const PUBLIC_NAV_LINKS = [
   { label: 'Properties', href: '/properties' },
@@ -178,6 +178,12 @@ export default function Navbar() {
                         <UserCircle2 className="h-4 w-4" />
                         Profile
                       </Link>
+                      {normalizeUserRole(user.role) === 'user' ? (
+                        <Link href="/account/reservations" onClick={handleNavClick}
+                          className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-stone-50 hover:text-midnight">
+                          My reservations
+                        </Link>
+                      ) : null}
                       {isStaffRole(user.role) ? (
                         <Link
                           href={roleDashboardHref ?? '/'}
@@ -270,6 +276,12 @@ export default function Navbar() {
                     >
                       Profile
                     </Link>
+                    {normalizeUserRole(user.role) === 'user' ? (
+                      <Link href="/account/reservations" onClick={handleNavClick}
+                        className="rounded-full border border-white/20 bg-white/80 px-5 py-3 text-center text-sm font-semibold text-slate-700">
+                        My reservations
+                      </Link>
+                    ) : null}
                     {isStaffRole(user.role) ? (
                       <Link
                         href={roleDashboardHref ?? '/'}

@@ -18,6 +18,7 @@ import { resolveImageSrcFromProperty } from '@/lib/image';
 
 const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
 const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
+const EMPTY_PROPERTIES: PropertyResponseDto[] = [];
 const PRICE_RANGES = ['Any Price', 'Under Rs 50 L', 'Rs 50 L – 1 Cr', 'Rs 1 Cr – 2 Cr', 'Rs 2 Cr+'];
 
 interface PropertiesListingProps {
@@ -34,7 +35,7 @@ export default function PropertiesListing({
   loadError,
 }: PropertiesListingProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const items = Array.isArray(properties) ? properties : [];
+  const items = Array.isArray(properties) ? properties : EMPTY_PROPERTIES;
   const resultCount = total ?? items.length;
 
   return (
@@ -112,8 +113,11 @@ function PropertiesMap({
       const active = id === hoveredId;
 
       element.classList.toggle('translate-y-[-4px]', active);
+      label?.classList.toggle('bg-white', !active);
       label?.classList.toggle('bg-[#AC953E]', active);
+      label?.classList.toggle('text-slate-800', !active);
       label?.classList.toggle('text-white', active);
+      label?.classList.toggle('shadow-[0_10px_24px_rgba(13,27,42,0.2)]', !active);
       label?.classList.toggle('shadow-[0_10px_28px_rgba(13,27,42,0.4)]', active);
       label?.classList.toggle('scale-105', active);
       dot?.classList.toggle('scale-125', active);
@@ -123,107 +127,121 @@ function PropertiesMap({
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
+    const container = mapContainer.current;
 
-    const mappedProperties = properties.filter((property) => {
-      const latitude = Number(property.latitude);
-      const longitude = Number(property.longitude);
-      return Number.isFinite(latitude) && Number.isFinite(longitude);
-    });
-
-    mapboxgl.accessToken = mapboxToken;
-
-    const firstProperty = mappedProperties[0];
-    const initialCenter: [number, number] = firstProperty
-      ? [Number(firstProperty.longitude), Number(firstProperty.latitude)]
-      : KATHMANDU_CENTER;
-
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/outdoors-v12',
-      center: initialCenter,
-      zoom: 12,
-      attributionControl: false,
-      cooperativeGestures: true,
-    });
-
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
-    map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
-
-    let isDisposed = false;
-
-    const addMarkers = () => {
-      if (isDisposed) return;
-
-      map.resize();
-      const bounds = new mapboxgl.LngLatBounds();
-
-      mappedProperties.forEach((property) => {
-        const coordinates: [number, number] = [
-          Number(property.longitude),
-          Number(property.latitude),
-        ];
-
-        bounds.extend(coordinates);
-
-        const element = createPriceMarker(property);
-        element.addEventListener('mouseenter', () => onHoverChange(property.id));
-        element.addEventListener('mouseleave', () => onHoverChange(null));
-
-        markerEls.current.set(property.id, element);
-
-        const marker = new mapboxgl.Marker({ element, anchor: 'bottom' })
-          .setLngLat(coordinates)
-          .addTo(map);
-
-        markersRef.current.push(marker);
+    // Strict Mode replays effects before the next frame. Avoid starting map
+    // requests for that throwaway setup, then cancelling them immediately.
+    let disposeMap: (() => void) | undefined;
+    const setupFrame = window.requestAnimationFrame(() => {
+      const mappedProperties = properties.filter((property) => {
+        const latitude = Number(property.latitude);
+        const longitude = Number(property.longitude);
+        return Number.isFinite(latitude) && Number.isFinite(longitude);
       });
 
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, {
-          padding: { top: 140, right: 80, bottom: 80, left: 80 },
-          maxZoom: 14,
-          duration: 0,
+      mapboxgl.accessToken = mapboxToken;
+
+      const firstProperty = mappedProperties[0];
+      const initialCenter: [number, number] = firstProperty
+        ? [Number(firstProperty.longitude), Number(firstProperty.latitude)]
+        : KATHMANDU_CENTER;
+
+      const map = new mapboxgl.Map({
+        container,
+        style: 'mapbox://styles/mapbox/outdoors-v12',
+        center: initialCenter,
+        zoom: 12,
+        attributionControl: false,
+        cooperativeGestures: true,
+      });
+
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+      map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
+
+      let isDisposed = false;
+
+      const addMarkers = () => {
+        if (isDisposed) return;
+
+        map.resize();
+        const bounds = new mapboxgl.LngLatBounds();
+
+        mappedProperties.forEach((property) => {
+          const coordinates: [number, number] = [
+            Number(property.longitude),
+            Number(property.latitude),
+          ];
+
+          bounds.extend(coordinates);
+
+          const element = createPriceMarker(property);
+          element.addEventListener('mouseenter', () => onHoverChange(property.id));
+          element.addEventListener('mouseleave', () => onHoverChange(null));
+
+          markerEls.current.set(property.id, element);
+
+          const marker = new mapboxgl.Marker({ element, anchor: 'bottom' })
+            .setLngLat(coordinates)
+            .addTo(map);
+
+          markersRef.current.push(marker);
         });
-      }
-    };
 
-    const handleError = () => {
-      setMapError('Mapbox could not load the map. Check the public token and allowed URLs.');
-    };
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, {
+            padding: { top: 140, right: 80, bottom: 80, left: 80 },
+            maxZoom: 14,
+            duration: 0,
+          });
+        }
+      };
 
-    const resizeMap = () => map.resize();
-    const resizeTimer = window.setTimeout(resizeMap, 250);
+      const handleError = (event: { error?: Error }) => {
+        if (isDisposed || event.error?.name === 'AbortError') return;
+        setMapError('Mapbox could not load the map. Check the public token and allowed URLs.');
+      };
 
-    map.once('load', addMarkers);
-    map.on('error', handleError);
-    window.addEventListener('resize', resizeMap);
+      const resizeMap = () => { if (!isDisposed) map.resize(); };
+      const resizeTimer = window.setTimeout(resizeMap, 250);
 
-    const markerElements = markerEls.current;
+      map.once('load', addMarkers);
+      map.on('error', handleError);
+      window.addEventListener('resize', resizeMap);
+
+      const markerElements = markerEls.current;
+
+      disposeMap = () => {
+        if (isDisposed) return;
+        isDisposed = true;
+
+        window.clearTimeout(resizeTimer);
+        window.removeEventListener('resize', resizeMap);
+        map.off('load', addMarkers);
+        map.off('error', handleError);
+
+        markersRef.current.forEach((marker) => {
+          try {
+            marker.remove();
+          } catch {
+            // Ignore cleanup errors while the map is tearing down.
+          }
+        });
+
+        markersRef.current = [];
+        markerElements.clear();
+
+        try {
+          map.remove();
+        } catch (error) {
+          // Only synchronous cancellation is expected during teardown.
+          if (!(error instanceof Error) || error.name !== 'AbortError') throw error;
+        }
+      };
+    });
 
     return () => {
-      if (isDisposed) return;
-      isDisposed = true;
-
-      window.clearTimeout(resizeTimer);
-      window.removeEventListener('resize', resizeMap);
-      map.off('error', handleError);
-
-      markersRef.current.forEach((marker) => {
-        try {
-          marker.remove();
-        } catch {
-          // Ignore cleanup errors while the map is tearing down.
-        }
-      });
-
-      markersRef.current = [];
-      markerElements.clear();
-
-      try {
-        map.remove();
-      } catch {
-        // Ignore cleanup aborts while the style request is resolving.
-      }
+      window.cancelAnimationFrame(setupFrame);
+      disposeMap?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapboxToken, properties]);
@@ -398,7 +416,7 @@ function createPriceMarker(property: PropertyResponseDto): HTMLAnchorElement {
   marker.ariaLabel = `View ${property.title}`;
   marker.className = 'group flex cursor-pointer flex-col items-center text-slate-800 no-underline';
   marker.innerHTML = `
-    <span data-role="label" class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold shadow-[0_10px_24px_rgba(13,27,42,0.2)] transition duration-200">Rs. ${
+    <span data-role="label" class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold text-slate-800 shadow-[0_10px_24px_rgba(13,27,42,0.2)] transition duration-200">Rs. ${
       Number.isFinite(price) ? price.toLocaleString('en-US') : '0'
     }</span>
     <span data-role="dot" class="mt-2 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#AC953E] shadow-[0_6px_16px_rgba(13,27,42,0.2)] transition duration-200"></span>

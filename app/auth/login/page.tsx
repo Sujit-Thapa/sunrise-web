@@ -29,7 +29,9 @@ export default function LoginPage() {
       const response = await auth.login(payload);
       setAuthToken(response.accessToken);
       const currentUser = await auth.me(response.accessToken);
-      router.replace(getRoleHomePath(currentUser.role));
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.replace(currentUser.role === 'USER' && next === '/account/reservations'
+        ? next : getRoleHomePath(currentUser.role));
     } catch (err) {
       setError((err as Error).message || 'Login failed.');
     } finally {
@@ -74,6 +76,7 @@ export default function LoginPage() {
             <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               id="password"
+              data-custom-password-toggle
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
