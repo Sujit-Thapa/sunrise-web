@@ -1,5 +1,12 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number, public readonly code?: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 interface ApiOptions extends RequestInit {
   /**
    * Next.js fetch cache behavior. Pass 'no-store' for anything that must
@@ -105,11 +112,10 @@ function isSafeBackendMessage(message: string | null): message is string {
 }
 
 function getUserFacingError(status: number, body: unknown): string {
-  if (status === 401) return STATUS_FALLBACK_MESSAGES[401];
-  if (status === 400 || status === 422) return STATUS_FALLBACK_MESSAGES[status];
   if (status >= 500) return getFriendlyHttpErrorMessage(status);
 
-  const message = getBodyMessage(body);
+  const errorBody = body && typeof body === 'object' && 'error' in body ? body.error : body;
+  const message = getBodyMessage(errorBody);
   return isSafeBackendMessage(message) ? message : getFriendlyHttpErrorMessage(status);
 }
 
@@ -130,7 +136,8 @@ async function apiFetch<T>(
 
   if (!res.ok) {
     const body = await readResponseBody(res);
-    throw new Error(getUserFacingError(res.status, body));
+    const error = (body as { error?: { code?: string } } | null)?.error;
+    throw new ApiError(getUserFacingError(res.status, body), res.status, error?.code);
   }
 
   // DELETE endpoints often return 204 No Content — guard against
@@ -145,8 +152,7 @@ async function apiFetch<T>(
   if (
     payload &&
     typeof payload === 'object' &&
-    'success' in payload &&
-    'data' in payload
+    'success' in payload
   ) {
     if (payload.success === false) {
       const errorCode =
@@ -154,7 +160,7 @@ async function apiFetch<T>(
           ? (payload.error as { code?: unknown }).code
           : undefined;
       const status = errorCode === 'INTERNAL_SERVER_ERROR' ? 500 : res.status;
-      throw new Error(getUserFacingError(status, payload));
+      throw new ApiError(getUserFacingError(status, payload.error), status, errorCode as string | undefined);
     }
     return payload.data as T;
   }

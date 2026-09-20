@@ -375,6 +375,47 @@ export interface UpdateSystemConfigDto {
 // ============================================
 // Reservations
 // ============================================
+export type MyReservationStatus = 'ACTIVE' | 'CLAIMED' | 'COMPLETED' | 'CANCELLED';
+
+export interface MyReservationDto {
+  id: string;
+  status: MyReservationStatus;
+  property: {
+    id: string;
+    title: string;
+    price: string;
+    listingType: string;
+    category: string;
+    status: string;
+    city: string;
+    state: string;
+    country: string;
+    primaryImageUrl: string | null;
+  };
+  reservationFeeAmount: string;
+  claimedByAgentId: string | null;
+  claimedAgentNameSnapshot: string | null;
+  cancelledBy: string | null;
+  cancellationReason: string | null;
+  createdAt: string;
+  claimedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+}
+
+export interface MyReservationsQueryParams {
+  status?: MyReservationStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface MyReservationsResponseDto {
+  items: MyReservationDto[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export type ReservationStatus = 'PENDING' | 'CLAIMED' | 'COMPLETED' | 'CANCELLED' | string;
 
 export interface ReservationPropertyDto {
