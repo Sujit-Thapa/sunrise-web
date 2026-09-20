@@ -1,33 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 import { RiArrowRightLine, RiCheckLine, RiCloseLine, RiHome4Line, RiPriceTag3Line } from 'react-icons/ri';
 
+import { normalizeUserRole } from '@/lib/auth-routing';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
-import { addBookedProperty, clearPendingBooking, getPendingBooking } from '@/lib/account-store';
+import { clearPendingBooking, getPendingBooking } from '@/lib/account-store';
 
 export default function PaymentResultPage({ success }: { success: boolean }) {
   const searchParams = useSearchParams();
   const { user } = useAuthSession();
-  const handled = useRef(false);
+  const router = useRouter();
   const paymentId = searchParams.get('paymentId') || searchParams.get('payment_id');
   const pendingBooking = user ? getPendingBooking(user.id) : null;
 
   useEffect(() => {
-    if (!success || !user || handled.current) return;
-
-    const pending = getPendingBooking(user.id);
-    if (pending) {
-      addBookedProperty(user.id, pending.property, {
-        paymentId,
-        provider: pending.provider,
-      });
-      clearPendingBooking(user.id);
-    }
-    handled.current = true;
-  }, [paymentId, success, user]);
+    if (!success || !user || normalizeUserRole(user.role) !== 'user') return;
+    clearPendingBooking(user.id);
+    const timer = window.setTimeout(() => router.replace('/account/reservations'), 5000);
+    return () => window.clearTimeout(timer);
+  }, [router, success, user]);
 
   const title = success ? 'Your property is reserved.' : 'Payment was not completed.';
   const description = success
@@ -50,20 +44,21 @@ export default function PaymentResultPage({ success }: { success: boolean }) {
               <RiHome4Line className="mt-0.5 h-5 w-5 shrink-0 text-gold-primary" />
               <div>
                 <p className="font-semibold text-midnight">{pendingBooking.property.title}</p>
-                <p className="mt-1 text-sm text-slate-500">Your booking has been added to your account.</p>
+                <p className="mt-1 text-sm text-slate-500">View your reservation in My reservations.</p>
               </div>
             </div>
             {paymentId ? <p className="mt-4 flex items-center gap-2 text-xs text-slate-500"><RiPriceTag3Line className="h-4 w-4" />Payment reference: {paymentId}</p> : null}
           </div>
         ) : null}
 
+        {success && normalizeUserRole(user?.role) === 'user' && <p role="status" className="mt-6 text-sm text-slate-500">Taking you to My reservations in a few seconds…</p>}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           {!success ? (
             <Link href={pendingBooking ? `/booking?propertyId=${encodeURIComponent(pendingBooking.property.id)}` : '/booking'} className="inline-flex items-center gap-2 rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white hover:bg-stone-800">
               Try payment again <RiArrowRightLine className="h-4 w-4" />
             </Link>
           ) : null}
-          <Link href="/profile" className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:border-gold-primary hover:text-gold-primary">View my bookings</Link>
+          <Link href="/account/reservations" className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:border-gold-primary hover:text-gold-primary">My reservations</Link>
           <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:border-gold-primary hover:text-gold-primary">Return home</Link>
         </div>
       </section>

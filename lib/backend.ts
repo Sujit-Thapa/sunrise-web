@@ -1,6 +1,8 @@
 import { api } from './api';
 import type {
   AgentResponseDto,
+  MyReservationsQueryParams,
+  MyReservationsResponseDto,
   CancelReservationDto,
   ConnectIpsInitiateResponseDto,
   ConfirmPropertyImageDto,
@@ -142,9 +144,13 @@ export const paymentApi = {
 };
 
 // ============================================
-// Reservations (Agent/Admin)
+// Reservations
 // ============================================
 export const reservationsApi = {
+  // USER only; the embedded property remains available after reservation.
+  findMine: (token: string, params?: MyReservationsQueryParams, signal?: AbortSignal) =>
+    api.get<MyReservationsResponseDto>(`/v1/reservations/mine${toQueryString(params)}`, token, { signal }),
+
   findAll: (
     params?: ReservationListQueryParams,
     token?: string
