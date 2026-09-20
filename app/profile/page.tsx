@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   ArrowRight,
   Bookmark,
-  CalendarCheck2,
   Clock3,
   House,
   LogOut,
@@ -22,9 +21,9 @@ import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import {
   toggleSavedProperty,
   useAccountStore,
-  EMPTY_BOOKED_PROPERTIES,
   EMPTY_SAVED_PROPERTIES,
 } from '@/lib/account-store';
+import { normalizeUserRole } from '@/lib/auth-routing';
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
 import type { BookedPropertySnapshot, PropertySnapshot } from '@/lib/account-store';
@@ -44,9 +43,6 @@ export default function ProfilePage() {
   const hydrated = useAccountStore((state) => state.hydrated);
   const saved = useAccountStore((state) =>
     user ? state.accounts[user.id]?.saved ?? EMPTY_SAVED_PROPERTIES : EMPTY_SAVED_PROPERTIES,
-  );
-  const booked = useAccountStore((state) =>
-    user ? state.accounts[user.id]?.booked ?? EMPTY_BOOKED_PROPERTIES : EMPTY_BOOKED_PROPERTIES,
   );
   const [mySubmissions, setMySubmissions] = useState<UserPropertyResponseDto[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
@@ -162,7 +158,6 @@ export default function ProfilePage() {
               <div className="mt-6 flex flex-wrap gap-2">
                 <Pill>{user.role}</Pill>
                 <Pill>{saved.length} saved</Pill>
-                <Pill>{booked.length} booked</Pill>
                 <Pill>{mySubmissions.length} submissions</Pill>
               </div>
 
@@ -173,7 +168,6 @@ export default function ProfilePage() {
 
               <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <MiniStat label="Saved" value={saved.length} />
-                <MiniStat label="Booked" value={booked.length} />
                 <MiniStat label="Submissions" value={mySubmissions.length} />
                 <MiniStat label="Role" value={user.role} />
                 <MiniStat label="Account" value={user.id.slice(0, 8)} />
@@ -251,15 +245,13 @@ export default function ProfilePage() {
             actionIcon={Bookmark}
           />
 
-          <PropertyShelf
-            title="Booked"
-            description="Properties reserved through your Sunrise account."
-            emptyText="No bookings yet."
-            items={booked}
-            actionLabel="Booked"
-            actionIcon={CalendarCheck2}
-            readOnly
-          />
+          {normalizeUserRole(user.role) === 'user' && (
+            <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">
+              <h2 className="text-2xl font-semibold text-midnight">My reservations</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-500">View your active holds and reservation history, including agent assignments and completion updates.</p>
+              <Link href="/account/reservations" className="mt-6 inline-flex rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white">My reservations</Link>
+            </div>
+          )}
         </section>
 
         <section className="mt-8 rounded-[32px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">

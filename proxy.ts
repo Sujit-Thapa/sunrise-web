@@ -4,7 +4,7 @@ import { AUTH_TOKEN_COOKIE } from '@/lib/auth-constants';
 import { getRoleHomePath, normalizeUserRole } from '@/lib/auth-routing';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
-const GUARDED_PREFIXES = ['/admin', '/agent'];
+const GUARDED_PREFIXES = ['/admin', '/agent', '/account/reservations'];
 
 function isPathUnder(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
@@ -66,6 +66,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(roleHome, request.url));
   }
 
+  if (isPathUnder(pathname, '/account/reservations')) {
+    return role === 'user' ? NextResponse.next() : NextResponse.redirect(new URL(roleHome, request.url));
+  }
+
   if (role === 'user') {
     return NextResponse.redirect(new URL('/', request.url));
   }
@@ -81,5 +85,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/agent/:path*', '/auth/login', '/auth/signup'],
+  matcher: ['/account/reservations/:path*', '/admin/:path*', '/agent/:path*', '/auth/login', '/auth/signup'],
 };

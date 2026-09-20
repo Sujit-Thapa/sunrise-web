@@ -1,32 +1,19 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
+import { normalizeUserRole } from '@/lib/auth-routing';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import {
-  addBookedProperty,
   clearPendingBooking,
-  getPendingBooking,
 } from '@/lib/account-store';
 
 type ConfirmationStatus = 'success' | 'failed' | 'pending' | 'unknown';
 
-/**
- * IMPORTANT — assumption flagged for verification:
- *
- * The Swagger schema for this API has no user-facing "check payment status"
- * endpoint (reservations are Agent/Admin only, and /v1/payments only has
- * initiate endpoints). That means this page CANNOT independently verify
- * the outcome by calling the API — it can only reflect whatever query
- * params the gateway/backend redirect actually contains.
- *
- * This parses a few common param name variants defensively. Once you
- * confirm the real redirect URL shape (check Network tab after a real
- * test payment, or ask your backend dev what `callbackUrl` produces),
- * update `parseCallbackParams` below to match exactly.
- */
+// The callback describes the payment outcome. My reservations loads the
+// authoritative reservation record from the backend after this page.
 function parseCallbackParams(params: URLSearchParams): {
   status: ConfirmationStatus;
   paymentId: string | null;
@@ -154,23 +141,15 @@ function StatusIcon({ status }: { status: ConfirmationStatus }) {
 function ConfirmationContent() {
   const searchParams = useSearchParams();
   const { user } = useAuthSession();
-  const hasStoredBooking = useRef(false);
+  const router = useRouter();
   const parsed = useMemo(() => parseCallbackParams(searchParams), [searchParams]);
 
   useEffect(() => {
-    if (!parsed || parsed.status !== 'success' || !user || hasStoredBooking.current) return;
-
-    const pending = getPendingBooking(user.id);
-
-    if (pending) {
-      addBookedProperty(user.id, pending.property, {
-        paymentId: parsed.paymentId,
-        provider: parsed.provider ?? pending.provider,
-      });
-      clearPendingBooking(user.id);
-      hasStoredBooking.current = true;
-    }
-  }, [parsed, user]);
+    if (parsed.status !== 'success' || !user || normalizeUserRole(user.role) !== 'user') return;
+    clearPendingBooking(user.id);
+    const timer = window.setTimeout(() => router.replace('/account/reservations'), 5000);
+    return () => window.clearTimeout(timer);
+  }, [parsed.status, router, user]);
 
   if (!parsed) {
     return (
@@ -216,7 +195,9 @@ function ConfirmationContent() {
           </div>
         ) : null}
 
+        {status === 'success' && normalizeUserRole(user?.role) === 'user' && <p role="status" className="mb-5 text-sm text-stone-500">Taking you to My reservations in a few seconds…</p>}
         <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link href="/account/reservations" className="border border-stone-900 bg-stone-900 px-8 py-3 text-[0.72rem] uppercase tracking-[0.16em] text-stone-50">My reservations</Link>
           {status === 'failed' || status === 'unknown' ? (
             <Link
               href="/booking"
