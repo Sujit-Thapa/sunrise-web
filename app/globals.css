@@ -16,5 +16,13 @@ body {
 
 /* Keep the custom eye button as the only password reveal control. */
 input[data-custom-password-toggle]::-ms-reveal {
-  display: none;
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+input[data-custom-password-toggle]::-ms-clear {
+  display: none !important;
 }
