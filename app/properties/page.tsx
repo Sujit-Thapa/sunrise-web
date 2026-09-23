@@ -32,6 +32,8 @@ export default async function Properties({ searchParams }: PropertiesPageProps) 
   let properties: PropertyResponseDto[] = [];
   let total = 0;
   let loadError: string | null = null;
+  const requestedPage = parseNumber(singleValue(resolvedSearchParams.page));
+  const page = requestedPage && Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
   try {
     const filters: PropertyListQueryParams = {
@@ -58,7 +60,7 @@ export default async function Properties({ searchParams }: PropertiesPageProps) 
       })(),
       minPrice: parseNumber(singleValue(resolvedSearchParams.minPrice)),
       maxPrice: parseNumber(singleValue(resolvedSearchParams.maxPrice)),
-      page: 1,
+      page,
       limit: 50,
     };
 
@@ -73,7 +75,7 @@ export default async function Properties({ searchParams }: PropertiesPageProps) 
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-[#f8f6f1]">
       <PropertiesListing
         properties={properties}
         total={total}

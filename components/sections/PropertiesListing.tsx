@@ -12,11 +12,10 @@ import {
   formatLocation,
   getPropertyCategoryLabel,
   getListingTypeLabel,
-  getPropertyStatusLabel,
 } from '@/lib/properties';
 import { resolveImageSrcFromProperty } from '@/lib/image';
+import SavePropertyButton from '@/components/ui/SavePropertyButton';
 
-const KATHMANDU_CENTER: [number, number] = [85.324, 27.7172];
 const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
 const EMPTY_PROPERTIES: PropertyResponseDto[] = [];
 const PRICE_RANGES = ['Any Price', 'Under Rs 50 L', 'Rs 50 L – 1 Cr', 'Rs 1 Cr – 2 Cr', 'Rs 2 Cr+'];
@@ -35,39 +34,50 @@ export default function PropertiesListing({
   loadError,
 }: PropertiesListingProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [sort, setSort] = useState('newest');
+  const searchParams = useSearchParams();
   const items = Array.isArray(properties) ? properties : EMPTY_PROPERTIES;
   const resultCount = total ?? items.length;
+  const currentPage = Math.max(1, Number(searchParams.get('page')) || 1);
+  const pageHref = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(page));
+    return `/properties?${params}`;
+  };
+  const sortedItems = useMemo(() => [...items].sort((a, b) => {
+    if (sort === 'price-asc') return Number(a.price) - Number(b.price);
+    if (sort === 'price-desc') return Number(b.price) - Number(a.price);
+    return sort === 'oldest' ? Date.parse(a.createdAt) - Date.parse(b.createdAt) : Date.parse(b.createdAt) - Date.parse(a.createdAt);
+  }), [items, sort]);
 
   return (
-    <div className="grid min-h-[calc(100vh-68px)] grid-cols-1 bg-white lg:grid-cols-[minmax(0,50vw)_minmax(320px,1fr)]">
-      <section className="relative min-h-[520px] overflow-hidden border-r border-slate-200 bg-slate-50 lg:min-h-[calc(100vh-68px)]">
+    <div className="grid grid-cols-1 bg-[#f8f6f1] text-[#2A2723] lg:h-[calc(100svh-80px)] lg:min-h-[600px] lg:grid-cols-[minmax(0,64fr)_minmax(390px,36fr)]">
+      <section aria-label="Property map" className="relative min-h-[430px] overflow-hidden bg-[#a9d8e9] lg:min-h-0">
         <PropertiesMap properties={items} hoveredId={hoveredId} onHoverChange={setHoveredId} />
         <SearchPanel />
       </section>
 
-      <section className="px-5 py-8 sm:px-8 lg:max-h-[calc(100vh-68px)] lg:overflow-y-auto">
-        <div className="mb-8">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-gold-primary">
-            Property search
-          </p>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            {resultCount} Properties Found
-          </h1>
-          <p className="mt-2 max-w-xl text-base text-slate-500">
-            {searchQuery
-              ? `Showing matches for “${searchQuery}”. Hover a listing to spotlight it on the map.`
-              : 'Hover a listing to spotlight it on the map. The experience stays useful even when the map token is missing.'}
-          </p>
+      <section aria-label="Property results" className="min-w-0 px-5 py-6 sm:px-7 lg:overflow-y-auto">
+        <div className="mb-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h1 className="text-xl font-bold">{searchQuery ? `${searchQuery} Properties` : 'Explore Properties'}{searchParams.get('listingType') === 'SALE' ? ' for Sale' : searchParams.get('listingType') === 'RENT' ? ' for Rent' : ''}</h1>
+            <p className="text-sm text-stone-500">{resultCount.toLocaleString()} results</p>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <select aria-label="Sort properties on this page" value={sort} onChange={event => setSort(event.target.value)} className="rounded-full border-0 bg-white px-4 py-2 text-xs outline-offset-2 focus-visible:outline-[#ca7653]">
+              <option value="newest">Newest</option><option value="oldest">Oldest</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option>
+            </select>
+          </div>
           {loadError ? (
             <div className="mt-4 rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Live listings are unavailable right now. Showing the page shell so you can keep browsing.
+              We couldn’t load properties. Please refresh to try again.
             </div>
           ) : null}
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
           {items.length > 0 ? (
-            items.map((property) => (
+            sortedItems.map((property) => (
               <PropertyResult
                 key={property.id}
                 property={property}
@@ -75,15 +85,22 @@ export default function PropertiesListing({
                 onHoverChange={setHoveredId}
               />
             ))
-          ) : (
+          ) : !loadError ? (
             <div className="rounded-3xl border border-dashed border-slate-200 bg-white/80 p-8 text-center shadow-sm">
               <p className="text-lg font-medium text-slate-800">No properties available right now</p>
               <p className="mt-2 text-sm text-slate-500">
                 Try again later or broaden your search once new listings are published.
               </p>
             </div>
-          )}
+          ) : null}
         </div>
+        {!loadError && resultCount > 50 ? (
+          <nav aria-label="Results pages" className="mt-6 flex items-center justify-between text-sm">
+            {currentPage > 1 ? <Link href={pageHref(currentPage - 1)} className="rounded-full bg-white px-4 py-2">Previous</Link> : <span />}
+            <span className="text-stone-500">Page {currentPage} of {Math.ceil(resultCount / 50)}</span>
+            {currentPage * 50 < resultCount ? <Link href={pageHref(currentPage + 1)} className="rounded-full bg-[#3E4A3D] px-4 py-2 text-white">Next</Link> : <span />}
+          </nav>
+        ) : null}
       </section>
     </div>
   );
@@ -144,13 +161,13 @@ function PropertiesMap({
       const firstProperty = mappedProperties[0];
       const initialCenter: [number, number] = firstProperty
         ? [Number(firstProperty.longitude), Number(firstProperty.latitude)]
-        : KATHMANDU_CENTER;
+        : [80, 19];
 
       const map = new mapboxgl.Map({
         container,
         style: 'mapbox://styles/mapbox/outdoors-v12',
         center: initialCenter,
-        zoom: 12,
+        zoom: firstProperty ? 12 : 3.5,
         attributionControl: false,
         cooperativeGestures: true,
       });
@@ -262,7 +279,9 @@ function SearchPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentLocation = searchParams.get('city') ?? '';
-  const currentCategory = searchParams.get('category') ?? 'All Types';
+  const currentCategory = PROPERTY_TYPES.find(
+    (type) => type.toUpperCase() === searchParams.get('category')?.toUpperCase(),
+  ) ?? 'All Types';
   const currentMinPrice = searchParams.get('minPrice');
   const currentMaxPrice = searchParams.get('maxPrice');
 
@@ -280,7 +299,8 @@ function SearchPanel() {
     const category = String(formData.get('category') ?? 'All Types');
     const priceRange = String(formData.get('priceRange') ?? 'Any Price');
 
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
+    ['city', 'category', 'minPrice', 'maxPrice', 'page'].forEach(key => params.delete(key));
 
     if (location) {
       params.set('city', location);
@@ -308,20 +328,21 @@ function SearchPanel() {
 
   return (
     <form
+      key={searchParams.toString()}
       onSubmit={(event) => {
         event.preventDefault();
         pushSearch(event.currentTarget);
       }}
-      className="absolute left-4 right-4 top-5 z-30 rounded-full bg-white shadow-xl sm:left-6 sm:right-6"
+      className="absolute left-4 right-4 top-6 z-30 mx-auto max-w-[660px] rounded-[24px] bg-white p-2 shadow-lg sm:top-9 sm:rounded-full"
     >
-      <div className="grid grid-cols-[1fr_auto] items-center gap-2 p-2 md:grid-cols-[1.15fr_0.9fr_0.9fr_auto]">
-        <div className="min-w-0 px-5 md:block">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Location</p>
+      <div className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
+        <div className="min-w-0 px-3">
           <input
             name="location"
+            aria-label="Location"
             defaultValue={currentLocation}
-            placeholder="Where are you looking?"
-            className="mt-1 w-full border-none bg-transparent text-sm font-bold text-slate-500 outline-none placeholder:text-slate-300"
+            placeholder="City or location"
+            className="w-full border-none bg-transparent py-2 text-xs text-stone-600 outline-offset-2 placeholder:text-stone-400"
           />
         </div>
 
@@ -343,11 +364,11 @@ function SearchPanel() {
         <button
           type="submit"
           aria-label="Search properties"
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-gold-primary text-white transition-colors duration-200 hover:bg-gold-deep"
+          className="flex items-center justify-center gap-1.5 rounded-full bg-[#3E4A3D] px-5 py-2.5 text-xs text-white transition hover:bg-[#303c2f]"
         >
           <svg
-            width="23"
-            height="23"
+            width="13"
+            height="13"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -358,6 +379,7 @@ function SearchPanel() {
             <circle cx="11" cy="11" r="7" />
             <line x1="16.5" y1="16.5" x2="21" y2="21" />
           </svg>
+          Search
         </button>
       </div>
     </form>
@@ -378,13 +400,13 @@ function SearchField({
   showChevron?: boolean;
 }) {
   return (
-    <div className="hidden min-w-0 border-r border-slate-200 px-6 py-2 md:block">
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
-      <div className="mt-2 flex items-center justify-between gap-3">
+    <div className="min-w-0 border-l border-stone-100 px-3 py-2">
+      <div className="flex items-center justify-between gap-1">
         <select
           name={name}
+          aria-label={label}
           defaultValue={defaultValue}
-          className="w-full appearance-none border-none bg-transparent text-sm font-bold text-slate-500 outline-none"
+          className={`w-full min-w-0 border-none bg-transparent text-xs text-stone-600 outline-offset-2 ${showChevron ? 'appearance-none' : ''}`}
         >
           {options.map((option) => (
             <option key={option} value={option}>
@@ -439,49 +461,42 @@ function PropertyResult({
   const areaSize = formatArea(property.areaSize, property.areaUnit);
   const category = getPropertyCategoryLabel(property.category);
   const listingType = getListingTypeLabel(property.listingType);
-  const status = getPropertyStatusLabel(property.status);
 
   return (
-    <Link
-      href={`/properties/${property.id}`}
+    <article
       onMouseEnter={() => onHoverChange(property.id)}
       onMouseLeave={() => onHoverChange(null)}
-      className={`grid grid-cols-[124px_1fr] gap-5 rounded-brand-lg border bg-white p-4 transition-all duration-200 sm:grid-cols-[150px_1fr] ${
+      onFocus={() => onHoverChange(property.id)}
+      onBlur={() => onHoverChange(null)}
+      className={`relative grid min-h-[164px] grid-cols-[43%_minmax(0,1fr)] overflow-hidden rounded-[26px] border bg-white transition-colors ${
         isHovered
-          ? 'border-gold-highlight shadow-brand-md'
-          : 'border-slate-100 hover:border-gold-highlight hover:shadow-brand-md'
+          ? 'border-[#ca7653]'
+          : 'border-transparent hover:border-[#ca7653]'
       }`}
     >
-      <div className="relative h-28 overflow-hidden rounded-brand-md bg-slate-100 sm:h-32">
+      <Link href={`/properties/${property.id}`} aria-label={`View ${property.title}`} className="absolute inset-0 z-10 rounded-[26px] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#ca7653]" />
+      <div className="relative min-h-[164px] overflow-hidden bg-stone-200">
         <Image
           src={resolveImageSrcFromProperty(property)}
           alt={property.title || 'Property'}
           fill
-          sizes="150px"
+          sizes="(min-width: 1024px) 18vw, 43vw"
           className="object-cover"
         />
       </div>
 
-      <div className="min-w-0 py-1">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="truncate text-lg font-medium text-slate-800">
+      <div className="flex min-w-0 flex-col px-4 py-3 sm:px-5">
+        <p className="text-lg font-medium leading-tight text-[#ca7653]">{price}</p>
+          <h2 className="mt-1 truncate text-base font-bold text-[#2A2723]">
             {property.title || 'Untitled property'}
           </h2>
-          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold uppercase text-slate-500">
-            {category}
-          </span>
-        </div>
-
-        <p className="mt-2 truncate text-base text-slate-400">{location}</p>
-
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
-          <span>{listingType}</span>
+        <p className="mt-1 truncate text-[11px] text-stone-400">{location}</p>
+        <div className="relative z-20 my-1 w-fit"><SavePropertyButton property={property} compact /></div>
+        <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 border-t border-stone-200 pt-2 text-[11px] text-stone-400">
           <span>{areaSize}</span>
-          <span>{status}</span>
+          <span>{category} · {listingType}</span>
         </div>
-
-        <p className="mt-3 text-lg font-medium text-gold-primary">{price}</p>
       </div>
-    </Link>
+    </article>
   );
 }

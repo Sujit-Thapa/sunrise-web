@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bookmark, BookmarkCheck } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Heart } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import {
@@ -11,7 +11,7 @@ import {
 } from '@/lib/account-store';
 import type { PropertyResponseDto } from '@/types';
 
-export default function SavePropertyButton({ property }: { property: PropertyResponseDto }) {
+export default function SavePropertyButton({ property, compact = false }: { property: PropertyResponseDto; compact?: boolean }) {
   const { user } = useAuthSession();
   const hydrated = useAccountStore((state) => state.hydrated);
   const saved = useAccountStore((state) =>
@@ -22,10 +22,10 @@ export default function SavePropertyButton({ property }: { property: PropertyRes
     return (
       <Link
         href="/auth/login"
-        className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+        aria-label="Sign in to save property"
+        className={compact ? 'inline-flex rounded-full p-1.5 text-stone-600 hover:text-[#ca7653]' : 'inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary'}
       >
-        <Bookmark className="h-4 w-4" />
-        Save
+        {compact ? <Heart className="h-4 w-4" /> : <><Bookmark className="h-4 w-4" />Save</>}
       </Link>
     );
   }
@@ -39,7 +39,7 @@ export default function SavePropertyButton({ property }: { property: PropertyRes
       type="button"
       onClick={handleToggle}
       disabled={!hydrated}
-      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${
+      className={compact ? `inline-flex rounded-full p-1.5 ${saved ? 'text-[#d74d49]' : 'text-stone-600 hover:text-[#ca7653]'}` : `inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${
         saved
           ? 'border border-gold-primary bg-gold-primary/10 text-gold-deep'
           : 'border border-stone-200 bg-white text-slate-600 hover:border-gold-primary hover:text-gold-primary'
@@ -47,8 +47,7 @@ export default function SavePropertyButton({ property }: { property: PropertyRes
       aria-pressed={saved}
       aria-label={saved ? 'Remove from saved properties' : 'Save property'}
     >
-      {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-      {saved ? 'Saved' : 'Save'}
+      {compact ? <Heart className="h-4 w-4" fill={saved ? 'currentColor' : 'none'} /> : <>{saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}{saved ? 'Saved' : 'Save'}</>}
     </button>
   );
 }

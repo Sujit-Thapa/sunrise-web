@@ -116,7 +116,7 @@ export default function Navbar() {
             </Link>
 
             <div className="hidden items-center gap-6 lg:flex">
-              <ul className={`flex items-center ${isHome ? 'absolute left-1/2 -translate-x-1/2 gap-6 whitespace-nowrap rounded-full bg-white px-7 py-3 shadow-sm' : 'gap-7'}`}>
+              <ul className={`absolute left-1/2 flex -translate-x-1/2 items-center gap-6 whitespace-nowrap px-7 py-3 ${isHome ? 'rounded-full bg-white shadow-sm' : ''}`}>
                 {navLinks.map((link) => {
                   const isActive = isActiveLink(link.href);
 
