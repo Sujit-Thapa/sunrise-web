@@ -1,74 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
 const PRICE_RANGES = ['Any Price', 'Under Rs 50 L', 'Rs 50 L – 1 Cr', 'Rs 1 Cr – 2 Cr', 'Rs 2 Cr+'];
-
-interface DropdownProps {
-  label: string;
-  options: string[];
-  value: string;
-  onChange: (v: string) => void;
-}
-
-function Dropdown({ label, options, value, onChange }: DropdownProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative flex-1 min-w-0">
-      {/* Trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full px-6 py-[14px] text-left bg-transparent border-none outline-none"
-      >
-        <p className="text-[9px] font-normal uppercase tracking-[0.2em] text-stone mb-1">{label}</p>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-ink truncate">{value}</span>
-          <svg
-            width="10" height="6" viewBox="0 0 10 6" fill="none"
-            className={`shrink-0 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
-          >
-            <path d="M1 1L5 5L9 1" stroke="#777777" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </div>
-      </button>
-
-      {/* Custom dropdown panel */}
-      {open && (
-        <div className="absolute top-full left-0 mt-2 w-full min-w-[180px] bg-white rounded-brand-md shadow-brand-md border border-ink/10 z-50 overflow-hidden">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => { onChange(opt); setOpen(false); }}
-              className={[
-                'w-full px-5 py-3 text-left text-sm transition-colors duration-150',
-                value === opt
-                  ? 'bg-gold-primary/10 text-gold-deep font-normal'
-                  : 'text-ink hover:bg-blush',
-              ].join(' ')}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function buildSearchUrl(location: string, propertyType: string, priceRange: string): string {
   const params = new URLSearchParams();
@@ -109,62 +45,44 @@ export default function SearchBar() {
 
   return (
     <form
+      role="search"
+      aria-label="Find a property"
       onSubmit={(event) => {
         event.preventDefault();
         handleSearch();
       }}
-      className="flex w-full items-center overflow-visible rounded-full bg-white shadow-brand-lg"
+      className="grid w-full grid-cols-1 items-center rounded-[26px] bg-white p-3 text-left shadow-[0_8px_32px_rgba(34,47,34,0.06)] sm:grid-cols-[1fr_1fr_1fr_auto] sm:rounded-[28px] sm:py-3 sm:pl-0 sm:pr-5"
     >
-
-      {/* Location */}
-      <div className="flex-1 px-6 py-[14px] min-w-0">
-        <label className="block text-[9px] font-normal uppercase tracking-[0.2em] text-stone mb-1">
-          Location
-        </label>
+      <label className="min-w-0 border-b border-stone-200 px-4 py-3 sm:border-b-0 sm:border-r sm:px-6">
+        <span className="mb-1.5 block text-[10px] uppercase text-stone-500">Location</span>
         <input
-          type="text"
-          placeholder="Where are you looking?"
+          type="search"
+          placeholder="City or location"
           value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="w-full text-sm text-ink bg-transparent border-none outline-none placeholder:text-stone/50"
+          onChange={(event) => setLocation(event.target.value)}
+          className="w-full min-w-0 border-none bg-transparent text-sm text-stone-800 outline-none placeholder:text-stone-500 focus-visible:ring-2 focus-visible:ring-[#ce7c57]/50"
         />
-      </div>
-
-      {/* Divider */}
-      <div className="w-px h-10 bg-ink/10 shrink-0" />
-
-      {/* Property Type */}
-      <Dropdown
-        label="Property Type"
-        options={PROPERTY_TYPES}
-        value={propertyType}
-        onChange={setPropertyType}
-      />
-
-      {/* Divider */}
-      <div className="w-px h-10 bg-ink/10 shrink-0" />
-
-      {/* Price Range */}
-      <Dropdown
-        label="Price Range"
-        options={PRICE_RANGES}
-        value={priceRange}
-        onChange={setPriceRange}
-      />
-
-      {/* Search button */}
-      <button
-        type="submit"
-        aria-label="Search properties"
-        className="w-[52px] h-[52px] m-[6px] rounded-full bg-gold-primary hover:bg-gold-deep hover:shadow-gold flex items-center justify-center shrink-0 transition-all duration-250 active:scale-95"
-      >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-          stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="7" />
-          <line x1="17" y1="17" x2="22" y2="22" />
+      </label>
+      <label className="min-w-0 border-b border-stone-200 px-4 py-3 sm:border-b-0 sm:border-r sm:px-6">
+        <span className="mb-1.5 block text-[10px] uppercase text-stone-500">Property type</span>
+        <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}
+          className="w-full min-w-0 cursor-pointer bg-transparent text-sm text-stone-800 outline-none focus-visible:ring-2 focus-visible:ring-[#ce7c57]/50">
+          {PROPERTY_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+        </select>
+      </label>
+      <label className="min-w-0 px-4 py-3 sm:border-r sm:border-stone-200 sm:px-6">
+        <span className="mb-1.5 block text-[10px] uppercase text-stone-500">Price range</span>
+        <select value={priceRange} onChange={(event) => setPriceRange(event.target.value)}
+          className="w-full min-w-0 cursor-pointer bg-transparent text-sm text-stone-800 outline-none focus-visible:ring-2 focus-visible:ring-[#ce7c57]/50">
+          {PRICE_RANGES.map((range) => <option key={range} value={range}>{range}</option>)}
+        </select>
+      </label>
+      <button type="submit" className="flex h-14 items-center justify-center gap-2 rounded-full bg-[#3E4A3D] px-8 text-sm font-medium text-white transition hover:bg-[#303c2f] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3E4A3D] sm:ml-6">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" />
         </svg>
+        Search
       </button>
-
     </form>
   );
 }
