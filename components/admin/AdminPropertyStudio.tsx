@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import Image from 'next/image';
+import WorkspaceShell from '@/components/admin/WorkspaceShell';
+import MapLocationPicker from '@/components/admin/MapLocationPicker';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
@@ -109,14 +111,6 @@ function parseOptionalNumber(value: string): number | undefined {
   if (!value.trim()) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-function validateLatitude(value: string): string | null {
-  if (!value.trim()) return null;
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 'Latitude must be a valid number.';
-  if (parsed < -90 || parsed > 90) return 'Latitude must be between -90 and 90.';
-  return null;
 }
 
 function validateDescription(value: string): string | null {
@@ -278,10 +272,12 @@ function categoryClass(category: string): string {
   const normalized = category.toLowerCase();
   if (normalized.includes('land')) return 'bg-emerald-50 text-emerald-700';
   if (normalized.includes('apartment')) return 'bg-sky-50 text-sky-700';
-  return 'bg-midnight/5 text-midnight';
+  return 'bg-[#3E4A3D]/5 text-[#2A2723]';
 }
 
-export default function AdminPropertyStudio() {
+export default function AdminPropertyStudio({ embedded = false }: { embedded?: boolean }) {
+  const [view, setView] = useState('inventory');
+  const [step, setStep] = useState(0);
   const [properties, setProperties] = useState<PropertyResponseDto[]>([]);
   const [token, setToken] = useState('');
   const [authLoading, setAuthLoading] = useState(true);
@@ -302,6 +298,7 @@ export default function AdminPropertyStudio() {
   const [deleteTarget, setDeleteTarget] = useState<PropertyResponseDto | null>(null);
 
   const resetForm = () => {
+    setStep(0);
     setMode('create');
     setEditingId(null);
     setForm(EMPTY_FORM);
@@ -422,7 +419,7 @@ export default function AdminPropertyStudio() {
     return (
       <div className="min-h-[calc(100vh-68px)] bg-white">
         <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="rounded-[28px] border border-stone-200 bg-white px-8 py-10 text-center shadow-brand-sm">
+          <div className="rounded-[28px] border border-stone-200 bg-white px-8 py-10 text-center shadow-sm">
             <p className="text-sm font-medium text-slate-500">Checking admin access…</p>
           </div>
         </div>
@@ -434,15 +431,15 @@ export default function AdminPropertyStudio() {
     return (
       <div className="min-h-[calc(100vh-68px)] bg-white">
         <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="w-full max-w-lg rounded-[28px] border border-stone-200 bg-white p-8 text-center shadow-brand-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
+          <div className="w-full max-w-lg rounded-[28px] border border-stone-200 bg-white p-8 text-center shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ca7653]">
               Admin access required
             </p>
-            <h1 className="mt-3 text-2xl font-semibold text-midnight">Sign in to continue</h1>
+            <h1 className="mt-3 text-2xl font-semibold text-[#2A2723]">Sign in to continue</h1>
             <p className="mt-3 text-sm leading-7 text-slate-500">{authMessage}</p>
             <Link
               href="/auth/login"
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-[#3E4A3D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f]"
             >
               Go to login
             </Link>
@@ -458,7 +455,6 @@ export default function AdminPropertyStudio() {
 
     const payload = buildPropertyPayload(form);
     const descriptionError = validateDescription(form.description);
-    const latitudeError = validateLatitude(form.latitude);
 
     if (!payload.title || !payload.description || !payload.city || !payload.state || !payload.country) {
       setNotice({ kind: 'error', message: 'Please complete the required property fields.' });
@@ -467,11 +463,6 @@ export default function AdminPropertyStudio() {
 
     if (descriptionError) {
       setNotice({ kind: 'error', message: descriptionError });
-      return;
-    }
-
-    if (latitudeError) {
-      setNotice({ kind: 'error', message: latitudeError });
       return;
     }
 
@@ -532,6 +523,7 @@ export default function AdminPropertyStudio() {
       });
 
       resetForm();
+      setView('inventory');
     } catch (error) {
       setNotice({
         kind: 'error',
@@ -543,6 +535,8 @@ export default function AdminPropertyStudio() {
   };
 
   const handleEdit = (property: PropertyResponseDto) => {
+    setView('create');
+    setStep(0);
     setMode('edit');
     setEditingId(property.id);
     setForm(formFromProperty(property));
@@ -628,27 +622,26 @@ export default function AdminPropertyStudio() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-68px)] bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-6 rounded-[28px] border border-stone-200/80 bg-white/85 p-6 shadow-brand-sm backdrop-blur sm:p-8">
+    <StudioLayout embedded={embedded} view={view} setView={setView}>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex flex-col gap-6 rounded-[28px] border border-stone-200/80 bg-white/85 p-6 shadow-sm backdrop-blur sm:p-8">
           <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
-                Sunrise Realestate Admin
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#ca7653]">
+                Property workspace
               </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-midnight sm:text-4xl">
-                Manage your property inventory from one place.
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#2A2723] sm:text-4xl">
+                Your next listing starts here.
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
-                Sign in with an admin or agent account to create draft listings, update them,
-                publish when ready, and manage images against the live backend.
+                Create beautiful property listings, keep drafts organised, and publish when you’re ready.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/properties"
-                className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#ca7653] hover:text-[#ca7653]"
               >
                 Preview site
               </Link>
@@ -656,9 +649,10 @@ export default function AdminPropertyStudio() {
                 type="button"
                 onClick={() => {
                   resetForm();
+                  setView('create');
                   setNotice(null);
                 }}
-                className="inline-flex items-center gap-2 rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f]"
               >
                 <Plus className="h-4 w-4" />
                 New property
@@ -666,9 +660,8 @@ export default function AdminPropertyStudio() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
-            New properties are saved in DRAFT status first. Images are uploaded through the
-            presign/confirm flow after the draft is created.
+          <div className="rounded-2xl border border-stone-200 bg-[#f8f6f1] px-4 py-3 text-sm text-stone-600">
+            Start with a draft. Add your details and photos, review the listing, then publish it from your inventory.
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -692,14 +685,14 @@ export default function AdminPropertyStudio() {
           </div>
         ) : null}
 
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-          <section className="rounded-[28px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">
+        <div className="space-y-6">
+          <section hidden={view !== 'create'} className="rounded-[28px] border border-stone-200 bg-white p-6 shadow-sm sm:p-7">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ca7653]">
                   {isEditing ? 'Edit property' : 'Create draft'}
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-midnight">
+                <h2 className="mt-2 text-2xl font-semibold text-[#2A2723]">
                   {isEditing ? 'Update listing details' : 'Add a new draft listing'}
                 </h2>
               </div>
@@ -708,19 +701,32 @@ export default function AdminPropertyStudio() {
                 <button
                   type="button"
                   onClick={handleCancelEdit}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                 >
                   Cancel
                 </button>
               ) : null}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="mb-7 grid grid-cols-3 gap-2" aria-label="Property form steps">
+              {['Property details', 'Location & size', 'Photos & review'].map((label, index) => <div key={label} aria-current={step === index ? 'step' : undefined} className={`rounded-2xl px-3 py-4 text-sm ${step === index ? 'bg-[#3E4A3D] text-white' : 'bg-[#f8f6f1] text-stone-500'}`}><span className="mb-1 block text-xs">0{index + 1}</span>{label}</div>)}
+            </div>
+            <form noValidate onSubmit={(event) => {
+              if (step < 2) {
+                event.preventDefault();
+                const fields = event.currentTarget.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('fieldset:not([disabled]) input, fieldset:not([disabled]) textarea, fieldset:not([disabled]) select');
+                for (const field of fields) { if (!field.reportValidity()) return; }
+                setStep(step + 1);
+                return;
+              }
+              void handleSubmit(event);
+            }} className="space-y-5">
+              <fieldset hidden={step !== 0} disabled={step !== 0 || saving} className="space-y-5">
               <Field label="Property title" required>
                 <input
                   value={form.title}
                   onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                   placeholder="Lakeside villa with mountain views"
                   required
                 />
@@ -733,45 +739,12 @@ export default function AdminPropertyStudio() {
                     setForm((current) => ({ ...current, description: event.target.value }))
                   }
                   minLength={10}
-                  className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                  className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                   placeholder="Describe the property, features, and selling points."
                   required
                 />
               </Field>
 
-              <Field label="Property images">
-                <input
-                  key={imageInputKey}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(event) => {
-                    const files = Array.from(event.target.files ?? []).filter((file) =>
-                      file.type.startsWith('image/'),
-                    );
-                    setSelectedImages(files);
-                  }}
-                  className="w-full cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-600 outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:border-gold-primary focus:border-gold-primary"
-                />
-                <p className="mt-2 text-xs leading-6 text-slate-500">
-                  Selected files are uploaded after the property draft is created. The first image
-                  becomes the primary image.
-                </p>
-                {selectedImages.length > 0 ? (
-                  <ul className="mt-3 space-y-1 text-xs text-slate-600">
-                    {selectedImages.map((file, index) => (
-                      <li key={`${file.name}-${file.lastModified}-${index}`} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
-                        <span className="truncate">{file.name}</span>
-                        {index === 0 ? (
-                          <span className="rounded-full bg-gold-primary/10 px-2 py-1 font-semibold text-gold-deep">
-                            Primary
-                          </span>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Listing type" required>
@@ -783,7 +756,7 @@ export default function AdminPropertyStudio() {
                         listingType: event.target.value as ListingType,
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   >
                     {LISTING_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -802,7 +775,7 @@ export default function AdminPropertyStudio() {
                         category: event.target.value as PropertyCategory,
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   >
                     {CATEGORY_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -822,7 +795,7 @@ export default function AdminPropertyStudio() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, price: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="25000000"
                     required
                   />
@@ -839,12 +812,15 @@ export default function AdminPropertyStudio() {
                         reservationFeeOverride: event.target.value,
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="Optional"
                   />
                 </Field>
               </div>
 
+              </fieldset>
+              <fieldset hidden={step !== 1} disabled={step !== 1 || saving} className="space-y-5">
+                <p className="text-sm text-stone-500">Add the address buyers will see, then pinpoint the exact location on the map.</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Street">
                   <input
@@ -852,7 +828,7 @@ export default function AdminPropertyStudio() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, street: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="Boudha Road"
                   />
                 </Field>
@@ -863,7 +839,7 @@ export default function AdminPropertyStudio() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, postalCode: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="44600"
                   />
                 </Field>
@@ -876,7 +852,7 @@ export default function AdminPropertyStudio() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, city: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="Kathmandu"
                     required
                   />
@@ -887,7 +863,7 @@ export default function AdminPropertyStudio() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, state: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="Bagmati"
                     required
                   />
@@ -898,7 +874,7 @@ export default function AdminPropertyStudio() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, country: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="Nepal"
                     required
                   />
@@ -914,7 +890,7 @@ export default function AdminPropertyStudio() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, areaSize: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="1500"
                   />
                 </Field>
@@ -924,7 +900,7 @@ export default function AdminPropertyStudio() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, areaUnit: event.target.value as AreaUnit }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   >
                     {AREA_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -935,56 +911,85 @@ export default function AdminPropertyStudio() {
                 </Field>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Latitude">
-                  <input
-                    type="number"
-                    min="-90"
-                    max="90"
-                    step="any"
-                    value={form.latitude}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, latitude: event.target.value }))
-                    }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
-                    placeholder="27.7172"
-                  />
-                </Field>
-                <Field label="Longitude">
-                  <input
-                    type="number"
-                    step="any"
-                    value={form.longitude}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, longitude: event.target.value }))
-                    }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
-                    placeholder="85.324"
-                  />
+              <div className="rounded-3xl border border-stone-200 bg-white p-4">
+                <Field label="Pin property location">
+                  {step === 1 ? (
+                    <MapLocationPicker
+                      latitude={form.latitude}
+                      longitude={form.longitude}
+                      onChange={({ latitude, longitude }) => setForm((current) => ({ ...current, latitude, longitude }))}
+                    />
+                  ) : null}
                 </Field>
               </div>
 
+              </fieldset>
+              <fieldset hidden={step !== 2} disabled={step !== 2 || saving} className="space-y-5">
+              <Field label="Property images">
+                <input
+                  key={imageInputKey}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []).filter((file) =>
+                      ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
+                    );
+                    setSelectedImages(files);
+                  }}
+                  className="w-full cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-600 outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:border-[#ca7653] focus:border-[#ca7653]"
+                />
+                <p className="mt-2 text-xs leading-6 text-slate-500">
+                  Choose JPG, PNG, or WebP photos. The first photo is the cover image.
+                </p>
+                {selectedImages.length > 0 ? (
+                  <ul className="mt-3 space-y-1 text-xs text-slate-600">
+                    {selectedImages.map((file, index) => (
+                      <li key={`${file.name}-${file.lastModified}-${index}`} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
+                        <span className="truncate">{file.name}</span>
+                        {index === 0 ? (
+                          <span className="rounded-full bg-gold-primary/10 px-2 py-1 font-semibold text-gold-deep">
+                            Primary
+                          </span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </Field>
+
+                <div className="rounded-3xl bg-[#f8f6f1] p-6">
+                  <p className="text-xs uppercase tracking-widest text-[#ca7653]">Review your listing</p>
+                  <h3 className="mt-3 text-xl font-semibold">{form.title || 'Untitled property'}</h3>
+                  <p className="mt-2 text-lg text-[#ca7653]">{formatCurrency(Number(form.price))}</p>
+                  <p className="mt-2 text-sm">{[form.street, form.city, form.state, form.country].filter(Boolean).join(', ')}</p>
+                  <p className="mt-2 text-sm">{getPropertyCategoryLabel(form.category)} · {getListingTypeLabel(form.listingType)}</p>
+                  <p className="mt-3 whitespace-pre-wrap break-words text-sm text-stone-500">{form.description}</p>
+                  <p className="mt-4 text-xs text-stone-500">{isEditing ? 'Your changes will update this listing.' : 'This saves a draft. Publish it from your inventory when it is ready.'}</p>
+                </div>
+              </fieldset>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={handleCancelEdit}
-                  className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                  disabled={saving}
+                  onClick={() => step > 0 ? setStep(step - 1) : setView('inventory')}
+                  className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                 >
-                  Reset
+                  {step > 0 ? 'Back' : 'Back to inventory'}
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-full bg-midnight px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex-1 rounded-full bg-[#3E4A3D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? 'Saving…' : isEditing ? 'Update property' : 'Save draft'}
+                  {saving ? 'Saving…' : step < 2 ? 'Continue' : isEditing ? 'Update property' : 'Save draft'}
                 </button>
               </div>
             </form>
           </section>
 
-          <section className="space-y-5">
-            <div className="rounded-[28px] border border-stone-200 bg-white p-5 shadow-brand-sm">
+          <section hidden={view !== 'inventory'} className="space-y-5">
+            <div className="rounded-[28px] border border-stone-200 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="relative min-w-0 flex-1">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -992,7 +997,7 @@ export default function AdminPropertyStudio() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search properties by title, city, or category"
-                    className="w-full rounded-full border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-full border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                   />
                 </div>
 
@@ -1004,8 +1009,8 @@ export default function AdminPropertyStudio() {
                       onClick={() => setStatusFilter(option.value)}
                       className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${
                         statusFilter === option.value
-                          ? 'bg-midnight text-white'
-                          : 'border border-slate-200 bg-white text-slate-500 hover:border-gold-primary hover:text-gold-primary'
+                          ? 'bg-[#3E4A3D] text-white'
+                          : 'border border-slate-200 bg-white text-slate-500 hover:border-[#ca7653] hover:text-[#ca7653]'
                       }`}
                     >
                       {option.label}
@@ -1017,7 +1022,7 @@ export default function AdminPropertyStudio() {
 
             <div className="grid gap-4">
               {loadingProperties ? (
-                <div className="rounded-[28px] border border-stone-200 bg-white p-10 text-center text-slate-500 shadow-brand-sm">
+                <div className="rounded-[28px] border border-stone-200 bg-white p-10 text-center text-slate-500 shadow-sm">
                   Loading properties…
                 </div>
               ) : filteredProperties.length > 0 ? (
@@ -1036,7 +1041,7 @@ export default function AdminPropertyStudio() {
                   return (
                     <article
                       key={property.id}
-                      className="overflow-hidden rounded-[28px] border border-stone-200 bg-white shadow-brand-sm transition hover:-translate-y-0.5 hover:shadow-brand-md"
+                      className="overflow-hidden rounded-[28px] border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-brand-md"
                     >
                       <div className="grid gap-0 lg:grid-cols-[240px_1fr]">
                         <div className="relative min-h-[220px] bg-slate-100">
@@ -1069,17 +1074,17 @@ export default function AdminPropertyStudio() {
                                 </span>
                               </div>
 
-                              <h3 className="truncate text-2xl font-semibold text-midnight">
+                              <h3 className="truncate text-2xl font-semibold text-[#2A2723]">
                                 {property.title}
                               </h3>
                               <p className="mt-2 text-sm text-slate-500">{location}</p>
                             </div>
 
-                            <div className="rounded-2xl bg-stone-50 px-4 py-3 text-right">
+                            <div className="rounded-2xl bg-[#f8f6f1] px-4 py-3 text-right">
                               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
                                 Asking price
                               </p>
-                              <p className="mt-1 text-2xl font-semibold text-gold-primary">
+                              <p className="mt-1 text-2xl font-semibold text-[#ca7653]">
                                 {formatCurrency(property.price)}
                               </p>
                             </div>
@@ -1104,14 +1109,14 @@ export default function AdminPropertyStudio() {
                           <div className="mt-6 flex flex-wrap gap-3">
                             <Link
                               href={`/properties/${property.id}`}
-                              className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                              className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                             >
                               View public page
                             </Link>
                             <button
                               type="button"
                               onClick={() => handleEdit(property)}
-                              className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                              className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                             >
                               Edit
                             </button>
@@ -1161,9 +1166,9 @@ export default function AdminPropertyStudio() {
                   );
                 })
               ) : (
-                <div className="rounded-[28px] border border-dashed border-stone-200 bg-white p-10 text-center shadow-brand-sm">
-                  <CheckCircle2 className="mx-auto h-8 w-8 text-gold-primary" />
-                  <p className="mt-4 text-lg font-semibold text-midnight">No properties match your filters</p>
+                <div className="rounded-[28px] border border-dashed border-stone-200 bg-white p-10 text-center shadow-sm">
+                  <CheckCircle2 className="mx-auto h-8 w-8 text-[#ca7653]" />
+                  <p className="mt-4 text-lg font-semibold text-[#2A2723]">No properties match your filters</p>
                   <p className="mt-2 text-sm leading-7 text-slate-500">
                     Try a different status or search term, or create a fresh listing from the form.
                   </p>
@@ -1185,7 +1190,7 @@ export default function AdminPropertyStudio() {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-500">
                   Delete property
                 </p>
-                <h3 className="text-xl font-semibold text-midnight">Remove this listing?</h3>
+                <h3 className="text-xl font-semibold text-[#2A2723]">Remove this listing?</h3>
               </div>
             </div>
 
@@ -1209,7 +1214,7 @@ export default function AdminPropertyStudio() {
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
-                className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#ca7653] hover:text-[#ca7653]"
               >
                 Cancel
               </button>
@@ -1228,7 +1233,7 @@ export default function AdminPropertyStudio() {
           </div>
         </div>
       ) : null}
-    </div>
+    </StudioLayout>
   );
 }
 
@@ -1244,7 +1249,7 @@ function Field({
   return (
     <label className="block">
       <span className="mb-2 block text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
-        {label} {required ? <span className="text-gold-primary">*</span> : null}
+        {label} {required ? <span className="text-[#ca7653]">*</span> : null}
       </span>
       {children}
     </label>
@@ -1257,7 +1262,13 @@ function StatCard({ label, value }: { label: string; value: number }) {
       <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
         {label}
       </p>
-      <p className="mt-2 text-3xl font-semibold text-midnight">{value}</p>
+      <p className="mt-2 text-3xl font-semibold text-[#2A2723]">{value}</p>
     </div>
   );
+}
+
+function StudioLayout({ embedded, view, setView, children }: { embedded: boolean; view: string; setView: (value: string) => void; children: React.ReactNode }) {
+  const items = [{ value: 'inventory', label: 'Property inventory' }, { value: 'create', label: 'Add a property' }];
+  if (embedded) return <div className="staff-workspace"><nav aria-label="Property tools" className="mb-5 flex gap-3">{items.map(item => <button key={item.value} aria-current={view === item.value ? 'page' : undefined} onClick={() => setView(item.value)} className={`rounded-full px-5 py-3 text-sm ${view === item.value ? 'bg-[#3E4A3D] text-white' : 'bg-[#e9e6dd]'}`}>{item.label}</button>)}</nav>{children}</div>;
+  return <WorkspaceShell title="Agent workspace" active={view} items={items} onSelect={setView}>{children}</WorkspaceShell>;
 }
