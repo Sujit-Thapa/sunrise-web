@@ -1,162 +1,46 @@
-import Link from "next/link";
-import { ArrowUpRight, Mail, MapPin } from "lucide-react";
+import Image from 'next/image';
+import Link from 'next/link';
 
-const NAV_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "Properties", href: "/properties" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-];
-
-const QUICK_LINKS = [
-  { label: "Buy a Property", href: "/properties" },
-  { label: "Sell or List Property", href: "/contact" },
-  { label: "Rental Listings", href: "/properties" },
-  { label: "Property Consultation", href: "/contact" },
-  { label: "Investment Support", href: "/contact" },
-];
-
-const SOCIALS = [
-  { label: "Instagram", href: "#" },
-  { label: "LinkedIn", href: "#" },
-  { label: "X", href: "#" },
+const groups = [
+  { title: 'Pages', links: [
+    { label: 'Home', href: '/' },
+    { label: 'About Us', href: '/about' },
+    { label: 'Marketplace', href: '/marketplace' },
+    { label: 'Properties', href: '/properties' },
+  ] },
+  { title: 'Account', links: [
+    { label: 'Sign In', href: '/auth/login' },
+    { label: 'Register', href: '/auth/signup' },
+    { label: 'My Profile', href: '/profile' },
+    { label: 'My Reservations', href: '/account/reservations' },
+  ] },
+  { title: 'Get in touch', links: [
+    { label: 'Contact Us', href: '/contact' },
+    { label: 'List Your Property', href: '/marketplace' },
+  ] },
 ];
 
 export default function Footer() {
   return (
-    <footer className="relative mt-20">
-      {/* Soft separation from the section above */}
-      <div className="pointer-events-none absolute inset-x-0 -top-12 h-12 bg-gradient-to-b from-transparent to-white" />
-
-      <div className="relative overflow-hidden border-t border-stone-200/70 bg-white text-stone-700">
-        {/* Subtle top highlight */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#B89B4E]/25 to-transparent" />
-
-        <div className="mx-auto max-w-7xl px-6 py-12 sm:px-8 lg:px-10 lg:py-14">
-          {/* Main footer content */}
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.15fr_1fr_1.2fr_auto] lg:gap-14">
-            {/* Explore */}
-            <div>
-              <FooterHeading>Explore</FooterHeading>
-
+    <footer className="bg-[#f8f6f1] px-5 pt-14 sm:px-8 sm:pt-20">
+      <div className="mx-auto max-w-[1088px] rounded-t-[48px] bg-[#2A2723] px-7 pb-7 pt-12 text-white sm:rounded-t-[80px] sm:px-14 sm:pt-14">
+        <Link href="/" aria-label="Sunrise Realestate home" className="mx-auto flex w-fit flex-col items-center">
+          <Image src="/images/logo/sunrise.png" alt="Sunrise" width={180} height={46} className="h-auto w-40 brightness-0 invert sm:w-44" />
+          <span className="mt-2 text-[7px] uppercase tracking-[0.14em] text-stone-300">Multiple Businesses &amp; Housing Pvt. Ltd.</span>
+        </Link>
+        <nav aria-label="Footer navigation" className="mx-auto mt-12 grid max-w-xl grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-12">
+          {groups.map((group) => (
+            <div key={group.title}>
+              <h2 className="mb-4 text-[10px] font-normal uppercase tracking-[0.16em] text-stone-400">{group.title}</h2>
               <ul className="space-y-2.5">
-                {NAV_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="group inline-flex items-center gap-1.5 text-sm text-stone-600 transition-colors duration-200 hover:text-[#B89B4E]"
-                    >
-                      <span>{link.label}</span>
-                      <ArrowUpRight className="h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
-                    </Link>
-                  </li>
-                ))}
+                {group.links.map((link) => <li key={link.href}><Link href={link.href} className="text-xs text-stone-100 transition hover:text-[#d1805c]">{link.label}</Link></li>)}
               </ul>
+              {group.title === 'Get in touch' && <p className="mt-4 text-xs leading-6 text-stone-400">Kathmandu, Nepal<br /><a className="break-all hover:text-[#d1805c]" href="mailto:info@sunrisembh.com">info@sunrisembh.com</a></p>}
             </div>
-
-            {/* Socials */}
-            <div className="sm:col-span-2 lg:col-span-1 lg:text-right">
-              <FooterHeading className="lg:text-right">Follow</FooterHeading>
-              <div className="flex flex-wrap gap-x-5 gap-y-2 lg:justify-end">
-                {SOCIALS.map((social) => (
-                  <a
-                    key={social.label}
-                    href={social.href}
-                    className="group inline-flex items-center gap-1 text-sm text-stone-600 transition-colors duration-200 hover:text-[#B89B4E]"
-                  >
-                    {social.label}
-                    <ArrowUpRight className="h-3.5 w-3.5 opacity-50 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Services */}
-            <div>
-              <FooterHeading>Services</FooterHeading>
-
-              <ul className="space-y-2.5">
-                {QUICK_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-stone-600 transition-colors duration-200 hover:text-[#B89B4E]"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <FooterHeading>Contact</FooterHeading>
-
-              <div className="space-y-3 text-sm text-stone-600">
-                <a
-                  href="mailto:info@sunrisembh.com"
-                  className="group flex w-fit items-start gap-2.5 transition-colors duration-200 hover:text-[#B89B4E]"
-                >
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#B89B4E]" />
-                  <span>info@sunrisembh.com</span>
-                </a>
-
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#B89B4E]" />
-                  <span className="max-w-[220px] leading-relaxed">Kathmandu, Nepal</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom area */}
-          <div className="mt-12 flex flex-col gap-4 border-t border-stone-200/70 pt-6 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between">
-            <p>
-              © {new Date().getFullYear()} Sunrise Realestate. All rights reserved.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-              <a
-                href="#"
-                className="transition-colors duration-200 hover:text-[#B89B4E]"
-              >
-                Privacy
-              </a>
-
-              <a
-                href="#"
-                className="transition-colors duration-200 hover:text-[#B89B4E]"
-              >
-                Terms
-              </a>
-
-              <a
-                href="#"
-                className="transition-colors duration-200 hover:text-[#B89B4E]"
-              >
-                Cookies
-              </a>
-            </div>
-          </div>
-        </div>
+          ))}
+        </nav>
+        <p className="mt-12 border-t border-white/10 pt-5 text-center text-[11px] text-stone-300">© {new Date().getFullYear()} Sunrise Realestate. All rights reserved.</p>
       </div>
     </footer>
-  );
-}
-
-function FooterHeading({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <h3
-      className={`mb-4 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-stone-400 ${className}`}
-    >
-      {children}
-    </h3>
   );
 }
