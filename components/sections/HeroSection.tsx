@@ -34,7 +34,7 @@ export default function HeroSection({
 
   const mapNotice = mapboxToken
     ? ''
-    : 'Interactive map preview is unavailable without a Mapbox token.';
+    : 'Explore available properties using the search below.';
 
   useEffect(() => {
     const container = mapContainer.current;
@@ -142,21 +142,11 @@ export default function HeroSection({
 
         if (mappedProperties.length > 0) {
           const bounds = new mapboxgl.LngLatBounds();
-
           mappedProperties.forEach((property) => {
-            bounds.extend([
-              Number(property.longitude),
-              Number(property.latitude),
-            ]);
+            bounds.extend([Number(property.longitude), Number(property.latitude)]);
           });
-
           map.fitBounds(bounds, {
-            padding: {
-              top: 180,
-              right: 120,
-              bottom: 140,
-              left: 120,
-            },
+            padding: { top: 180, right: 120, bottom: 140, left: 120 },
             maxZoom: 13,
             duration: 5000,
           });
@@ -231,15 +221,13 @@ export default function HeroSection({
             });
 
             element.style.opacity = '0';
-            element.style.transform =
-              'scale(0.4) translateY(12px)';
+            element.style.transform = 'scale(0.4) translateY(12px)';
 
             window.requestAnimationFrame(() => {
               element.style.transition =
                 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
               element.style.opacity = '1';
-              element.style.transform =
-                'scale(1) translateY(0)';
+              element.style.transform = 'scale(1) translateY(0)';
             });
 
             markersRef.current.push(marker);
@@ -285,14 +273,14 @@ export default function HeroSection({
   }, [mapboxToken, properties]);
 
   const overlayClasses =
-    `absolute inset-0 z-10 flex flex-col items-center justify-center px-4 pb-20 transition-all duration-300 pointer-events-none ${
+    `absolute inset-0 z-10 flex flex-col items-center justify-center px-5 pt-[16vh] sm:px-8 transition-all duration-300 pointer-events-none ${
       isZooming
         ? 'scale-[0.97] opacity-0'
         : 'scale-100 opacity-100'
     }`;
 
   return (
-    <div className="relative h-screen min-h-[580px] w-full overflow-hidden">
+    <div className="relative h-svh min-h-[680px] w-full overflow-hidden bg-[#a9d8e9]">
       <div
         ref={mapContainer}
         className="absolute inset-0 h-full w-full"
@@ -305,53 +293,16 @@ export default function HeroSection({
       ) : null}
 
       <div className={overlayClasses}>
-        <div className="mb-5 flex items-center gap-3">
-          <span className="block h-px w-9 bg-gold-primary/70" />
-          <p className="text-[9px] uppercase tracking-[0.28em] text-gold-primary">
-            Real Estate Nepal
-          </p>
-          <span className="block h-px w-9 bg-gold-primary/70" />
-        </div>
-
-        <h1
-          className="mb-3 text-center text-5xl font-bold leading-[1.08] tracking-tight text-midnight md:text-6xl"
-          style={{
-            textShadow:
-              '0 1px 12px rgba(253,243,220,0.9), 0 0 40px rgba(253,243,220,0.6)',
-          }}
-        >
-          The Simplest Way to
-          <br />
-          <em className="not-italic text-gold-primary">
-            Finding Property
-          </em>
+        <p className="mb-3 text-center text-sm font-normal text-[#ce7c57]">
+          Real Estate for the Next Era
+        </p>
+        <h1 className="mb-7 text-center text-[clamp(2.75rem,5.5vw,5rem)] font-bold leading-[1.08] tracking-[-0.045em] text-[#20241f]">
+          Find Your <span className="text-[#ce7c57]">Sanctuary.</span>
         </h1>
-
-        <div className="pointer-events-auto w-full max-w-3xl">
+        <div className="pointer-events-auto w-full max-w-[900px]">
           <SearchBar />
         </div>
       </div>
-
-      <button
-        type="button"
-        className={`absolute bottom-8 left-1/2 z-20 flex h-11 w-11 -translate-x-1/2 items-center justify-center rounded-full bg-gold-primary shadow-gold transition-all duration-250 hover:scale-110 hover:bg-gold-deep ${
-          isZooming ? 'opacity-0' : 'opacity-100'
-        } animate-bounce`}
-        aria-label="Scroll down"
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
 
       {ctrlHint ? (
         <div className="pointer-events-none absolute bottom-40 left-1/2 z-30 flex -translate-x-1/2 items-center justify-center">
