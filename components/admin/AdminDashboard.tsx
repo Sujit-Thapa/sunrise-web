@@ -13,6 +13,7 @@ import {
   Users,
 } from 'lucide-react';
 
+import WorkspaceShell from '@/components/admin/WorkspaceShell';
 import AdminPropertyStudio from '@/components/admin/AdminPropertyStudio';
 import { auth, authAdmin, getAuthToken } from '@/lib/auth';
 import { financeApi, reservationsApi, systemConfigApi, userPropertiesApi } from '@/lib/backend';
@@ -114,10 +115,10 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[28px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">
+    <section className="rounded-[28px] border border-stone-200 bg-white p-6 shadow-sm sm:p-7">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-midnight">{title}</h2>
+          <h2 className="text-2xl font-semibold text-[#2A2723]">{title}</h2>
           {description ? <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500">{description}</p> : null}
         </div>
         {action ? <div>{action}</div> : null}
@@ -310,9 +311,9 @@ export default function AdminDashboard() {
 
   const overviewStats = useMemo(
     () => [
-      { label: 'User listings', value: userProperties.length },
-      { label: 'Reservations', value: reservations.length },
-      { label: 'Payments', value: financePayments.length },
+      { label: 'Listings on this page', value: userProperties.length },
+      { label: 'Reservations on this page', value: reservations.length },
+      { label: 'Payments on this page', value: financePayments.length },
       { label: 'Collected', value: financeSummary ? money(financeSummary.totalCollectedAmount) : 'Rs. 0' },
     ],
     [financePayments.length, financeSummary, reservations.length, userProperties.length],
@@ -322,7 +323,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-[calc(100vh-68px)] bg-white">
         <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="rounded-[28px] border border-stone-200 bg-white px-8 py-10 text-center shadow-brand-sm">
+          <div className="rounded-[28px] border border-stone-200 bg-white px-8 py-10 text-center shadow-sm">
             <p className="text-sm font-medium text-slate-500">Checking admin access…</p>
           </div>
         </div>
@@ -334,15 +335,15 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-[calc(100vh-68px)] bg-white">
         <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="w-full max-w-lg rounded-[28px] border border-stone-200 bg-white p-8 text-center shadow-brand-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
+          <div className="w-full max-w-lg rounded-[28px] border border-stone-200 bg-white p-8 text-center shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ca7653]">
               Admin access required
             </p>
-            <h1 className="mt-3 text-2xl font-semibold text-midnight">Sign in to continue</h1>
+            <h1 className="mt-3 text-2xl font-semibold text-[#2A2723]">Sign in to continue</h1>
             <p className="mt-3 text-sm leading-7 text-slate-500">{authMessage}</p>
             <Link
               href="/auth/login"
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-[#3E4A3D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f]"
             >
               Go to login
             </Link>
@@ -501,34 +502,33 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-68px)] bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-8 rounded-[28px] border border-stone-200/80 bg-white/85 p-6 shadow-brand-sm backdrop-blur sm:p-8">
+    <WorkspaceShell title="Admin workspace" active={activeSection} items={sectionTabs} onSelect={(value) => setActiveSection(value as AdminSection)}>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 rounded-[28px] border border-stone-200/80 bg-white/85 p-6 shadow-sm backdrop-blur sm:p-8">
           <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#ca7653]">
                 Sunrise Realestate Admin
               </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-midnight sm:text-4xl">
-                Manage the full backend from one place.
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#2A2723] sm:text-4xl">
+                A clear view of your business.
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
-                This dashboard now mirrors the available admin endpoints for properties, user
-                listings, reservations, finance, system configuration, and agent management.
+                Manage your listings, support your agents, and keep every reservation moving.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/properties"
-                className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-gold-primary hover:text-gold-primary"
+                className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#ca7653] hover:text-[#ca7653]"
               >
                 Preview site
               </Link>
               <button
                 type="button"
                 onClick={handleFinanceRefresh}
-                className="inline-flex items-center gap-2 rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f]"
               >
                 <RefreshCw className="h-4 w-4" />
                 Refresh data
@@ -538,36 +538,16 @@ export default function AdminDashboard() {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {overviewStats.map((item) => (
-              <div key={item.label} className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
+              <div key={item.label} className="rounded-2xl border border-stone-200 bg-[#f8f6f1] px-4 py-3">
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
                   {item.label}
                 </p>
-                <p className="mt-1 text-xl font-semibold text-midnight">{item.value}</p>
+                <p className="mt-1 text-xl font-semibold text-[#2A2723]">{item.value}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            {sectionTabs.map((tab) => {
-              const Icon = tab.icon;
-              const active = activeSection === tab.value;
-              return (
-                <button
-                  key={tab.value}
-                  type="button"
-                  onClick={() => setActiveSection(tab.value)}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition ${
-                    active
-                      ? 'bg-midnight text-white'
-                      : 'border border-slate-200 bg-white text-slate-500 hover:border-gold-primary hover:text-gold-primary'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+
         </div>
 
         {notice ? (
@@ -587,8 +567,11 @@ export default function AdminDashboard() {
             <>
               <Panel
                 title="Overview"
-                description="Quick access to the main backend areas covered by the admin endpoints."
+                description="Review the current page of marketplace activity, or jump into your daily tasks."
               >
+                <div className="mb-6 grid gap-3 sm:grid-cols-3">
+                  {([{ value: 'properties', label: 'Manage company properties' }, { value: 'users', label: 'Review marketplace listings' }, { value: 'agents', label: 'Create an agent account' }] as const).map(item => <button key={item.value} onClick={() => setActiveSection(item.value)} className="flex items-center justify-between rounded-2xl bg-[#e9e6dd] p-5 text-left text-sm font-semibold">{item.label}<ArrowRight size={18} /></button>)}
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   <Metric label="User listings" value={String(userPropertySummary.total)} />
                   <Metric label="Pending reviews" value={String(userPropertySummary.pending)} />
@@ -608,21 +591,21 @@ export default function AdminDashboard() {
           {activeSection === 'properties' ? (
             <Panel
               title="Company properties"
-              description="Create property drafts, edit them, publish them, hide them, delete them, and attach images through presign/confirm."
+              description="Prepare, review, and publish your company listings."
             >
-              <AdminPropertyStudio />
+              <AdminPropertyStudio embedded />
             </Panel>
           ) : null}
 
           {activeSection === 'users' ? (
             <Panel
               title="User-submitted properties"
-              description="Review the community marketplace queue using the user-properties endpoints."
+              description="Review property submissions before they appear in the marketplace."
               action={
                 <button
                   type="button"
                   onClick={handleUserPropertyRefresh}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                 >
                   Refresh
                 </button>
@@ -638,7 +621,7 @@ export default function AdminDashboard() {
                         status: event.target.value === 'all' ? undefined : (event.target.value as UserStatusFilter),
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   >
                     {['all', 'PENDING_REVIEW', 'APPROVED', 'REJECTED', 'HIDDEN'].map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -656,7 +639,7 @@ export default function AdminDashboard() {
                       }));
                     }}
                     placeholder="SALE"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
                 <Field label="Category">
@@ -670,7 +653,7 @@ export default function AdminDashboard() {
                       }));
                     }}
                     placeholder="APARTMENT"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
                 <Field label="City">
@@ -680,7 +663,7 @@ export default function AdminDashboard() {
                       setUserFilters((current) => ({ ...current, city: event.target.value || undefined }))
                     }
                     placeholder="Kathmandu"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
                 <Field label="Min price">
@@ -690,7 +673,7 @@ export default function AdminDashboard() {
                       setUserFilters((current) => ({ ...current, minPrice: toOptionalNumber(event.target.value) }))
                     }
                     placeholder="1000000"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
                 <Field label="Max price">
@@ -700,7 +683,7 @@ export default function AdminDashboard() {
                       setUserFilters((current) => ({ ...current, maxPrice: toOptionalNumber(event.target.value) }))
                     }
                     placeholder="20000000"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
               </div>
@@ -709,7 +692,7 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => token && loadUsers(token, userFilters)}
-                  className="rounded-full bg-midnight px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="rounded-full bg-[#3E4A3D] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#303c2f]"
                 >
                   Apply filters
                 </button>
@@ -718,9 +701,9 @@ export default function AdminDashboard() {
               {loadingUsers ? (
                 <p className="text-sm text-slate-500">Loading user properties…</p>
               ) : (
-                <div className="overflow-hidden rounded-[24px] border border-stone-200">
+                <div className="overflow-x-auto rounded-[24px] border border-stone-200">
                   <table className="min-w-full divide-y divide-stone-200 text-left text-sm">
-                    <thead className="bg-stone-50 text-[0.68rem] uppercase tracking-[0.16em] text-slate-400">
+                    <thead className="bg-[#f8f6f1] text-[0.68rem] uppercase tracking-[0.16em] text-slate-400">
                       <tr>
                         <th className="px-4 py-3">Listing</th>
                         <th className="px-4 py-3">Owner</th>
@@ -732,7 +715,7 @@ export default function AdminDashboard() {
                       {userProperties.map((property) => (
                         <tr key={property.id}>
                           <td className="px-4 py-4">
-                            <p className="font-semibold text-midnight">{property.title}</p>
+                            <p className="font-semibold text-[#2A2723]">{property.title}</p>
                             <p className="mt-1 text-xs text-slate-500">
                               {formatLocation(property)} · {getPropertyCategoryLabel(property.category)} · {getListingTypeLabel(property.listingType)}
                             </p>
@@ -748,7 +731,7 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex flex-wrap gap-2">
-                              <button type="button" onClick={() => handleInspectUserProperty(property.id)} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-gold-primary hover:text-gold-primary">Inspect</button>
+                              <button type="button" onClick={() => handleInspectUserProperty(property.id)} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-[#ca7653] hover:text-[#ca7653]">Inspect</button>
                               <button type="button" onClick={() => handleUserPropertyAction('approve', property)} className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white">Approve</button>
                               <button type="button" onClick={() => handleUserPropertyAction('reject', property)} className="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white">Reject</button>
                               <button type="button" onClick={() => handleUserPropertyAction('hide', property)} className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">Hide</button>
@@ -763,9 +746,9 @@ export default function AdminDashboard() {
               )}
 
               {selectedUserProperty ? (
-                <div className="mt-6 rounded-[24px] border border-stone-200 bg-stone-50 p-5">
+                <div className="mt-6 rounded-[24px] border border-stone-200 bg-[#f8f6f1] p-5">
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Selected listing</p>
-                  <h3 className="mt-2 text-xl font-semibold text-midnight">{selectedUserProperty.title}</h3>
+                  <h3 className="mt-2 text-xl font-semibold text-[#2A2723]">{selectedUserProperty.title}</h3>
                   <p className="mt-2 text-sm text-slate-500">{selectedUserProperty.description}</p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <MiniStat label="Price" value={money(selectedUserProperty.price)} />
@@ -786,7 +769,7 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={handleReservationRefresh}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                 >
                   Refresh
                 </button>
@@ -802,7 +785,7 @@ export default function AdminDashboard() {
                         status: event.target.value === 'all' ? undefined : (event.target.value as ReservationStatusFilter),
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   >
                     {['all', 'ACTIVE', 'CLAIMED', 'COMPLETED', 'CANCELLED'].map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -815,7 +798,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setReservationFilters((current) => ({ ...current, propertyId: event.target.value || undefined }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
                 <Field label="User ID">
@@ -824,7 +807,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setReservationFilters((current) => ({ ...current, userId: event.target.value || undefined }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
                 <div />
@@ -832,7 +815,7 @@ export default function AdminDashboard() {
                   <button
                     type="button"
                     onClick={() => token && loadReservations(token, reservationFilters)}
-                    className="w-full rounded-full bg-midnight px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    className="w-full rounded-full bg-[#3E4A3D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f]"
                   >
                     Apply filters
                   </button>
@@ -842,9 +825,9 @@ export default function AdminDashboard() {
               {loadingReservations ? (
                 <p className="text-sm text-slate-500">Loading reservations…</p>
               ) : (
-                <div className="overflow-hidden rounded-[24px] border border-stone-200">
+                <div className="overflow-x-auto rounded-[24px] border border-stone-200">
                   <table className="min-w-full divide-y divide-stone-200 text-left text-sm">
-                    <thead className="bg-stone-50 text-[0.68rem] uppercase tracking-[0.16em] text-slate-400">
+                    <thead className="bg-[#f8f6f1] text-[0.68rem] uppercase tracking-[0.16em] text-slate-400">
                       <tr>
                         <th className="px-4 py-3">Property</th>
                         <th className="px-4 py-3">Guest</th>
@@ -856,7 +839,7 @@ export default function AdminDashboard() {
                       {reservations.map((reservation) => (
                         <tr key={reservation.id}>
                           <td className="px-4 py-4">
-                            <p className="font-semibold text-midnight">{reservation.property.title}</p>
+                            <p className="font-semibold text-[#2A2723]">{reservation.property.title}</p>
                             <p className="mt-1 text-xs text-slate-500">{reservation.property.id}</p>
                           </td>
                           <td className="px-4 py-4 text-slate-600">
@@ -870,7 +853,7 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex flex-wrap gap-2">
-                              <button type="button" onClick={() => handleInspectReservation(reservation.id)} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-gold-primary hover:text-gold-primary">Inspect</button>
+                              <button type="button" onClick={() => handleInspectReservation(reservation.id)} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-[#ca7653] hover:text-[#ca7653]">Inspect</button>
                               <button type="button" onClick={() => handleReservationCancel(reservation)} className="rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700">Cancel</button>
                             </div>
                           </td>
@@ -882,9 +865,9 @@ export default function AdminDashboard() {
               )}
 
               {selectedReservation ? (
-                <div className="mt-6 rounded-[24px] border border-stone-200 bg-stone-50 p-5">
+                <div className="mt-6 rounded-[24px] border border-stone-200 bg-[#f8f6f1] p-5">
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Selected reservation</p>
-                  <h3 className="mt-2 text-xl font-semibold text-midnight">{selectedReservation.property.title}</h3>
+                  <h3 className="mt-2 text-xl font-semibold text-[#2A2723]">{selectedReservation.property.title}</h3>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <MiniStat label="Status" value={selectedReservation.status} />
                     <MiniStat label="Guest" value={selectedReservation.userNameSnapshot} />
@@ -904,7 +887,7 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={handleFinanceRefresh}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                 >
                   Refresh
                 </button>
@@ -924,7 +907,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setPaymentFilters((current) => ({ ...current, status: event.target.value === 'all' ? undefined : event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   >
                     {['all', 'PENDING', 'SUCCEEDED', 'FAILED', 'REFUNDED'].map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -937,7 +920,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setPaymentFilters((current) => ({ ...current, provider: event.target.value === 'all' ? undefined : event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   >
                     {['all', 'ESEWA', 'KHALTI', 'CONNECT_IPS'].map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -951,7 +934,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setPaymentFilters((current) => ({ ...current, dateFrom: event.target.value || undefined }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
                 <Field label="Date to">
@@ -961,7 +944,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setPaymentFilters((current) => ({ ...current, dateTo: event.target.value || undefined }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                   />
                 </Field>
               </div>
@@ -970,7 +953,7 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => token && loadFinance(token, paymentFilters)}
-                  className="rounded-full bg-midnight px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="rounded-full bg-[#3E4A3D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f]"
                 >
                   Apply filters
                 </button>
@@ -979,9 +962,9 @@ export default function AdminDashboard() {
               {loadingFinance ? (
                 <p className="mt-5 text-sm text-slate-500">Loading payments…</p>
               ) : (
-                <div className="mt-5 overflow-hidden rounded-[24px] border border-stone-200">
+                <div className="mt-5 overflow-x-auto rounded-[24px] border border-stone-200">
                   <table className="min-w-full divide-y divide-stone-200 text-left text-sm">
-                    <thead className="bg-stone-50 text-[0.68rem] uppercase tracking-[0.16em] text-slate-400">
+                    <thead className="bg-[#f8f6f1] text-[0.68rem] uppercase tracking-[0.16em] text-slate-400">
                       <tr>
                         <th className="px-4 py-3">Payment</th>
                         <th className="px-4 py-3">Property</th>
@@ -993,7 +976,7 @@ export default function AdminDashboard() {
                       {financePayments.map((payment) => (
                         <tr key={payment.id}>
                           <td className="px-4 py-4">
-                            <p className="font-semibold text-midnight">{payment.provider}</p>
+                            <p className="font-semibold text-[#2A2723]">{payment.provider}</p>
                             <p className="mt-1 text-xs text-slate-500">{formatDate(payment.createdAt)}</p>
                           </td>
                           <td className="px-4 py-4 text-slate-600">
@@ -1005,7 +988,7 @@ export default function AdminDashboard() {
                               {payment.status}
                             </span>
                           </td>
-                          <td className="px-4 py-4 font-semibold text-midnight">{money(payment.amount)}</td>
+                          <td className="px-4 py-4 font-semibold text-[#2A2723]">{money(payment.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1021,24 +1004,24 @@ export default function AdminDashboard() {
               description="Create agent accounts and manage suspend/reactivate operations by ID."
             >
               <div className="grid gap-6 xl:grid-cols-3">
-                <form onSubmit={handleAgentCreate} className="space-y-4 rounded-[24px] border border-stone-200 bg-stone-50 p-5 xl:col-span-2">
-                  <h3 className="text-lg font-semibold text-midnight">Create agent</h3>
+                <form onSubmit={handleAgentCreate} className="space-y-4 rounded-[24px] border border-stone-200 bg-[#f8f6f1] p-5 xl:col-span-2">
+                  <h3 className="text-lg font-semibold text-[#2A2723]">Create agent</h3>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Full name">
-                      <input value={agentForm.fullName} onChange={(e) => setAgentForm((current) => ({ ...current, fullName: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" required />
+                      <input value={agentForm.fullName} onChange={(e) => setAgentForm((current) => ({ ...current, fullName: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" required />
                     </Field>
                     <Field label="Email">
-                      <input value={agentForm.email} type="email" onChange={(e) => setAgentForm((current) => ({ ...current, email: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" required />
+                      <input value={agentForm.email} type="email" onChange={(e) => setAgentForm((current) => ({ ...current, email: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" required />
                     </Field>
                     <Field label="Phone">
-                      <input value={agentForm.phoneNumber} onChange={(e) => setAgentForm((current) => ({ ...current, phoneNumber: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" required />
+                      <input value={agentForm.phoneNumber} onChange={(e) => setAgentForm((current) => ({ ...current, phoneNumber: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" required />
                     </Field>
                     <Field label="Password">
-                      <input value={agentForm.password} type="password" onChange={(e) => setAgentForm((current) => ({ ...current, password: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" required />
+                      <input value={agentForm.password} type="password" onChange={(e) => setAgentForm((current) => ({ ...current, password: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" required />
                     </Field>
                   </div>
                   <div className="flex justify-end">
-                    <button disabled={agentBusy} type="submit" className="inline-flex items-center gap-2 rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60">
+                    <button disabled={agentBusy} type="submit" className="inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f] disabled:opacity-60">
                       {agentBusy ? 'Saving…' : 'Create agent'}
                       <ArrowRight className="h-4 w-4" />
                     </button>
@@ -1046,16 +1029,16 @@ export default function AdminDashboard() {
                 </form>
 
                 <div className="space-y-4 rounded-[24px] border border-stone-200 bg-white p-5">
-                  <h3 className="text-lg font-semibold text-midnight">Suspend / reactivate</h3>
+                  <h3 className="text-lg font-semibold text-[#2A2723]">Suspend / reactivate</h3>
                   <Field label="Agent ID to suspend">
-                    <input value={suspendAgentId} onChange={(e) => setSuspendAgentId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" />
+                    <input value={suspendAgentId} onChange={(e) => setSuspendAgentId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" />
                   </Field>
                   <button disabled={agentBusy} type="button" onClick={handleSuspendAgent} className="w-full rounded-full bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60">
                     Suspend
                   </button>
 
                   <Field label="Agent ID to reactivate">
-                    <input value={reactivateAgentId} onChange={(e) => setReactivateAgentId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" />
+                    <input value={reactivateAgentId} onChange={(e) => setReactivateAgentId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" />
                   </Field>
                   <button disabled={agentBusy} type="button" onClick={handleReactivateAgent} className="w-full rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
                     Reactivate
@@ -1079,23 +1062,23 @@ export default function AdminDashboard() {
                 <form onSubmit={handleConfigSubmit} className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Company name">
-                      <input value={configForm.companyName ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyName: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" />
+                      <input value={configForm.companyName ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyName: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" />
                     </Field>
                     <Field label="Company email">
-                      <input value={configForm.companyEmail ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyEmail: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" />
+                      <input value={configForm.companyEmail ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyEmail: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" />
                     </Field>
                     <Field label="Company phone">
-                      <input value={configForm.companyPhone ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyPhone: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" />
+                      <input value={configForm.companyPhone ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyPhone: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" />
                     </Field>
                     <Field label="Reservation fee amount">
-                      <input type="number" value={configForm.reservationFeeAmount ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, reservationFeeAmount: toOptionalNumber(e.target.value) }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" />
+                      <input type="number" value={configForm.reservationFeeAmount ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, reservationFeeAmount: toOptionalNumber(e.target.value) }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" />
                     </Field>
                   </div>
                   <Field label="Company address">
-                    <textarea value={configForm.companyAddress ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyAddress: e.target.value }))} className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary" />
+                    <textarea value={configForm.companyAddress ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyAddress: e.target.value }))} className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]" />
                   </Field>
                   <div className="flex justify-end">
-                    <button disabled={configSaving} type="submit" className="rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60">
+                    <button disabled={configSaving} type="submit" className="rounded-full bg-[#3E4A3D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f] disabled:opacity-60">
                       {configSaving ? 'Saving…' : 'Save settings'}
                     </button>
                   </div>
@@ -1107,7 +1090,7 @@ export default function AdminDashboard() {
           <div className="pb-10" />
         </div>
       </div>
-    </div>
+    </WorkspaceShell>
   );
 }
 
@@ -1115,7 +1098,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-stone-200 bg-white px-4 py-4">
       <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-midnight">{value}</p>
+      <p className="mt-2 text-xl font-semibold text-[#2A2723]">{value}</p>
     </div>
   );
 }
@@ -1124,7 +1107,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white px-4 py-3">
       <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-midnight">{value}</p>
+      <p className="mt-1 text-sm font-semibold text-[#2A2723]">{value}</p>
     </div>
   );
 }

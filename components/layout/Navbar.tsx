@@ -10,10 +10,10 @@ import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { isStaffRole, normalizeUserRole } from '@/lib/auth-routing';
 
 const PUBLIC_NAV_LINKS = [
+  { label: 'Explore', href: '/' },
   { label: 'Properties', href: '/properties' },
   { label: 'Marketplace', href: '/marketplace' },
-  { label: 'Booking', href: '/booking' },
-  { label: 'About', href: '/about' },
+  { label: 'About Us', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -34,6 +34,7 @@ export default function Navbar() {
   const accountRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+  const isHome = pathname === '/';
 
   useEffect(() => {
     if (isOpen) {
@@ -93,26 +94,29 @@ export default function Navbar() {
     : 'U';
   return (
     <>
-      <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/15 bg-white/10 backdrop-blur-xl backdrop-saturate-200 shadow-[0_1px_20px_rgba(0,0,0,0.04)]">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/35 via-white/10 to-transparent" />
-        <div className="pointer-events-none absolute -top-1/2 -left-1/4 h-[200%] w-1/2 rotate-12 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <nav aria-label="Main navigation" className={`left-0 right-0 top-0 z-50 ${isHome ? 'absolute pt-4 sm:pt-7' : 'fixed border-b border-stone-200/60 bg-white/95 backdrop-blur-xl'}`}>
+        <div className="mx-auto max-w-[1440px] px-5 sm:px-10 lg:px-16">
           <div className="relative z-10 flex h-16 items-center justify-between sm:h-20">
-            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-              <div className="relative h-12 w-32 sm:h-14 sm:w-36">
+            <Link href="/" aria-label="Sunrise Realestate home" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+              {isHome ? (
+                <span className="flex w-28 flex-col items-center gap-1 sm:w-32">
+                  <Image src="/images/logo/sunrise1.png" alt="" width={64} height={64} className="h-12 w-12 object-contain sm:h-16 sm:w-16" priority />
+                  <Image src="/images/logo/sunrise.png" alt="Sunrise Realestate" width={116} height={29} className="h-6 w-24 object-contain sm:h-7 sm:w-[116px]" priority />
+                </span>
+              ) : <div className="relative h-14 w-40 sm:h-16 sm:w-44">
                 <Image
                   src="/images/logo/sunrise2.png"
                   alt="Sunrise Realestate"
                   fill
-                  sizes="(min-width: 640px) 144px, 128px"
+                  sizes="(min-width: 640px) 176px, 160px"
                   className="object-contain"
                   priority
                 />
-              </div>
+              </div>}
             </Link>
 
             <div className="hidden items-center gap-6 lg:flex">
-              <ul className="flex items-center gap-8">
+              <ul className={`flex items-center ${isHome ? 'absolute left-1/2 -translate-x-1/2 gap-6 whitespace-nowrap rounded-full bg-white px-7 py-3 shadow-sm' : 'gap-7'}`}>
                 {navLinks.map((link) => {
                   const isActive = isActiveLink(link.href);
 
@@ -121,14 +125,12 @@ export default function Navbar() {
                       <Link
                         href={link.href}
                         className={`group relative text-sm font-medium transition-colors ${
-                          isActive ? 'text-midnight' : 'text-slate-700 hover:text-midnight'
+                          isActive ? (isHome ? 'text-[#ce7c57]' : 'text-midnight') : 'text-stone-700 hover:text-[#ce7c57]'
                         }`}
                       >
                         {link.label}
                         <span
-                          className={`absolute -bottom-1 left-0 h-0.5 bg-gold-primary transition-all duration-300 ${
-                            isActive ? 'w-full' : 'w-0 group-hover:w-full'
-                          }`}
+                          className={`absolute -bottom-1 left-0 h-0.5 bg-gold-primary transition-all duration-300 ${isHome ? 'hidden' : isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
                         />
                       </Link>
                     </li>
@@ -209,9 +211,9 @@ export default function Navbar() {
                 <div className="flex items-center gap-3">
                   <Link
                     href="/auth/login"
-                    className="rounded-full bg-gold-primary px-5 py-2.5 text-sm font-semibold text-midnight shadow-[0_10px_24px_rgba(172,149,62,0.24)] transition hover:bg-gold-deep"
+                    className="rounded-full bg-[#3E4A3D] px-7 py-2 text-sm font-medium text-white transition hover:bg-[#303c2f]"
                   >
-                    Login
+                    Sign In
                   </Link>
                 </div>
               )}
@@ -220,17 +222,18 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setIsOpen((prev) => !prev)}
-              className="rounded-lg p-2 transition hover:bg-white/10 lg:hidden"
+              className="rounded-full bg-white/90 p-2.5 text-[#3E4A3D] shadow-sm transition hover:bg-white lg:hidden"
+              aria-expanded={isOpen}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
             >
-              {isOpen ? <X className="h-6 w-6 text-white" /> : <Menu className="h-6 w-6 text-white" />}
+              {isOpen ? <X className="h-6 w-6 text-[#3E4A3D]" /> : <Menu className="h-6 w-6 text-[#3E4A3D]" />}
             </button>
           </div>
         </div>
       </nav>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-40 bg-white/20 pt-16 backdrop-blur-xl lg:hidden">
+        <div className="fixed inset-0 z-40 bg-white/95 pt-28 backdrop-blur-xl lg:hidden">
           <div className="relative flex h-full flex-col">
             <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
               <ul className="divide-y divide-white/15 rounded-[28px] border border-white/20 bg-white/70 shadow-sm backdrop-blur-xl">
@@ -305,9 +308,9 @@ export default function Navbar() {
                   <Link
                     href="/auth/login"
                     onClick={handleNavClick}
-                    className="rounded-full bg-gold-primary px-5 py-3 text-center text-sm font-semibold text-midnight shadow-[0_10px_24px_rgba(172,149,62,0.24)] transition hover:bg-gold-deep"
+                    className="rounded-full bg-[#3E4A3D] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#303c2f]"
                   >
-                    Login
+                    Sign In
                   </Link>
                 </div>
               )}
