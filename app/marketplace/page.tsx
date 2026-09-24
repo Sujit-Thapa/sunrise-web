@@ -180,17 +180,6 @@ function statusTone(status: UserPropertyStatus): string {
   return 'bg-amber-50 text-amber-700';
 }
 
-function InfoChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[22px] border border-stone-200 bg-stone-50 px-4 py-4">
-      <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-semibold text-midnight">{value}</p>
-    </div>
-  );
-}
-
 function Field({
   label,
   children,
@@ -407,63 +396,44 @@ export default function Marketplace() {
 
   return (
     <>
-      <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(184,155,78,0.1),transparent_30%),linear-gradient(180deg,#fcfbf7_0%,#f5f1e8_100%)] text-stone-900">
-        <div className="pointer-events-none absolute -left-28 top-24 h-72 w-72 rounded-full bg-gold-primary/10 blur-3xl" />
-        <div className="pointer-events-none absolute -right-28 top-56 h-80 w-80 rounded-full bg-midnight/6 blur-3xl" />
-
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
-          <motion.section
-            {...fadeUp}
-            className="overflow-hidden rounded-[32px] border border-white/70 bg-white/80 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-8 lg:p-10"
-          >
-            <div className="max-w-3xl">
-              <p className="inline-flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-gold-primary">
-                <RiSparklingLine className="h-4 w-4" />
-                Sunrise Realestate · Community Marketplace
-              </p>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-midnight sm:text-5xl">
-                Properties listed by the community.
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
-                Browse approved community listings, submit your own property for review, and manage
-                your submissions from one place.
-              </p>
+      <main className="min-h-screen bg-[#f8f6f1] text-[#2A2723]">
+        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+          <section className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-[#ca7653]">The Sunrise marketplace</p>
+              <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-6xl">Local listings.<br /><span className="text-[#ca7653]">New possibilities.</span></h1>
+              <p className="mt-6 max-w-xl text-sm leading-7 text-stone-500">Discover properties shared by our community. Explore approved listings and find a place that fits your next chapter.</p>
+              <a href="#marketplace-listings" className="mt-6 inline-flex items-center gap-2 text-sm font-bold">Explore the marketplace<RiArrowRightLine /></a>
             </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <InfoChip label="Approved listings" value={filteredPublic.length.toString()} />
-              <InfoChip label="Your submissions" value={myListings.length.toString()} />
-              <InfoChip label="Workflow" value="Review to publish" />
-            </div>
-
-            <div className="mt-6 rounded-[24px] border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
-              New submissions are sent to the admin review queue. Approved listings appear here,
-              while your personal submissions stay in{' '}
-              <a href="#my-submissions" className="font-semibold text-gold-primary underline-offset-4 hover:underline">
-                My submissions
-              </a>
-              .
-            </div>
-          </motion.section>
+            <aside className="rounded-[32px] bg-[#e9e6dd] p-7 sm:p-9">
+              <RiAddLine className="rounded-2xl bg-white p-3 text-5xl text-[#ca7653]" />
+              <h2 className="mt-6 text-2xl font-bold">Your property. Its next owner.</h2>
+              <p className="mt-3 text-sm leading-7 text-stone-500">Add your details and photos, then submit your listing for review. Approved properties appear in the marketplace.</p>
+              {user ? <button type="button" onClick={() => setShowForm(true)} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">List your property<RiArrowRightLine /></button> : <Link href="/auth/login" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Sign in to list<RiArrowRightLine /></Link>}
+              {user ? <a href="#my-submissions" className="mt-4 block text-xs text-stone-600 underline underline-offset-4">Manage my submissions</a> : null}
+            </aside>
+          </section>
+          <div id="marketplace-listings" className="mt-14 scroll-mt-6"><p className="text-xs uppercase tracking-widest text-[#ca7653]">Community collection</p><h2 className="mt-3 text-3xl font-bold">Find your next place.</h2></div>
 
           <motion.div
             {...fadeUp}
             transition={{ duration: 0.5, ease: cubicBezier(0.22, 1, 0.36, 1), delay: 0.05 }}
-            className="sticky top-4 z-30 my-6 rounded-[28px] border border-white/70 bg-white/85 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-5"
+            className="my-6 rounded-[24px] bg-white p-4 sm:p-5"
           >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <div className="relative min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-[200px] flex-1">
                 <RiSearchLine className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  aria-label="Search marketplace listings"
                   placeholder="Search by title or location…"
-                  className="w-full rounded-full border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm text-stone-900 outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                  className="w-full rounded-full border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm text-stone-900 outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                 />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-[#f8f6f1] px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
                   <RiFilter3Line className="h-4 w-4" />
                   Filter
                 </span>
@@ -472,10 +442,11 @@ export default function Marketplace() {
                     key={option}
                     type="button"
                     onClick={() => setFilter(option)}
+                    aria-pressed={filter === option}
                     className={`rounded-full border px-4 py-2 text-[0.7rem] uppercase tracking-[0.12em] transition ${
                       filter === option
-                        ? 'border-midnight bg-midnight text-white'
-                        : 'border-stone-200 bg-white text-slate-500 hover:border-gold-primary hover:text-gold-primary'
+                        ? 'border-[#3E4A3D] bg-[#3E4A3D] text-white'
+                        : 'border-stone-200 bg-white text-slate-500 hover:border-[#ca7653] hover:text-[#ca7653]'
                     }`}
                   >
                     {option === 'all' ? 'All' : option.charAt(0).toUpperCase() + option.slice(1)}
@@ -485,9 +456,10 @@ export default function Marketplace() {
 
               <div className="flex items-center gap-3">
                 <select
+                  aria-label="Sort marketplace listings"
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortOption)}
-                  className="rounded-full border border-stone-200 bg-white px-4 py-3 text-[0.7rem] uppercase tracking-[0.1em] text-slate-600 outline-none transition focus:border-gold-primary"
+                  className="rounded-full border border-stone-200 bg-white px-4 py-3 text-[0.7rem] uppercase tracking-[0.1em] text-slate-600 outline-none transition focus:border-[#ca7653]"
                 >
                   {sortOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -499,7 +471,7 @@ export default function Marketplace() {
                 <button
                   type="button"
                   onClick={() => setShowForm(true)}
-                  className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-midnight bg-midnight px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-stone-800"
+                  className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#3E4A3D] bg-[#3E4A3D] px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#303c2f]"
                 >
                   <RiAddLine className="h-4 w-4" />
                   List property
@@ -528,7 +500,7 @@ export default function Marketplace() {
                   <p className="mt-2 text-sm">Try a different location or category to widen the search.</p>
                 </div>
               ) : (
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredPublic.map((listing) => {
                     const isMine = user?.id ? listing.submittedBy.id === user.id : false;
 
@@ -541,11 +513,11 @@ export default function Marketplace() {
                         onMouseEnter={() => setHoveredId(listing.id)}
                         onMouseLeave={() => setHoveredId(null)}
                         whileHover={{ y: -4 }}
-                        className={`group overflow-hidden rounded-[28px] border bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] transition-shadow duration-300 ${
-                          hoveredId === listing.id ? 'border-gold-primary/40' : 'border-white/80'
+                        className={`group overflow-hidden rounded-[24px] border bg-white transition-shadow duration-300 ${
+                          hoveredId === listing.id ? 'border-[#ca7653]/40' : 'border-white/80'
                         }`}
                       >
-                        <div className="relative aspect-[4/3] bg-slate-100">
+                        <div className="relative aspect-[4/3] bg-[#e9e6dd]">
                           <Image
                             src={resolveImageSrcFromProperty(listing)}
                             alt={listing.title || 'Property'}
@@ -555,14 +527,14 @@ export default function Marketplace() {
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-midnight/40 via-transparent to-transparent" />
                           <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                            <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${String(listing.category).toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/90 text-midnight'} backdrop-blur`}>
+                            <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${String(listing.category).toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/90 text-[#2A2723]'} backdrop-blur`}>
                               {getPropertyCategoryLabel(listing.category)}
                             </span>
                             <span className={`rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${statusTone(listing.status)} backdrop-blur`}>
                               {getPropertyStatusLabel(listing.status)}
                             </span>
                             {isMine ? (
-                              <span className="rounded-full bg-midnight/90 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                              <span className="rounded-full bg-[#3E4A3D]/90 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
                                 Your listing
                               </span>
                             ) : null}
@@ -570,13 +542,14 @@ export default function Marketplace() {
                         </div>
 
                         <div className="p-5">
-                          <h3 className="text-xl font-semibold text-midnight">{listing.title}</h3>
+                          <p className="mb-1 text-xl font-medium text-[#ca7653]">{formatCurrency(listing.price)}</p>
+                          <h3 className="text-lg font-bold text-[#2A2723]"><Link href={`/marketplace/${listing.id}`} className="hover:text-[#ca7653]">{listing.title}</Link></h3>
                           <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
-                            <RiMapPinLine className="h-4 w-4 shrink-0 text-gold-primary" />
+                            <RiMapPinLine className="h-4 w-4 shrink-0 text-[#ca7653]" />
                             {locationLabel(listing) || 'Location not specified'}
                           </p>
 
-                          <div className="mt-5 flex flex-wrap gap-3">
+                          <div className="mt-4 flex flex-wrap gap-3">
                             <span className="rounded-full bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
                               {sizeLabel(listing)}
                             </span>
@@ -585,20 +558,20 @@ export default function Marketplace() {
                             </span>
                           </div>
 
-                          <div className="mt-6 flex items-end justify-between gap-4 border-t border-stone-100 pt-5">
+                          <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-stone-100 pt-4">
                             <div>
-                              <p className="text-2xl font-semibold text-midnight">{formatCurrency(listing.price)}</p>
+                              
                               <p className="mt-1 text-[0.72rem] text-slate-400">Listed by {listing.submittedBy.fullName}</p>
                               <p className="text-[0.68rem] text-slate-400">{new Date(listing.createdAt).toLocaleDateString()}</p>
                             </div>
                             {isMine ? (
-                              <span className="rounded-full border border-stone-200 bg-stone-50 px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="rounded-full border border-stone-200 bg-[#f8f6f1] px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                 Manage in My submissions
                               </span>
                             ) : (
                               <a
                                 href={`/marketplace/${listing.id}`}
-                                className="rounded-full border border-midnight bg-midnight px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-stone-800"
+                                className="rounded-full border border-[#3E4A3D] bg-[#3E4A3D] px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#303c2f]"
                               >
                                 View listing
                               </a>
@@ -615,18 +588,18 @@ export default function Marketplace() {
                 id="my-submissions"
                 {...fadeUp}
                 transition={{ duration: 0.5, ease: cubicBezier(0.22, 1, 0.36, 1), delay: 0.06 }}
-                className="mt-12"
+                className="mt-14 rounded-[32px] bg-[#e9e6dd] p-5 sm:p-8"
               >
                 <div className="mb-5 flex items-center justify-between gap-4">
                   <div>
-                    <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-gold-primary">
+                    <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#ca7653]">
                       <RiCalendarCheckLine className="h-4 w-4" />
                       My submissions
                     </p>
-                    <h2 className="mt-2 text-2xl font-semibold text-midnight">Your user properties</h2>
+                    <h2 className="mt-2 text-2xl font-semibold text-[#2A2723]">My submissions</h2>
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
-                    <Link href="/marketplace/manage" className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary">
+                    <Link href="/marketplace/manage" className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]">
                       Manage listings
                     </Link>
                     <button
@@ -636,7 +609,7 @@ export default function Marketplace() {
                         setForm(EMPTY_FORM);
                         setShowForm(true);
                       }}
-                      className="inline-flex items-center gap-2 rounded-full border border-midnight px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-midnight transition hover:bg-midnight hover:text-white"
+                      className="inline-flex items-center gap-2 rounded-full border border-[#3E4A3D] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#2A2723] transition hover:bg-[#3E4A3D] hover:text-white"
                     >
                       <RiAddLine className="h-4 w-4" />
                       Add new
@@ -647,7 +620,7 @@ export default function Marketplace() {
                 {myListings.length === 0 ? (
                   <div className="rounded-[28px] border border-dashed border-stone-300 bg-white/70 px-8 py-12 text-center text-slate-500 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
                     <p className="text-lg font-medium text-slate-700">No submissions yet.</p>
-                    <p className="mt-2 text-sm">Use the form above to submit a property for review.</p>
+                    <p className="mt-2 text-sm">List a property to submit it for review.</p>
                   </div>
                 ) : (
                   <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -665,12 +638,12 @@ export default function Marketplace() {
                               <p className={`inline-flex rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${statusTone(listing.status)}`}>
                                 {getPropertyStatusLabel(listing.status)}
                               </p>
-                              <h3 className="mt-3 text-xl font-semibold text-midnight">{listing.title}</h3>
+                              <h3 className="mt-3 text-xl font-semibold text-[#2A2723]">{listing.title}</h3>
                             </div>
-                            <span className="text-lg font-semibold text-gold-primary">{formatCurrency(listing.price)}</span>
+                            <span className="text-lg font-semibold text-[#ca7653]">{formatCurrency(listing.price)}</span>
                           </div>
                           <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
-                            <RiMapPinLine className="h-4 w-4 shrink-0 text-gold-primary" />
+                            <RiMapPinLine className="h-4 w-4 shrink-0 text-[#ca7653]" />
                             {locationLabel(listing) || 'Location not specified'}
                           </p>
                           <div className="mt-5 flex flex-wrap gap-2">
@@ -704,7 +677,7 @@ export default function Marketplace() {
                                 });
                                 setShowForm(true);
                               }}
-                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                             >
                               <RiEditLine className="h-4 w-4" />
                               Edit
@@ -720,7 +693,7 @@ export default function Marketplace() {
                             <button
                               type="button"
                               onClick={() => handleHide(listing.id)}
-                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                             >
                               {listing.status === 'HIDDEN' ? (
                                 <RiEyeLine className="h-4 w-4" />
@@ -760,11 +733,11 @@ export default function Marketplace() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="inline-flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-gold-primary">
+                  <p className="inline-flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-[#ca7653]">
                     <RiSparklingLine className="h-4 w-4" />
                     Property listing
                   </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-midnight">
+                  <h2 className="mt-2 text-2xl font-semibold text-[#2A2723]">
                     {editingId ? 'Edit your property' : 'List your property'}
                   </h2>
                 </div>
@@ -774,7 +747,7 @@ export default function Marketplace() {
                     setShowForm(false);
                     setEditingId(null);
                   }}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 text-slate-500 transition hover:border-gold-primary hover:text-gold-primary"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 text-slate-500 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                   aria-label="Close"
                 >
                   <RiCloseLine className="h-5 w-5" />
@@ -793,7 +766,7 @@ export default function Marketplace() {
                     value={form.title}
                     onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                     required
-                    className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="e.g. Corner Plot, Riverside District"
                   />
                 </Field>
@@ -803,20 +776,20 @@ export default function Marketplace() {
                     value={form.description}
                     onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                     required
-                    className="min-h-[120px] w-full resize-none rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="min-h-[120px] w-full resize-none rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="Describe the property…"
                   />
                 </Field>
 
                 <Field label="Property images">
-                  <div className="rounded-[20px] border border-dashed border-stone-300 bg-stone-50 p-4">
+                  <div className="rounded-[20px] border border-dashed border-stone-300 bg-[#f8f6f1] p-4">
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       multiple
                       onChange={handleImageSelection}
                       disabled={submitting || pendingImages.length >= MAX_MARKETPLACE_IMAGES}
-                      className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-midnight file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
+                      className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-[#3E4A3D] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
                     />
                     <p className="mt-3 text-xs leading-5 text-slate-500">
                       Add up to {MAX_MARKETPLACE_IMAGES} JPG, PNG, or WEBP images. Each file must be 5 MB or smaller.
@@ -846,7 +819,7 @@ export default function Marketplace() {
                               </button>
                             </div>
                             <div className="p-2">
-                              <p className="truncate text-[0.68rem] font-medium text-midnight">{image.file.name}</p>
+                              <p className="truncate text-[0.68rem] font-medium text-[#2A2723]">{image.file.name}</p>
                               <p className={`mt-1 text-[0.62rem] ${image.status === 'error' ? 'text-rose-600' : image.status === 'done' ? 'text-emerald-600' : 'text-slate-400'}`}>
                                 {image.status === 'pending' ? 'Ready to upload' : image.status === 'uploading' ? 'Uploading…' : image.status === 'confirming' ? 'Saving image…' : image.status === 'done' ? 'Uploaded' : image.error ?? 'Upload failed'}
                               </p>
@@ -863,7 +836,7 @@ export default function Marketplace() {
                     <select
                       value={form.category}
                       onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as typeof prev.category }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                     >
                       <option value="HOUSE">House</option>
                       <option value="APARTMENT">Apartment</option>
@@ -875,7 +848,7 @@ export default function Marketplace() {
                     <select
                       value={form.listingType}
                       onChange={(e) => setForm((prev) => ({ ...prev, listingType: e.target.value as ListingType }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                     >
                       <option value="SALE">For Sale</option>
                       <option value="RENT">For Rent</option>
@@ -889,7 +862,7 @@ export default function Marketplace() {
                     value={form.price}
                     onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
                     required
-                    className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                    className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                     placeholder="e.g. 25000000"
                   />
                 </Field>
@@ -900,7 +873,7 @@ export default function Marketplace() {
                       value={form.city}
                       onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))}
                       required
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="Kathmandu"
                     />
                   </Field>
@@ -909,7 +882,7 @@ export default function Marketplace() {
                       value={form.state}
                       onChange={(e) => setForm((prev) => ({ ...prev, state: e.target.value }))}
                       required
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="Bagmati"
                     />
                   </Field>
@@ -918,7 +891,7 @@ export default function Marketplace() {
                       value={form.country}
                       onChange={(e) => setForm((prev) => ({ ...prev, country: e.target.value }))}
                       required
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="Nepal"
                     />
                   </Field>
@@ -929,7 +902,7 @@ export default function Marketplace() {
                     <input
                       value={form.street}
                       onChange={(e) => setForm((prev) => ({ ...prev, street: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="Boudha Road"
                     />
                   </Field>
@@ -937,7 +910,7 @@ export default function Marketplace() {
                     <input
                       value={form.postalCode}
                       onChange={(e) => setForm((prev) => ({ ...prev, postalCode: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="44600"
                     />
                   </Field>
@@ -950,7 +923,7 @@ export default function Marketplace() {
                       step="any"
                       value={form.latitude}
                       onChange={(e) => setForm((prev) => ({ ...prev, latitude: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="27.7172"
                     />
                   </Field>
@@ -960,7 +933,7 @@ export default function Marketplace() {
                       step="any"
                       value={form.longitude}
                       onChange={(e) => setForm((prev) => ({ ...prev, longitude: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="85.324"
                     />
                   </Field>
@@ -972,7 +945,7 @@ export default function Marketplace() {
                       type="number"
                       value={form.areaSize}
                       onChange={(e) => setForm((prev) => ({ ...prev, areaSize: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="e.g. 1500"
                     />
                   </Field>
@@ -980,7 +953,7 @@ export default function Marketplace() {
                     <select
                       value={form.areaUnit}
                       onChange={(e) => setForm((prev) => ({ ...prev, areaUnit: e.target.value as AreaUnit }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gold-primary"
+                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#ca7653]"
                     >
                       <option value="sqft">sq ft</option>
                       <option value="sqm">sq m</option>
@@ -997,14 +970,14 @@ export default function Marketplace() {
                       setShowForm(false);
                       setEditingId(null);
                     }}
-                    className="flex-1 rounded-full border border-stone-200 bg-white px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
+                    className="flex-1 rounded-full border border-stone-200 bg-white px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-midnight bg-midnight px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#3E4A3D] bg-[#3E4A3D] px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#303c2f] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {submitting ? 'Submitting…' : editingId ? 'Update listing' : 'Publish listing'}
                     <RiArrowRightLine className="h-4 w-4" />
@@ -1036,7 +1009,7 @@ export default function Marketplace() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-700">
                 <RiDeleteBinLine className="h-5 w-5" />
               </div>
-              <h3 className="mt-4 text-2xl font-semibold text-midnight">Remove listing?</h3>
+              <h3 className="mt-4 text-2xl font-semibold text-[#2A2723]">Remove listing?</h3>
               <p className="mt-3 text-sm leading-7 text-slate-500">
                 This listing will be permanently removed from the marketplace. This action cannot be undone.
               </p>
@@ -1045,7 +1018,7 @@ export default function Marketplace() {
                   type="button"
                   disabled={deleting}
                   onClick={() => setDeleteId(null)}
-                  className="flex-1 rounded-full border border-stone-200 bg-white px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary disabled:opacity-60"
+                  className="flex-1 rounded-full border border-stone-200 bg-white px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653] disabled:opacity-60"
                 >
                   Keep it
                 </button>
