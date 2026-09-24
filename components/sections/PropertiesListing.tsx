@@ -51,13 +51,13 @@ export default function PropertiesListing({
   }), [items, sort]);
 
   return (
-    <div className="grid grid-cols-1 bg-[#f8f6f1] text-[#2A2723] lg:h-[calc(100svh-80px)] lg:min-h-[600px] lg:grid-cols-[minmax(0,64fr)_minmax(390px,36fr)]">
+    <div className="grid grid-cols-1 bg-[#f8f6f1] text-[#2A2723] lg:h-svh lg:min-h-[724px] lg:grid-cols-[minmax(0,64fr)_minmax(390px,36fr)]">
       <section aria-label="Property map" className="relative min-h-[430px] overflow-hidden bg-[#a9d8e9] lg:min-h-0">
         <PropertiesMap properties={items} hoveredId={hoveredId} onHoverChange={setHoveredId} />
         <SearchPanel />
       </section>
 
-      <section aria-label="Property results" className="min-w-0 px-5 py-6 sm:px-7 lg:overflow-y-auto">
+      <section aria-label="Property results" className="min-w-0 px-5 py-6 sm:px-7 lg:overflow-y-auto lg:pt-[148px]">
         <div className="mb-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h1 className="text-xl font-bold">{searchQuery ? `${searchQuery} Properties` : 'Explore Properties'}{searchParams.get('listingType') === 'SALE' ? ' for Sale' : searchParams.get('listingType') === 'RENT' ? ' for Rent' : ''}</h1>
@@ -333,7 +333,7 @@ function SearchPanel() {
         event.preventDefault();
         pushSearch(event.currentTarget);
       }}
-      className="absolute left-4 right-4 top-6 z-30 mx-auto max-w-[660px] rounded-[24px] bg-white p-2 shadow-lg sm:top-9 sm:rounded-full"
+      className="absolute left-4 right-4 top-28 z-30 mx-auto max-w-[660px] rounded-[24px] bg-white p-2 shadow-lg sm:top-[148px] sm:rounded-full"
     >
       <div className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
         <div className="min-w-0 px-3">
