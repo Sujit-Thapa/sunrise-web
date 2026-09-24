@@ -34,7 +34,6 @@ export default function Navbar() {
   const accountRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const isHome = pathname === '/';
 
   useEffect(() => {
     if (isOpen) {
@@ -94,29 +93,18 @@ export default function Navbar() {
     : 'U';
   return (
     <>
-      <nav aria-label="Main navigation" className={`left-0 right-0 top-0 z-50 ${isHome ? 'absolute pt-4 sm:pt-7' : 'fixed border-b border-stone-200/60 bg-white/95 backdrop-blur-xl'}`}>
+      <nav aria-label="Main navigation" className="absolute left-0 right-0 top-0 z-50 pb-4 pt-4 sm:pt-7">
         <div className="mx-auto max-w-[1440px] px-5 sm:px-10 lg:px-16">
           <div className="relative z-10 flex h-16 items-center justify-between sm:h-20">
             <Link href="/" aria-label="Sunrise Realestate home" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-              {isHome ? (
                 <span className="flex w-28 flex-col items-center gap-1 sm:w-32">
                   <Image src="/images/logo/sunrise1.png" alt="" width={64} height={64} className="h-12 w-12 object-contain sm:h-16 sm:w-16" priority />
                   <Image src="/images/logo/sunrise.png" alt="Sunrise Realestate" width={116} height={29} className="h-6 w-24 object-contain sm:h-7 sm:w-[116px]" priority />
                 </span>
-              ) : <div className="relative h-14 w-40 sm:h-16 sm:w-44">
-                <Image
-                  src="/images/logo/sunrise2.png"
-                  alt="Sunrise Realestate"
-                  fill
-                  sizes="(min-width: 640px) 176px, 160px"
-                  className="object-contain"
-                  priority
-                />
-              </div>}
             </Link>
 
             <div className="hidden items-center gap-6 lg:flex">
-              <ul className={`absolute left-1/2 flex -translate-x-1/2 items-center gap-6 whitespace-nowrap px-7 py-3 ${isHome ? 'rounded-full bg-white shadow-sm' : ''}`}>
+              <ul className="absolute left-1/2 flex -translate-x-1/2 items-center gap-6 whitespace-nowrap rounded-full bg-white px-7 py-3 shadow-sm">
                 {navLinks.map((link) => {
                   const isActive = isActiveLink(link.href);
 
@@ -125,13 +113,10 @@ export default function Navbar() {
                       <Link
                         href={link.href}
                         className={`group relative text-sm font-medium transition-colors ${
-                          isActive ? (isHome ? 'text-[#ce7c57]' : 'text-midnight') : 'text-stone-700 hover:text-[#ce7c57]'
+                          isActive ? 'text-[#ce7c57]' : 'text-stone-700 hover:text-[#ce7c57]'
                         }`}
                       >
                         {link.label}
-                        <span
-                          className={`absolute -bottom-1 left-0 h-0.5 bg-gold-primary transition-all duration-300 ${isHome ? 'hidden' : isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
-                        />
                       </Link>
                     </li>
                   );
@@ -233,7 +218,7 @@ export default function Navbar() {
       </nav>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-40 bg-white/95 pt-28 backdrop-blur-xl lg:hidden">
+        <div className="fixed inset-0 z-40 bg-white/95 pt-28 sm:pt-36 backdrop-blur-xl lg:hidden">
           <div className="relative flex h-full flex-col">
             <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
               <ul className="divide-y divide-white/15 rounded-[28px] border border-white/20 bg-white/70 shadow-sm backdrop-blur-xl">
