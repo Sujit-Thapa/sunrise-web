@@ -9,13 +9,13 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const hideLayout = pathname?.startsWith('/auth/') || pathname === '/admin' || pathname === '/agent';
   const isHome = pathname === '/';
-  const isContact = pathname?.startsWith('/contact');
-  const contentOffset = hideLayout || isHome || isContact ? '' : 'pt-16 sm:pt-20';
+  const isProperties = pathname === '/properties';
+  const contentOffset = hideLayout || isHome || isProperties ? '' : 'pt-24 sm:pt-[124px]';
 
   return (
     <AuthSessionProvider>
       {!hideLayout && <Navbar />}
-      <main className={`flex-1 ${contentOffset}`}>{children}</main>
+      <main className={`flex-1 bg-[#f8f6f1] ${contentOffset}`}>{children}</main>
       {!hideLayout && <Footer />}
     </AuthSessionProvider>
   );
