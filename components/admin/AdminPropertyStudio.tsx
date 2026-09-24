@@ -196,6 +196,9 @@ async function uploadPropertyImages(
   token: string,
 ): Promise<PropertyResponseDto> {
   let latestProperty = await propertiesApi.findOne(propertyId, token);
+  const existingImages = latestProperty.images ?? [];
+  const nextSortOrder = existingImages.reduce((next, image) => Math.max(next, (image.sortOrder ?? 0) + 1), 0);
+  const hasPrimary = existingImages.some(image => image.isPrimary);
 
   for (let index = 0; index < files.length; index += 1) {
     const file = files[index];
@@ -230,8 +233,8 @@ if (!uploadResponse.ok) {
       createConfirmImagePayload(
         presignResponse.s3Key,
         presignResponse.publicUrl,
-        index === 0,
-        index,
+        !hasPrimary && index === 0,
+        nextSortOrder + index,
       ),
       token,
     );
@@ -932,26 +935,36 @@ export default function AdminPropertyStudio({ embedded = false }: { embedded?: b
                   accept="image/jpeg,image/png,image/webp"
                   multiple
                   onChange={(event) => {
-                    const files = Array.from(event.target.files ?? []).filter((file) =>
-                      ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
-                    );
-                    setSelectedImages(files);
+                    const files = Array.from(event.target.files ?? []);
+                    event.target.value = '';
+                    const invalidFiles = files.filter(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type));
+                    const validFiles = files.filter(file => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type));
+                    setSelectedImages(current => {
+                      const next = [...current];
+                      for (const file of validFiles) {
+                        if (!next.some(existing => existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified)) next.push(file);
+                      }
+                      return next;
+                    });
+                    setNotice(invalidFiles.length ? { kind: 'error', message: `Could not add ${invalidFiles.map(file => file.name).join(', ')}. Choose JPG, PNG, or WebP images.` } : null);
                   }}
                   className="w-full cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-600 outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:border-[#ca7653] focus:border-[#ca7653]"
                 />
                 <p className="mt-2 text-xs leading-6 text-slate-500">
-                  Choose JPG, PNG, or WebP photos. The first photo is the cover image.
+                  Choose multiple JPG, PNG, or WebP photos at once, or add more in separate selections. Existing cover photos are preserved.
                 </p>
                 {selectedImages.length > 0 ? (
                   <ul className="mt-3 space-y-1 text-xs text-slate-600">
+                    <li role="status" className="py-2 font-medium">{selectedImages.length} photo{selectedImages.length === 1 ? '' : 's'} ready to upload</li>
                     {selectedImages.map((file, index) => (
                       <li key={`${file.name}-${file.lastModified}-${index}`} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
                         <span className="truncate">{file.name}</span>
-                        {index === 0 ? (
+                        {index === 0 && !properties.find(property => property.id === editingId)?.images?.some(image => image.isPrimary) ? (
                           <span className="rounded-full bg-gold-primary/10 px-2 py-1 font-semibold text-gold-deep">
                             Primary
                           </span>
                         ) : null}
+                        <button type="button" aria-label={`Remove ${file.name}`} onClick={() => setSelectedImages(current => current.filter((_, imageIndex) => imageIndex !== index))} className="rounded-full px-3 py-1 text-rose-700 hover:bg-rose-100">Remove</button>
                       </li>
                     ))}
                   </ul>
