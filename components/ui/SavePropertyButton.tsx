@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bookmark, BookmarkCheck, Heart } from 'lucide-react';
+import { RiBookmarkLine as Bookmark, RiBookmarkFill as BookmarkCheck, RiHeartLine, RiHeartFill } from 'react-icons/ri';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import {
@@ -25,7 +25,7 @@ export default function SavePropertyButton({ property, compact = false }: { prop
         aria-label="Sign in to save property"
         className={compact ? 'inline-flex rounded-full p-1.5 text-stone-600 hover:text-[#ca7653]' : 'inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary'}
       >
-        {compact ? <Heart className="h-4 w-4" /> : <><Bookmark className="h-4 w-4" />Save</>}
+        {compact ? <RiHeartLine className="h-4 w-4" /> : <><Bookmark className="h-4 w-4" />Save</>}
       </Link>
     );
   }
@@ -47,7 +47,7 @@ export default function SavePropertyButton({ property, compact = false }: { prop
       aria-pressed={saved}
       aria-label={saved ? 'Remove from saved properties' : 'Save property'}
     >
-      {compact ? <Heart className="h-4 w-4" fill={saved ? 'currentColor' : 'none'} /> : <>{saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}{saved ? 'Saved' : 'Save'}</>}
+      {compact ? (saved ? <RiHeartFill className="h-4 w-4" /> : <RiHeartLine className="h-4 w-4" />) : <>{saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}{saved ? 'Saved' : 'Save'}</>}
     </button>
   );
 }
