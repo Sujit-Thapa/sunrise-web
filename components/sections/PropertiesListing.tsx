@@ -490,9 +490,9 @@ function PropertyResult({
           <h2 className="mt-1 truncate text-base font-bold text-[#2A2723]">
             {property.title || 'Untitled property'}
           </h2>
-        <p className="mt-1 truncate text-[11px] text-stone-400">{location}</p>
+        <p className="mt-1 truncate text-xs text-stone-400">{location}</p>
         <div className="relative z-20 my-1 w-fit"><SavePropertyButton property={property} compact /></div>
-        <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 border-t border-stone-200 pt-2 text-[11px] text-stone-400">
+        <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 border-t border-stone-200 pt-2 text-xs text-stone-400">
           <span>{areaSize}</span>
           <span>{category} · {listingType}</span>
         </div>
