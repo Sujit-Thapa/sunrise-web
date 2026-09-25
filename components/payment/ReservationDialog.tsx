@@ -63,7 +63,7 @@ export default function ReservationDialog({ property, onClose }: { property: Pro
         <button type="button" disabled={busy} onClick={onClose} aria-label="Close reservation" className="rounded-full bg-[#f8f6f1] p-2 disabled:opacity-50"><RiCloseCircleLine size={18} /></button>
       </div>
       <div className="rounded-2xl bg-[#f8f6f1] p-5 text-sm">
-        <p className="text-[10px] uppercase">Property details</p><h3 className="mt-1 font-bold">{property.title}</h3>
+        <p className="text-xs uppercase">Property details</p><h3 className="mt-1 font-bold">{property.title}</h3>
         <dl className="mt-3 space-y-3 border-t border-stone-200 pt-3">
           <div className="flex justify-between gap-4"><dt>Property price</dt><dd>{formatCurrency(property.price)}</dd></div>
           {fee != null ? <><div className="flex justify-between gap-4"><dt>Reservation fee</dt><dd>{formatCurrency(fee)}</dd></div><div className="flex justify-between gap-4 border-t border-stone-200 pt-3 font-bold"><dt>Total reservation payment</dt><dd className="text-[#ca7653]">{formatCurrency(fee)}</dd></div></> : <p className="text-xs leading-5 text-stone-500">The reservation fee will be confirmed at the payment gateway before you pay.</p>}
