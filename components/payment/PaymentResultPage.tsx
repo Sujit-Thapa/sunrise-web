@@ -56,7 +56,7 @@ export default function PaymentResultPage({ success }: { success: boolean }) {
         {reservation ? <>
           <p className="mx-auto mt-3 w-fit break-all rounded-full bg-[#f8f6f1] px-3 py-1 text-center text-xs">Reference: {reservation.id}</p>
           <div className="mt-8 rounded-2xl border border-stone-200 bg-[#f8f6f1] p-5">
-            <p className="text-[10px] uppercase">Reserved property</p><h2 className="mt-1 font-bold">{reservation.property.title}</h2>
+            <p className="text-xs uppercase">Reserved property</p><h2 className="mt-1 font-bold">{reservation.property.title}</h2>
             <dl className="mt-4 space-y-3 border-t border-stone-200 pt-4 text-sm">
               <div className="flex justify-between gap-3"><dt>Reservation fee</dt><dd>{formatCurrency(reservation.reservationFeeAmount)}</dd></div>
               <div className="flex justify-between gap-3"><dt>Status</dt><dd>{reservation.status.charAt(0) + reservation.status.slice(1).toLowerCase()}</dd></div>

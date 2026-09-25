@@ -15,7 +15,7 @@ export default function PropertyCollection({ id, eyebrow, title, properties, hre
       <div className={inset ? 'bg-[#e9e6dd] px-5 py-10 sm:px-10 sm:py-14' : ''}>
         <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
           <div>
-            <p className="mb-2 text-[11px] font-medium uppercase text-[#ca7653]">{eyebrow}</p>
+            <p className="mb-2 text-xs font-medium uppercase text-[#ca7653]">{eyebrow}</p>
             <h2 id={`${id}-heading`} className="text-2xl font-bold tracking-tight text-[#2c2925] sm:text-3xl">{title}</h2>
           </div>
           <Link href={href} className="inline-flex items-center gap-2 text-sm font-medium text-[#2c2925] transition hover:text-[#ca7653]">{marketplace ? 'View Marketplace' : 'View Gallery'}<ArrowRight aria-hidden="true" size={17} /></Link>
@@ -48,7 +48,7 @@ function CollectionCard({ property, marketplace }: { property: Listing; marketpl
       <div className="p-4">
         <p className="text-xl font-medium text-[#ca7653]">Rs. {Number(property.price).toLocaleString('en-IN')}</p>
         <h3 className="mt-1 truncate text-sm font-bold text-[#2c2925]">{property.title}</h3>
-        <p className="mt-1 truncate text-[11px] text-stone-400">{[property.street, property.city].filter(Boolean).join(', ') || property.country}</p>
+        <p className="mt-1 truncate text-xs text-stone-400">{[property.street, property.city].filter(Boolean).join(', ') || property.country}</p>
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-[#e9e6dd] pt-2 text-xs text-stone-500">
           <span>{property.areaSize != null ? formatArea(property.areaSize, property.areaUnit) : property.category}</span>
           <span>{getListingTypeLabel(property.listingType)}</span>

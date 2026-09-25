@@ -195,13 +195,13 @@ export default function HeroSection({
               className: 'sunrise-popup',
             }).setHTML(`
               <div class="min-w-[180px] p-3 font-sans">
-                <p class="mb-1 text-[9px] uppercase tracking-[0.18em] text-[#AC953E]">
+                <p class="mb-1 text-xs uppercase tracking-[0.18em] text-[#AC953E]">
                   ${escapeHtml(String(category))}
                 </p>
                 <p class="mb-0.5 text-base font-bold text-stone-900">
                   ${escapeHtml(formattedPrice)}
                 </p>
-                <p class="text-[11px] text-stone-500">
+                <p class="text-xs text-stone-500">
                   ${escapeHtml(location)}
                 </p>
               </div>
@@ -296,7 +296,7 @@ export default function HeroSection({
         <p className="mb-3 text-center text-sm font-normal text-[#ce7c57]">
           Real Estate for the Next Era
         </p>
-        <h1 className="mb-7 text-center text-[clamp(2.75rem,5.5vw,5rem)] font-bold leading-[1.08] tracking-[-0.045em] text-[#20241f]">
+        <h1 className="mb-7 text-center text-3xl sm:text-5xl xl:text-7xl font-bold leading-[1.08] tracking-[-0.045em] text-[#20241f]">
           Find Your <span className="text-[#ce7c57]">Sanctuary.</span>
         </h1>
         <div className="pointer-events-auto w-full max-w-[900px]">

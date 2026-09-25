@@ -139,7 +139,7 @@ export default function Navbar() {
                     </span>
                     <span className="hidden flex-col leading-tight sm:flex">
                       <span className="text-sm font-semibold text-midnight">{user.fullName}</span>
-                      <span className="text-[0.65rem] uppercase tracking-[0.16em] text-slate-600">
+                      <span className="text-xs uppercase tracking-[0.16em] text-slate-600">
                         {user.role}
                       </span>
                     </span>
@@ -252,7 +252,7 @@ export default function Navbar() {
                   <div className="rounded-[24px] border border-white/20 bg-white/70 p-4 backdrop-blur-xl">
                     <p className="text-sm font-semibold text-midnight">{user.fullName}</p>
                     <p className="text-xs text-slate-500">{user.email}</p>
-                    <p className="mt-2 text-[0.65rem] uppercase tracking-[0.16em] text-slate-400">
+                    <p className="mt-2 text-xs uppercase tracking-[0.16em] text-slate-400">
                       {user.role}
                     </p>
                   </div>

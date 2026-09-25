@@ -54,7 +54,7 @@ export default function SearchBar() {
       className="grid w-full grid-cols-1 items-center rounded-[26px] bg-white p-3 text-left shadow-[0_8px_32px_rgba(34,47,34,0.06)] sm:grid-cols-[1fr_1fr_1fr_auto] sm:rounded-[28px] sm:py-3 sm:pl-0 sm:pr-5"
     >
       <label className="min-w-0 border-b border-stone-200 px-4 py-3 sm:border-b-0 sm:border-r sm:px-6">
-        <span className="mb-1.5 block text-[10px] uppercase text-stone-500">Location</span>
+        <span className="mb-1.5 block text-xs uppercase text-stone-500">Location</span>
         <input
           type="search"
           placeholder="City or location"
@@ -64,14 +64,14 @@ export default function SearchBar() {
         />
       </label>
       <label className="min-w-0 border-b border-stone-200 px-4 py-3 sm:border-b-0 sm:border-r sm:px-6">
-        <span className="mb-1.5 block text-[10px] uppercase text-stone-500">Property type</span>
+        <span className="mb-1.5 block text-xs uppercase text-stone-500">Property type</span>
         <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}
           className="w-full min-w-0 cursor-pointer bg-transparent text-sm text-stone-800 outline-none focus-visible:ring-2 focus-visible:ring-[#ce7c57]/50">
           {PROPERTY_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
         </select>
       </label>
       <label className="min-w-0 px-4 py-3 sm:border-r sm:border-stone-200 sm:px-6">
-        <span className="mb-1.5 block text-[10px] uppercase text-stone-500">Price range</span>
+        <span className="mb-1.5 block text-xs uppercase text-stone-500">Price range</span>
         <select value={priceRange} onChange={(event) => setPriceRange(event.target.value)}
           className="w-full min-w-0 cursor-pointer bg-transparent text-sm text-stone-800 outline-none focus-visible:ring-2 focus-visible:ring-[#ce7c57]/50">
           {PRICE_RANGES.map((range) => <option key={range} value={range}>{range}</option>)}
