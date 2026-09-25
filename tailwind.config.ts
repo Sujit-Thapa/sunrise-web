@@ -18,7 +18,22 @@ const config: Config = {
         'blush': '#FDF3DC',
       },
       fontFamily: {
-        sans: ['var(--font-radikal)', 'sans-serif'],
+        sans: ['var(--font-plus-jakarta-sans)', 'sans-serif'],
+        serif: ['var(--font-plus-jakarta-sans)', 'sans-serif'],
+      },
+      // Figma type scale: 12, 14, 16, 18, 22, 28, 40, 55, 80 px.
+      fontSize: {
+        xs: ['0.75rem', { lineHeight: 'normal' }],
+        sm: ['0.875rem', { lineHeight: '1.5' }],
+        base: ['1rem', { lineHeight: '1.5' }],
+        lg: ['1.125rem', { lineHeight: '1.5' }],
+        xl: ['1.375rem', { lineHeight: 'normal' }],
+        '2xl': ['1.75rem', { lineHeight: 'normal' }],
+        '3xl': ['2.5rem', { lineHeight: 'normal' }],
+        '4xl': ['2.5rem', { lineHeight: 'normal' }],
+        '5xl': ['3.4375rem', { lineHeight: 'normal' }],
+        '6xl': ['3.4375rem', { lineHeight: 'normal' }],
+        '7xl': ['5rem', { lineHeight: 'normal' }],
       },
       borderRadius: {
         'brand-sm': '4px',
