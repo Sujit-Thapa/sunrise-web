@@ -209,5 +209,5 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
 }
 
 function InfoTile({ icon: Icon, label, value }: { icon: IconType; label: string; value: string }) {
-  return <div className="flex items-start gap-3 rounded-xl bg-white p-4"><span className="rounded-lg bg-[#fff3ee] p-2 text-[#ca7653]"><Icon size={18} /></span><div className="min-w-0"><p className="text-[10px] text-stone-400">{label}</p><p className="mt-1 break-words text-sm font-medium">{value}</p></div></div>;
+  return <div className="flex items-start gap-3 rounded-xl bg-white p-4"><span className="rounded-lg bg-[#fff3ee] p-2 text-[#ca7653]"><Icon size={18} /></span><div className="min-w-0"><p className="text-xs text-stone-400">{label}</p><p className="mt-1 break-words text-sm font-medium">{value}</p></div></div>;
 }
