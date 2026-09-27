@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { parseCoordinates } from '@/lib/coordinates';
 
 const DEFAULT_CENTER: [number, number] = [85.324, 27.7172];
 
@@ -23,22 +24,18 @@ export default function MapLocationPicker({
   useEffect(() => {
     if (!token || !containerRef.current) return;
     mapboxgl.accessToken = token;
-    const parsedLongitude = Number(longitude);
-    const parsedLatitude = Number(latitude);
-    const center: [number, number] = Number.isFinite(parsedLongitude) && Number.isFinite(parsedLatitude)
-      ? [parsedLongitude, parsedLatitude]
-      : DEFAULT_CENTER;
+    const coordinates = parseCoordinates(latitude, longitude);
+    const center = coordinates ?? DEFAULT_CENTER;
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center,
-      zoom: Number.isFinite(parsedLongitude) && Number.isFinite(parsedLatitude) ? 14 : 10,
-      attributionControl: false,
+      zoom: coordinates ? 14 : 10,
     });
     mapRef.current = map;
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
     const placeMarker = (event: mapboxgl.MapMouseEvent) => {
-      const { lng, lat } = event.lngLat;
+      const { lng, lat } = event.lngLat.wrap();
       markerRef.current?.remove();
       markerRef.current = new mapboxgl.Marker({ color: '#ca7653' }).setLngLat([lng, lat]).addTo(map);
       onChange({ latitude: lat.toFixed(6), longitude: lng.toFixed(6) });
@@ -46,12 +43,15 @@ export default function MapLocationPicker({
     map.on('click', placeMarker);
     map.on('error', () => setMapError('Map could not load. Check the Mapbox token and try again.'));
     map.once('load', () => {
-      if (Number.isFinite(parsedLongitude) && Number.isFinite(parsedLatitude)) {
+      if (coordinates && !markerRef.current) {
         markerRef.current = new mapboxgl.Marker({ color: '#ca7653' }).setLngLat(center).addTo(map);
       }
       map.resize();
     });
+    const resizeObserver = new ResizeObserver(() => map.resize());
+    resizeObserver.observe(containerRef.current);
     return () => {
+      resizeObserver.disconnect();
       map.off('click', placeMarker);
       markerRef.current?.remove();
       markerRef.current = null;
