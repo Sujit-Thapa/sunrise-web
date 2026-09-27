@@ -21,6 +21,7 @@ import {
   getPropertyStatusLabel,
 } from '@/lib/properties';
 import SavePropertyButton from '@/components/ui/SavePropertyButton';
+import { parseCoordinates } from '@/lib/coordinates';
 import type { PropertyResponseDto, UserRole } from '@/types';
 
 interface PropertyDetailPageProps {
@@ -166,20 +167,31 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
   const hero = getPrimaryImage(images);
   const gallery = hero ? [hero, ...images.filter(image => image.id !== hero.id)] : images;
   const location = locationLabel(property);
-  const hasCoordinates = property.latitude != null && property.longitude != null;
-  const mapQuery = hasCoordinates ? `${property.latitude},${property.longitude}` : location;
+  const coordinates = parseCoordinates(property.latitude, property.longitude);
+  const mapQuery = coordinates ? `${coordinates[1]},${coordinates[0]}` : location;
 
   return (
     <div className="bg-[#f8f6f1] text-[#2A2723]">
       <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
         <Link href="/properties" className="mb-6 inline-block text-xs text-stone-500 hover:text-[#ca7653]">Properties / {getPropertyCategoryLabel(property.category)}</Link>
         <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-14">
-          <section aria-label="Property photos" className="space-y-4 lg:sticky lg:top-28">
+          <div className="min-w-0 space-y-8">
+          <section aria-label="Property photos" className="space-y-4">
             <div className="relative aspect-[5/3] overflow-hidden rounded-xl bg-stone-200">
               <Image src={selectedImage ? resolveImageSrcFromProperty(selectedImage) : resolveImageSrcFromProperty(property)} alt={property.title} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
             </div>
             {gallery.length > 1 ? <div className="grid grid-cols-3 gap-3">{gallery.map((img, index) => <button key={img.id} type="button" onClick={() => setSelectedImage(img.url)} aria-label={`View property photo ${index + 1}`} aria-pressed={(selectedImage ?? hero?.url) === img.url} className={`relative aspect-[3/2] overflow-hidden rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ca7653] ${(selectedImage ?? hero?.url) === img.url ? 'ring-2 ring-[#ca7653]' : ''}`}><Image src={resolveImageSrcFromProperty(img.url)} alt="" fill sizes="(min-width: 1024px) 180px, 30vw" className="object-cover" /></button>)}</div> : null}
           </section>
+          {property.description ? <section aria-labelledby="property-description"><h2 id="property-description" className="mb-3 text-lg font-semibold">{property.category === 'LAND' ? 'Plot Description' : 'Property Description'}</h2><p className="whitespace-pre-line break-words text-sm leading-7 text-stone-500">{property.description}</p></section> : null}
+          <section aria-labelledby="property-map-heading">
+            <h2 id="property-map-heading" className="mb-3 text-lg font-semibold">Location Map</h2>
+            {mapQuery ? <>
+              <iframe title={`Location of ${property.title}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen className="h-[280px] w-full rounded-xl border border-stone-200 bg-[#e9e6dd] sm:h-[320px]" />
+              {!coordinates ? <p className="mt-2 text-xs text-stone-500">Showing the listed address. An exact property pin has not been provided.</p> : null}
+              <a href={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm text-[#ca7653]"><RiMapPinLine />Open in Google Maps</a>
+            </> : <p className="rounded-xl bg-white p-5 text-sm text-stone-500">A location has not been provided for this property.</p>}
+          </section>
+          </div>
           <div className="space-y-8">
             <header>
               <p className="text-xs text-[#ca7653]">{getListingTypeLabel(property.listingType)}</p>
@@ -199,7 +211,6 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
               {property.reservationFeeOverride != null ? <InfoTile icon={RiKey2Line} label="Reservation fee" value={formatCurrency(property.reservationFeeOverride)} /> : null}
             </div></section>
             {location ? <section aria-labelledby="property-location"><h2 id="property-location" className="mb-4 text-sm font-bold">Location</h2><InfoTile icon={RiMapPinLine} label="Address" value={location} />{mapQuery ? <a href={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm text-[#ca7653]"><RiMapPinLine />View on Maps</a> : null}</section> : null}
-            {property.description ? <section aria-labelledby="property-description"><h2 id="property-description" className="mb-4 text-sm font-bold">About this property</h2><p className="whitespace-pre-line rounded-xl bg-white p-5 text-sm leading-7 text-stone-600">{property.description}</p></section> : null}
           </div>
         </div>
       </div>
