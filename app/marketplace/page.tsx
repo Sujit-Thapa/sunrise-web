@@ -21,6 +21,7 @@ import {
 } from 'react-icons/ri';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
+import MapLocationPicker from '@/components/admin/MapLocationPicker';
 import { getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
 import { resolveImageSrcFromProperty } from '@/lib/image';
@@ -28,7 +29,6 @@ import {
   formatArea,
   formatCurrency,
   formatLocation,
-  getPropertyCategoryLabel,
   getListingTypeLabel,
   getPropertyStatusLabel,
 } from '@/lib/properties';
@@ -211,7 +211,6 @@ export default function Marketplace() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -398,22 +397,21 @@ export default function Marketplace() {
     <>
       <main className="min-h-screen bg-[#f8f6f1] text-[#2A2723]">
         <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
-          <section className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+          <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
             <div>
-              <p className="text-xs uppercase tracking-widest text-[#ca7653]">The Sunrise marketplace</p>
-              <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-6xl">Local listings.<br /><span className="text-[#ca7653]">New possibilities.</span></h1>
-              <p className="mt-6 max-w-xl text-sm leading-7 text-stone-500">Discover properties shared by our community. Explore approved listings and find a place that fits your next chapter.</p>
+              <p className="text-xs uppercase tracking-widest text-[#ca7653]">Marketplace</p>
+              <h1 className="mt-2 text-2xl font-bold leading-snug tracking-tight sm:text-3xl">Search, List, and <span className="text-[#ca7653]">Connect.</span> Your community place for real estate.</h1>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-stone-500">Connect directly with property owners and discover properties listed by people across our community.</p>
               <a href="#marketplace-listings" className="mt-6 inline-flex items-center gap-2 text-sm font-bold">Explore the marketplace<RiArrowRightLine /></a>
             </div>
-            <aside className="rounded-[32px] bg-[#e9e6dd] p-7 sm:p-9">
-              <RiAddLine className="rounded-2xl bg-white p-3 text-5xl text-[#ca7653]" />
-              <h2 className="mt-6 text-2xl font-bold">Your property. Its next owner.</h2>
-              <p className="mt-3 text-sm leading-7 text-stone-500">Add your details and photos, then submit your listing for review. Approved properties appear in the marketplace.</p>
-              {user ? <button type="button" onClick={() => setShowForm(true)} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">List your property<RiArrowRightLine /></button> : <Link href="/auth/login" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Sign in to list<RiArrowRightLine /></Link>}
+            <aside className="rounded-2xl bg-white p-7 text-center shadow-[0_3px_20px_rgba(42,39,35,0.08)]">
+              <h2 className="text-lg font-bold">Selling your home?</h2>
+              <p className="mt-3 text-sm leading-7 text-stone-500">Share your property with the Sunrise community. Add your details and submit it for review.</p>
+              {user ? <button type="button" onClick={() => setShowForm(true)} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Post Your Property<RiAddLine /></button> : <Link href="/auth/login" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Sign in to list<RiArrowRightLine /></Link>}
               {user ? <a href="#my-submissions" className="mt-4 block text-xs text-stone-600 underline underline-offset-4">Manage my submissions</a> : null}
             </aside>
           </section>
-          <div id="marketplace-listings" className="mt-14 scroll-mt-6"><p className="text-xs uppercase tracking-widest text-[#ca7653]">Community collection</p><h2 className="mt-3 text-3xl font-bold">Find your next place.</h2></div>
+          <div id="marketplace-listings" className="mt-12 scroll-mt-6 lg:mt-24"><h2 className="sr-only">Marketplace listings</h2></div>
 
           <motion.div
             {...fadeUp}
@@ -500,87 +498,19 @@ export default function Marketplace() {
                   <p className="mt-2 text-sm">Try a different location or category to widen the search.</p>
                 </div>
               ) : (
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredPublic.map((listing) => {
-                    const isMine = user?.id ? listing.submittedBy.id === user.id : false;
-
-                    return (
-                      <motion.article
-                        key={listing.id}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35, ease: cubicBezier(0.22, 1, 0.36, 1) }}
-                        onMouseEnter={() => setHoveredId(listing.id)}
-                        onMouseLeave={() => setHoveredId(null)}
-                        whileHover={{ y: -4 }}
-                        className={`group overflow-hidden rounded-[24px] border bg-white transition-shadow duration-300 ${
-                          hoveredId === listing.id ? 'border-[#ca7653]/40' : 'border-white/80'
-                        }`}
-                      >
-                        <div className="relative aspect-[4/3] bg-[#e9e6dd]">
-                          <Image
-                            src={resolveImageSrcFromProperty(listing)}
-                            alt={listing.title || 'Property'}
-                            fill
-                            sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
-                            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-midnight/40 via-transparent to-transparent" />
-                          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${String(listing.category).toLowerCase() === 'land' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/90 text-[#2A2723]'} backdrop-blur`}>
-                              {getPropertyCategoryLabel(listing.category)}
-                            </span>
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${statusTone(listing.status)} backdrop-blur`}>
-                              {getPropertyStatusLabel(listing.status)}
-                            </span>
-                            {isMine ? (
-                              <span className="rounded-full bg-[#3E4A3D]/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
-                                Your listing
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-
-                        <div className="p-5">
-                          <p className="mb-1 text-xl font-medium text-[#ca7653]">{formatCurrency(listing.price)}</p>
-                          <h3 className="text-lg font-bold text-[#2A2723]"><Link href={`/marketplace/${listing.id}`} className="hover:text-[#ca7653]">{listing.title}</Link></h3>
-                          <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
-                            <RiMapPinLine className="h-4 w-4 shrink-0 text-[#ca7653]" />
-                            {locationLabel(listing) || 'Location not specified'}
-                          </p>
-
-                          <div className="mt-4 flex flex-wrap gap-3">
-                            <span className="rounded-full bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
-                              {sizeLabel(listing)}
-                            </span>
-                            <span className="rounded-full bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
-                              {getListingTypeLabel(listing.listingType)}
-                            </span>
-                          </div>
-
-                          <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-stone-100 pt-4">
-                            <div>
-                              
-                              <p className="mt-1 text-xs text-slate-400">Listed by {listing.submittedBy.fullName}</p>
-                              <p className="text-xs text-slate-400">{new Date(listing.createdAt).toLocaleDateString()}</p>
-                            </div>
-                            {isMine ? (
-                              <span className="rounded-full border border-stone-200 bg-[#f8f6f1] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                Manage in My submissions
-                              </span>
-                            ) : (
-                              <a
-                                href={`/marketplace/${listing.id}`}
-                                className="rounded-full border border-[#3E4A3D] bg-[#3E4A3D] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#303c2f]"
-                              >
-                                View listing
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </motion.article>
-                    );
-                  })}
+                <div className="grid gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
+                  {filteredPublic.map(listing => (
+                    <Link key={listing.id} href={`/marketplace/${listing.id}`} className="group overflow-hidden rounded-[22px] bg-white transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ca7653]">
+                      <div className="relative aspect-square bg-[#e9e6dd]"><Image src={resolveImageSrcFromProperty(listing)} alt={listing.title} fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition-transform duration-300 group-hover:scale-105" /></div>
+                      <div className="p-4">
+                        <p className="text-lg font-medium text-[#ca7653]">{formatCurrency(listing.price)}</p>
+                        <h3 className="mt-1 truncate text-sm font-bold">{listing.title}</h3>
+                        <p className="mt-1 flex items-center gap-1.5 text-xs text-stone-600"><span aria-hidden="true" className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e9e6dd] text-[10px]">{listing.submittedBy.fullName.charAt(0)}</span><span className="truncate">{listing.submittedBy.fullName}</span></p>
+                        <p className="mt-1 truncate text-xs text-stone-400">{locationLabel(listing)}</p>
+                        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-stone-100 pt-2 text-xs text-stone-400">{listing.areaSize != null && listing.areaUnit ? <span>{sizeLabel(listing)}</span> : null}<span>{getListingTypeLabel(listing.listingType)}</span></div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
 
@@ -912,6 +842,18 @@ export default function Marketplace() {
                       onChange={(e) => setForm((prev) => ({ ...prev, postalCode: e.target.value }))}
                       className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#ca7653]"
                       placeholder="44600"
+                    />
+                  </Field>
+                </div>
+
+                <div className="rounded-[20px] border border-stone-200 bg-[#f8f6f1] p-4">
+                  <Field label="Pin property location">
+                    <MapLocationPicker
+                      latitude={form.latitude}
+                      longitude={form.longitude}
+                      onChange={({ latitude, longitude }) =>
+                        setForm((prev) => ({ ...prev, latitude, longitude }))
+                      }
                     />
                   </Field>
                 </div>
