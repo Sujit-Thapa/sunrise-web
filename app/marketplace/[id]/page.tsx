@@ -3,8 +3,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
-import { RiArrowLeftLine, RiMailLine, RiMapPinLine, RiPhoneLine } from 'react-icons/ri';
+import { RiArrowLeftLine, RiMapPinLine, RiPhoneLine, RiHome4Line, RiRulerLine, RiPriceTag3Line, RiCheckboxCircleLine } from 'react-icons/ri';
 
+import type { IconType } from 'react-icons';
+import OwnerContactDialog from '@/components/marketplace/OwnerContactDialog';
+import { parseCoordinates } from '@/lib/coordinates';
 import { userPropertiesApi } from '@/lib/backend';
 import { resolveImageSrcFromProperty } from '@/lib/image';
 import {
@@ -26,6 +29,9 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
   const { id } = use(params);
   const [listing, setListing] = useState<UserPropertyResponseDto | null>(null);
   const [error, setError] = useState('');
+  const [contactOpen, setContactOpen] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [expandedGallery, setExpandedGallery] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -72,126 +78,43 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
   }
 
   const images = Array.isArray(listing.images) ? listing.images : [];
-  const heroImage = getPrimaryImage(images);
-  const gallery = images.filter((image) => image.id !== heroImage?.id);
-  const location = formatLocation(listing) || 'Location not specified';
-  const emailSubject = encodeURIComponent(`Interest in ${listing.title}`);
-  const emailBody = encodeURIComponent(`Hello ${listing.submittedBy.fullName},\n\nI am interested in your marketplace listing: ${listing.title}.\n\nPlease let me know when it would be convenient to discuss it.`);
+  const hero = getPrimaryImage(images);
+  const gallery = hero ? [hero, ...images.filter(image => image.id !== hero.id)] : images;
+  const location = formatLocation(listing);
+  const coordinates = parseCoordinates(listing.latitude, listing.longitude);
+  const mapQuery = coordinates ? `${coordinates[1]},${coordinates[0]}` : location;
+  const owner = listing.submittedBy;
+  const initials = owner.fullName.split(' ').filter(Boolean).slice(0, 2).map(part => part[0]).join('');
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(184,155,78,0.13),transparent_28%),linear-gradient(180deg,#fcfbf7_0%,#f5f1e8_100%)] text-stone-900">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <Link href="/marketplace" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-midnight">
-          <RiArrowLeftLine className="h-4 w-4" />
-          Back to marketplace
-        </Link>
-
-        <header className="mt-8 grid gap-5 border-b border-stone-200 pb-8 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <div>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-gold-deep">
-              <span>{getPropertyCategoryLabel(listing.category)}</span>
-              <span className="h-1 w-1 rounded-full bg-gold-primary" />
-              <span>{getListingTypeLabel(listing.listingType)}</span>
-            </div>
-            <h1 className="mt-3 max-w-4xl text-4xl font-semibold leading-[1.05] tracking-tight text-midnight sm:text-6xl">{listing.title}</h1>
-            <p className="mt-4 flex items-center gap-2 text-sm text-slate-500"><RiMapPinLine className="h-4 w-4 text-gold-primary" />{location}</p>
-          </div>
-          <div className="sm:text-right">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">Asking price</p>
-            <p className="mt-1 font-serif text-4xl font-semibold text-midnight sm:text-5xl">{formatCurrency(listing.price)}</p>
-          </div>
-        </header>
-
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-          <section>
-            <div className="overflow-hidden border border-stone-200 bg-white p-2 shadow-[0_24px_70px_rgba(15,23,42,0.1)] sm:p-3">
-              <div className="relative aspect-[16/10] min-h-[340px] bg-stone-100 sm:aspect-[16/9]">
-                <Image
-                  src={resolveImageSrcFromProperty(heroImage?.url ?? listing)}
-                  alt={listing.title || 'Marketplace property'}
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 900px, 100vw"
-                  className="object-cover"
-                />
-              </div>
-
-              {gallery.length > 0 ? (
-                <div className="grid gap-3 bg-white pt-3 sm:grid-cols-3">
-                  {gallery.slice(0, 3).map((image) => (
-                    <div key={image.id} className="relative aspect-[4/3] overflow-hidden bg-stone-100">
-                      <Image
-                        src={resolveImageSrcFromProperty(image.url)}
-                        alt=""
-                        fill
-                        sizes="(min-width: 640px) 30vw, 100vw"
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <Fact label="Area" value={formatArea(listing.areaSize, listing.areaUnit)} />
-              <Fact label="Listing type" value={getListingTypeLabel(listing.listingType)} />
-              <Fact label="Availability" value={getPropertyStatusLabel(listing.status)} />
-            </div>
-
-            <section className="mt-6 border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-8">
-              <h2 className="text-2xl font-semibold text-midnight">About this property</h2>
-              <p className="mt-4 whitespace-pre-line text-sm leading-8 text-slate-600">{listing.description}</p>
+    <div className="bg-[#f8f6f1] text-[#2A2723]">
+      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
+        <Link href="/marketplace" className="mb-6 inline-flex items-center gap-2 text-xs text-stone-500 hover:text-[#ca7653]"><RiArrowLeftLine />Back to marketplace</Link>
+        <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-14">
+          <div className="min-w-0 space-y-8">
+            <section aria-label="Property gallery">
+              <div className="relative aspect-[5/3] overflow-hidden rounded-xl bg-[#e9e6dd]"><Image src={resolveImageSrcFromProperty(selectedPhoto || hero?.url || listing)} alt={listing.title} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" /></div>
+              {gallery.length > 1 ? <div className="mt-4 grid grid-cols-3 gap-3">{(expandedGallery ? gallery : gallery.slice(0, 3)).map((image, index) => {
+                const more = !expandedGallery && index === 2 && gallery.length > 3;
+                return <button key={image.id} type="button" onClick={() => { if (more) setExpandedGallery(true); else setSelectedPhoto(image.url); }} aria-label={more ? `Show all ${gallery.length} photos` : `View property photo ${index + 1}`} className="relative aspect-[3/2] overflow-hidden rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ca7653]"><Image src={resolveImageSrcFromProperty(image.url)} alt="" fill sizes="(min-width: 1024px) 180px, 30vw" className="object-cover" />{more ? <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-3xl text-white">+{gallery.length - 2}</span> : null}</button>;
+              })}</div> : null}
+              {expandedGallery ? <button onClick={() => setExpandedGallery(false)} className="mt-3 text-xs text-[#ca7653]">Show fewer photos</button> : null}
             </section>
-          </section>
-
-          <aside className="lg:sticky lg:top-24">
-            <div className="border border-midnight/10 bg-midnight p-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.2)] sm:p-8">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-gold-highlight">Direct contact</p>
-              <p className="mt-6 text-sm text-slate-300">Listed by</p>
-              <h2 className="mt-3 text-3xl font-semibold">{listing.submittedBy.fullName}</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                Contact the person who listed this property directly to ask questions, arrange a viewing, or discuss the next step.
-              </p>
-
-              <div className="mt-8 space-y-3">
-                <a
-                  href={`mailto:${listing.submittedBy.email}?subject=${emailSubject}&body=${emailBody}`}
-                  className="flex items-center gap-3 border border-white/20 px-4 py-3 text-sm transition hover:border-gold-highlight hover:text-gold-highlight"
-                >
-                  <RiMailLine className="h-5 w-5" />
-                  <span className="truncate">{listing.submittedBy.email}</span>
-                </a>
-                {listing.submittedBy.phoneNumber ? (
-                  <a
-                    href={`tel:${listing.submittedBy.phoneNumber}`}
-                    className="flex items-center gap-3 border border-white/20 px-4 py-3 text-sm transition hover:border-gold-highlight hover:text-gold-highlight"
-                  >
-                    <RiPhoneLine className="h-5 w-5" />
-                    <span>{listing.submittedBy.phoneNumber}</span>
-                  </a>
-                ) : null}
-              </div>
-
-              <a
-                href={`mailto:${listing.submittedBy.email}?subject=${emailSubject}&body=${emailBody}`}
-                className="mt-6 inline-flex h-12 w-full items-center justify-center bg-gold-primary px-5 text-sm font-semibold text-midnight transition hover:bg-gold-highlight"
-              >
-                Contact lister
-              </a>
-            </div>
-          </aside>
+            {listing.description ? <section><h2 className="mb-3 text-lg font-semibold">{listing.category === 'LAND' ? 'Plot Description' : 'Property Description'}</h2><p className="whitespace-pre-line break-words text-sm leading-7 text-stone-500">{listing.description}</p></section> : null}
+            {mapQuery ? <section><h2 className="mb-3 text-lg font-semibold">Location Map</h2><iframe title={`Location of ${listing.title}`} src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen className="h-[280px] w-full rounded-xl border border-stone-200 bg-[#e9e6dd] sm:h-[320px]" />{!coordinates ? <p className="mt-2 text-xs text-stone-500">Showing the listed address; an exact pin has not been provided.</p> : null}<a href={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm text-[#ca7653]"><RiMapPinLine />Open in Google Maps</a></section> : null}
+          </div>
+          <div className="space-y-8">
+            <header><p className="text-2xl font-medium text-[#ca7653]">{formatCurrency(listing.price)}</p><h1 className="mt-2 text-xl font-bold">{listing.title}</h1>{location ? <p className="mt-2 text-xs text-stone-500">{location}</p> : null}<button type="button" onClick={() => setContactOpen(true)} className="mt-4 inline-flex items-center gap-2 rounded-full py-1 pr-3 text-sm font-semibold hover:bg-white focus-visible:outline-[#ca7653]" aria-label={`Contact ${owner.fullName}`}><span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e9e6dd] text-xs text-[#3E4A3D]">{initials}</span>{owner.fullName}<RiPhoneLine className="rounded-full bg-[#f7e4da] p-1 text-2xl text-[#ca7653]" /></button></header>
+            <section><h2 className="mb-4 text-lg font-semibold">Property Detail</h2><div className="grid gap-3 sm:grid-cols-2"><Fact icon={RiHome4Line} label="Property type" value={getPropertyCategoryLabel(listing.category)} />{listing.areaSize != null && listing.areaUnit ? <Fact icon={RiRulerLine} label="Area" value={formatArea(listing.areaSize, listing.areaUnit)} /> : null}<Fact icon={RiPriceTag3Line} label="Listing type" value={getListingTypeLabel(listing.listingType)} /><Fact icon={RiCheckboxCircleLine} label="Listing status" value={getPropertyStatusLabel(listing.status)} /></div></section>
+            {location ? <section><h2 className="mb-4 text-lg font-semibold">Overview</h2><Fact icon={RiMapPinLine} label="City & area" value={location} /></section> : null}
+          </div>
         </div>
       </div>
-    </main>
+      {contactOpen ? <OwnerContactDialog listing={listing} onClose={() => setContactOpen(false)} /> : null}
+    </div>
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="border border-stone-200 bg-white px-4 py-4 shadow-brand-sm">
-      <p className="text-xs font-medium text-slate-400">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-midnight">{value}</p>
-    </div>
-  );
+function Fact({ icon: Icon, label, value }: { icon: IconType; label: string; value: string }) {
+  return <div className="flex items-center gap-3 rounded-xl border border-stone-100 bg-white p-4"><span className="rounded-lg bg-[#fff3ee] p-2 text-[#ca7653]"><Icon size={18} /></span><div className="min-w-0"><p className="text-xs text-stone-400">{label}</p><p className="mt-1 break-words text-sm font-medium">{value}</p></div></div>;
 }
