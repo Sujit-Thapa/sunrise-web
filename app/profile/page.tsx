@@ -2,12 +2,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
   Bookmark,
   Clock3,
+  LoaderCircle,
   House,
   LogOut,
   MapPin,
@@ -24,7 +25,7 @@ import {
   EMPTY_SAVED_PROPERTIES,
 } from '@/lib/account-store';
 import { normalizeUserRole } from '@/lib/auth-routing';
-import { getAuthToken } from '@/lib/auth';
+import { auth, getAuthToken } from '@/lib/auth';
 import { userPropertiesApi } from '@/lib/backend';
 import type { BookedPropertySnapshot, PropertySnapshot } from '@/lib/account-store';
 import { resolveImageSrc } from '@/lib/image';
@@ -38,8 +39,11 @@ import {
 } from '@/lib/properties';
 import type { UserPropertyResponseDto } from '@/types';
 
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+const AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+
 export default function ProfilePage() {
-  const { user, loading, signOut } = useAuthSession();
+  const { user, loading, signOut, updateUser } = useAuthSession();
   const hydrated = useAccountStore((state) => state.hydrated);
   const saved = useAccountStore((state) =>
     user ? state.accounts[user.id]?.saved ?? EMPTY_SAVED_PROPERTIES : EMPTY_SAVED_PROPERTIES,
@@ -47,6 +51,67 @@ export default function ProfilePage() {
   const [mySubmissions, setMySubmissions] = useState<UserPropertyResponseDto[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
+  const clearAvatarPreview = () => {
+    setAvatarPreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
+  };
+
+  useEffect(() => () => {
+    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+  }, [avatarPreviewUrl]);
+
+  const handleAvatarSelection = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || avatarUploading || !user) return;
+
+    if (!AVATAR_MIME_TYPES.includes(file.type as typeof AVATAR_MIME_TYPES[number])) {
+      setAvatarError('Choose a JPG, PNG, or WEBP image.');
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      setAvatarError('Choose an image smaller than 5 MB.');
+      return;
+    }
+
+    setAvatarError(null);
+    clearAvatarPreview();
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreviewUrl(previewUrl);
+    setAvatarUploading(true);
+
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('Your session has expired. Please sign in again.');
+
+      const presign = await auth.presignAvatar({ mimeType: file.type as typeof AVATAR_MIME_TYPES[number] }, token);
+      const upload = await fetch(presign.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      if (!upload.ok) throw new Error('Avatar upload failed. Please try again.');
+
+      const updatedUser = await auth.confirmAvatar(
+        { s3Key: presign.s3Key, publicUrl: presign.publicUrl },
+        token,
+      );
+      updateUser(updatedUser);
+      clearAvatarPreview();
+    } catch (error) {
+      clearAvatarPreview();
+      setAvatarError(error instanceof Error ? error.message : 'Unable to update your avatar.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -138,13 +203,21 @@ export default function ProfilePage() {
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-midnight text-lg font-semibold text-white">
-                  {user.fullName
-                    .split(' ')
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((part) => part[0]?.toUpperCase())
-                    .join('')}
+                <div className="relative h-16 w-16 overflow-hidden rounded-[24px] bg-midnight text-lg font-semibold text-white">
+                  {avatarPreviewUrl || user.avatarUrl ? (
+                    // A regular image supports the presigned URL's configured S3 host.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarPreviewUrl ?? user.avatarUrl ?? ''} alt={`${user.fullName}'s avatar`} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center">
+                      {user.fullName
+                        .split(' ')
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((part) => part[0]?.toUpperCase())
+                        .join('')}
+                    </span>
+                  )}
                 </div>
 
                 <div className="min-w-0">
@@ -153,6 +226,29 @@ export default function ProfilePage() {
                   </h1>
                   <p className="mt-1 text-sm text-slate-500">{user.email}</p>
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => void handleAvatarSelection(event)}
+                  disabled={avatarUploading}
+                  className="sr-only"
+                  tabIndex={-1}
+                />
+                <button
+                  type="button"
+                  disabled={avatarUploading}
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-midnight transition hover:border-gold-primary hover:text-gold-primary disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {avatarUploading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <PencilLine className="h-4 w-4" />}
+                  {avatarUploading ? 'Uploading avatar…' : user.avatarUrl ? 'Change avatar' : 'Upload avatar'}
+                </button>
+                <p className="mt-2 text-xs text-slate-500">JPG, PNG, or WEBP · up to 5 MB</p>
+                {avatarError ? <p role="alert" className="mt-2 text-sm text-rose-700">{avatarError}</p> : null}
               </div>
 
               <div className="mt-6 flex flex-wrap gap-2">
