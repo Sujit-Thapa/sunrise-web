@@ -1,6 +1,9 @@
 import { api } from './api';
 import type {
   AgentResponseDto,
+  AvatarConfirmDto,
+  AvatarPresignDto,
+  AvatarPresignResponseDto,
   AuthResponseDto,
   AuthUserDto,
   CreateAgentDto,
@@ -39,6 +42,10 @@ export const auth = {
   login: (data: LoginDto) => api.post<AuthResponseDto>('/v1/auth/login', data),
   register: (data: RegisterUserDto) => api.post<AuthResponseDto>('/v1/auth/register', data),
   me: (token: string) => api.get<AuthUserDto>('/v1/auth/me', token),
+  presignAvatar: (data: AvatarPresignDto, token: string) =>
+    api.post<AvatarPresignResponseDto>('/v1/auth/avatar/presign', data, token),
+  confirmAvatar: (data: AvatarConfirmDto, token: string) =>
+    api.post<AuthUserDto>('/v1/auth/avatar/confirm', data, token),
 };
 
 // Admin-only agent management
