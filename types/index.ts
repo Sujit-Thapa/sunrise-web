@@ -26,11 +26,27 @@ export interface AuthUserDto {
   email: string;
   fullName: string;
   role: UserRole;
+  avatarUrl?: string | null;
 }
 
 export interface AuthResponseDto {
   accessToken: string;
   user: AuthUserDto;
+}
+
+export interface AvatarPresignDto {
+  mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
+}
+
+export interface AvatarPresignResponseDto {
+  uploadUrl: string;
+  s3Key: string;
+  publicUrl: string;
+}
+
+export interface AvatarConfirmDto {
+  s3Key: string;
+  publicUrl: string;
 }
 
 export interface CreateAgentDto {
