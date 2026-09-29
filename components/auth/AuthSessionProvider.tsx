@@ -18,6 +18,7 @@ interface AuthSessionValue {
   user: AuthUserDto | null;
   loading: boolean;
   refresh: () => Promise<void>;
+  updateUser: (user: AuthUserDto) => void;
   signOut: () => void;
 }
 
@@ -79,15 +80,20 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback((nextUser: AuthUserDto) => {
+    setUser(nextUser);
+  }, []);
+
   const value = useMemo<AuthSessionValue>(
     () => ({
       token,
       user,
       loading,
       refresh,
+      updateUser,
       signOut,
     }),
-    [loading, refresh, signOut, token, user],
+    [loading, refresh, signOut, token, updateUser, user],
   );
 
   return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;
