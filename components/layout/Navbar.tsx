@@ -135,7 +135,11 @@ export default function Navbar() {
                     aria-label="Open account menu"
                   >
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-midnight text-xs font-semibold text-white">
-                      {initials}
+                      {user.avatarUrl ? (
+                        // A regular image keeps the avatar compatible with any configured S3 host.
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={user.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
+                      ) : initials}
                     </span>
                     <span className="hidden flex-col leading-tight sm:flex">
                       <span className="text-sm font-semibold text-midnight">{user.fullName}</span>
