@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { RiAddLine, RiDeleteBinLine, RiEditLine, RiEyeLine, RiEyeOffLine, RiMapPinLine } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBinLine, RiEyeLine, RiEyeOffLine, RiMapPinLine } from 'react-icons/ri';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
@@ -155,7 +155,6 @@ export default function ManageMarketplacePage() {
                   </div>
                   <div className="mt-6 flex flex-wrap gap-2">
                     {listing.status === 'APPROVED' ? <Link href={`/marketplace/${listing.id}`} className="inline-flex items-center gap-2 rounded-full bg-midnight px-3 py-2 text-xs font-semibold text-white hover:bg-stone-800"><RiEyeLine className="h-4 w-4" />View live</Link> : null}
-                    <Link href={`/marketplace#my-submissions`} className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-gold-primary hover:text-gold-primary"><RiEditLine className="h-4 w-4" />Edit details</Link>
                     {listing.status !== 'HIDDEN' ? <button type="button" disabled={busyId === listing.id} onClick={() => void handleHide(listing)} className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-gold-primary hover:text-gold-primary disabled:opacity-50"><RiEyeOffLine className="h-4 w-4" />Hide</button> : null}
                     <button type="button" disabled={busyId === listing.id} onClick={() => void handleDelete(listing)} className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"><RiDeleteBinLine className="h-4 w-4" />Delete</button>
                   </div>
