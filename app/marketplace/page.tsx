@@ -7,17 +7,11 @@ import Link from 'next/link';
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import {
   RiAddLine,
-  RiCalendarCheckLine,
   RiCloseLine,
-  RiDeleteBinLine,
   RiArrowRightLine,
-  RiEditLine,
   RiFilter3Line,
-  RiMapPinLine,
   RiSearchLine,
   RiSparklingLine,
-  RiEyeLine,
-  RiEyeOffLine,
 } from 'react-icons/ri';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
@@ -30,7 +24,6 @@ import {
   formatCurrency,
   formatLocation,
   getListingTypeLabel,
-  getPropertyStatusLabel,
 } from '@/lib/properties';
 import type {
   AreaUnit,
@@ -173,13 +166,6 @@ function isPublicApproved(status: UserPropertyStatus): boolean {
   return status === 'APPROVED';
 }
 
-function statusTone(status: UserPropertyStatus): string {
-  if (status === 'APPROVED') return 'bg-emerald-50 text-emerald-700';
-  if (status === 'REJECTED') return 'bg-rose-50 text-rose-700';
-  if (status === 'HIDDEN') return 'bg-slate-100 text-slate-600';
-  return 'bg-amber-50 text-amber-700';
-}
-
 function Field({
   label,
   children,
@@ -200,7 +186,6 @@ function Field({
 export default function Marketplace() {
   const { user } = useAuthSession();
   const [publicListings, setPublicListings] = useState<UserPropertyResponseDto[]>([]);
-  const [myListings, setMyListings] = useState<UserPropertyResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -208,12 +193,9 @@ export default function Marketplace() {
   const [sort, setSort] = useState<SortOption>('newest');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
 
   const fetchListings = async () => {
@@ -229,24 +211,8 @@ export default function Marketplace() {
     }
   };
 
-  const fetchMine = async () => {
-    const token = getAuthToken();
-    if (!token) {
-      setMyListings([]);
-      return;
-    }
-
-    try {
-      const res = await userPropertiesApi.findMine(token, { page: 1, limit: 50 });
-      setMyListings(res.items ?? []);
-    } catch (err) {
-      setApiError((err as Error).message || 'Unable to load your submissions.');
-    }
-  };
-
   useEffect(() => {
     void fetchListings();
-    void fetchMine();
   }, []);
 
   const handleImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
@@ -254,11 +220,7 @@ export default function Marketplace() {
     event.target.value = '';
 
     if (selectedFiles.length === 0) return;
-    const existingImageCount = editingId
-      ? myListings.find((listing) => listing.id === editingId)?.images?.length ?? 0
-      : 0;
-
-    if (existingImageCount + pendingImages.length + selectedFiles.length > MAX_MARKETPLACE_IMAGES) {
+    if (pendingImages.length + selectedFiles.length > MAX_MARKETPLACE_IMAGES) {
       setApiError(`You can upload a maximum of ${MAX_MARKETPLACE_IMAGES} images per listing.`);
       return;
     }
@@ -329,20 +291,10 @@ export default function Marketplace() {
       if (!token) {
         throw new Error('You must be signed in to submit a property.');
       }
-      let savedListing: UserPropertyResponseDto;
-      if (editingId) {
-        const updated = await userPropertiesApi.update(editingId, payload, token);
-        savedListing = updated;
-        setMyListings((prev) => [updated, ...prev.filter((listing) => listing.id !== updated.id)]);
-        setEditingId(null);
-      } else {
-        const created = await userPropertiesApi.submit(payload, token);
-        savedListing = created;
-        setMyListings((prev) => [created, ...prev]);
-      }
+      const savedListing = await userPropertiesApi.submit(payload, token);
 
       if (pendingImages.length > 0) {
-        const listingWithImages = await uploadMarketplaceImages(
+        await uploadMarketplaceImages(
           savedListing.id,
           pendingImages,
           token,
@@ -352,7 +304,6 @@ export default function Marketplace() {
             )));
           },
         );
-        setMyListings((prev) => [listingWithImages, ...prev.filter((listing) => listing.id !== listingWithImages.id)]);
       }
       pendingImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       setPendingImages([]);
@@ -363,33 +314,6 @@ export default function Marketplace() {
       setApiError((err as Error).message || 'Unable to submit listing.');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    setDeleting(true);
-    try {
-      const token = getAuthToken();
-      if (!token) throw new Error('You must be signed in to remove a listing.');
-      await userPropertiesApi.remove(id, token);
-      setMyListings((prev) => prev.filter((listing) => listing.id !== id));
-    } catch (err) {
-      setLoadError((err as Error).message || 'Unable to remove listing.');
-    } finally {
-      setDeleting(false);
-      setDeleteId(null);
-    }
-  };
-
-  const handleHide = async (id: string) => {
-    try {
-      const token = getAuthToken();
-      if (!token) throw new Error('You must be signed in to hide a listing.');
-      const updated = await userPropertiesApi.hide(id, token);
-      setMyListings((prev) => [updated, ...prev.filter((listing) => listing.id !== updated.id)]);
-      await fetchListings();
-    } catch (err) {
-      setApiError((err as Error).message || 'Unable to hide listing.');
     }
   };
 
@@ -408,7 +332,7 @@ export default function Marketplace() {
               <h2 className="text-lg font-bold">Selling your home?</h2>
               <p className="mt-3 text-sm leading-7 text-stone-500">Share your property with the Sunrise community. Add your details and submit it for review.</p>
               {user ? <button type="button" onClick={() => setShowForm(true)} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Post Your Property<RiAddLine /></button> : <Link href="/auth/login" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Sign in to list<RiArrowRightLine /></Link>}
-              {user ? <a href="#my-submissions" className="mt-4 block text-xs text-stone-600 underline underline-offset-4">Manage my submissions</a> : null}
+              {user ? <Link href="/marketplace/manage" className="mt-4 block text-xs text-stone-600 underline underline-offset-4">Manage my submissions</Link> : null}
             </aside>
           </section>
           <div id="marketplace-listings" className="mt-12 scroll-mt-6 lg:mt-24"><h2 className="sr-only">Marketplace listings</h2></div>
@@ -514,131 +438,6 @@ export default function Marketplace() {
                 </div>
               )}
 
-              <motion.section
-                id="my-submissions"
-                {...fadeUp}
-                transition={{ duration: 0.5, ease: cubicBezier(0.22, 1, 0.36, 1), delay: 0.06 }}
-                className="mt-14 rounded-[32px] bg-[#e9e6dd] p-5 sm:p-8"
-              >
-                <div className="mb-5 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#ca7653]">
-                      <RiCalendarCheckLine className="h-4 w-4" />
-                      My submissions
-                    </p>
-                    <h2 className="mt-2 text-2xl font-semibold text-[#2A2723]">My submissions</h2>
-                  </div>
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <Link href="/marketplace/manage" className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]">
-                      Manage listings
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingId(null);
-                        setForm(EMPTY_FORM);
-                        setShowForm(true);
-                      }}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#3E4A3D] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#2A2723] transition hover:bg-[#3E4A3D] hover:text-white"
-                    >
-                      <RiAddLine className="h-4 w-4" />
-                      Add new
-                    </button>
-                  </div>
-                </div>
-
-                {myListings.length === 0 ? (
-                  <div className="rounded-[28px] border border-dashed border-stone-300 bg-white/70 px-8 py-12 text-center text-slate-500 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
-                    <p className="text-lg font-medium text-slate-700">No submissions yet.</p>
-                    <p className="mt-2 text-sm">List a property to submit it for review.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                    {myListings.map((listing) => (
-                      <motion.article
-                        key={listing.id}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35, ease: cubicBezier(0.22, 1, 0.36, 1) }}
-                        className="overflow-hidden rounded-[28px] border border-white/80 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
-                      >
-                        <div className="p-5">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${statusTone(listing.status)}`}>
-                                {getPropertyStatusLabel(listing.status)}
-                              </p>
-                              <h3 className="mt-3 text-xl font-semibold text-[#2A2723]">{listing.title}</h3>
-                            </div>
-                            <span className="text-lg font-semibold text-[#ca7653]">{formatCurrency(listing.price)}</span>
-                          </div>
-                          <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
-                            <RiMapPinLine className="h-4 w-4 shrink-0 text-[#ca7653]" />
-                            {locationLabel(listing) || 'Location not specified'}
-                          </p>
-                          <div className="mt-5 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-slate-50 px-3 py-1 text-xs text-slate-600">
-                              {getListingTypeLabel(listing.listingType)}
-                            </span>
-                            <span className="rounded-full bg-slate-50 px-3 py-1 text-xs text-slate-600">
-                              {sizeLabel(listing)}
-                            </span>
-                          </div>
-                          <div className="mt-6 flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingId(listing.id);
-                                setForm({
-                                  title: listing.title ?? '',
-                                  description: listing.description ?? '',
-                                  price: String(listing.price ?? ''),
-                                  listingType: listing.listingType,
-                                  category: listing.category as PropertyCategory,
-                                  city: listing.city ?? '',
-                                  state: listing.state ?? '',
-                                  country: listing.country ?? '',
-                                  areaSize: listing.areaSize != null ? String(listing.areaSize) : '',
-                                  areaUnit: listing.areaUnit ?? 'sqft',
-                                  street: listing.street ?? '',
-                                  postalCode: listing.postalCode ?? '',
-                                  latitude: listing.latitude != null ? String(listing.latitude) : '',
-                                  longitude: listing.longitude != null ? String(listing.longitude) : '',
-                                });
-                                setShowForm(true);
-                              }}
-                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
-                            >
-                              <RiEditLine className="h-4 w-4" />
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeleteId(listing.id)}
-                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-rose-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700 transition hover:bg-rose-50"
-                            >
-                              <RiDeleteBinLine className="h-4 w-4" />
-                              Delete
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleHide(listing.id)}
-                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
-                            >
-                              {listing.status === 'HIDDEN' ? (
-                                <RiEyeLine className="h-4 w-4" />
-                              ) : (
-                                <RiEyeOffLine className="h-4 w-4" />
-                              )}
-                              Hide
-                            </button>
-                          </div>
-                        </div>
-                      </motion.article>
-                    ))}
-                  </div>
-                )}
-              </motion.section>
             </>
           )}
         </div>
@@ -668,14 +467,13 @@ export default function Marketplace() {
                     Property listing
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold text-[#2A2723]">
-                    {editingId ? 'Edit your property' : 'List your property'}
+                    List your property
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     setShowForm(false);
-                    setEditingId(null);
                   }}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 text-slate-500 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                   aria-label="Close"
@@ -910,7 +708,6 @@ export default function Marketplace() {
                     type="button"
                     onClick={() => {
                       setShowForm(false);
-                      setEditingId(null);
                     }}
                     className="flex-1 rounded-full border border-stone-200 bg-white px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653]"
                   >
@@ -921,7 +718,7 @@ export default function Marketplace() {
                     disabled={submitting}
                     className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#3E4A3D] bg-[#3E4A3D] px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#303c2f] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {submitting ? 'Submitting…' : editingId ? 'Update listing' : 'Publish listing'}
+                    {submitting ? 'Submitting…' : 'Publish listing'}
                     <RiArrowRightLine className="h-4 w-4" />
                   </button>
                 </div>
@@ -931,52 +728,6 @@ export default function Marketplace() {
         ) : null}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {deleteId ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/55 px-4 backdrop-blur-sm"
-            onClick={() => !deleting && setDeleteId(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 16, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 16, scale: 0.98 }}
-              transition={{ duration: 0.2, ease: cubicBezier(0.22, 1, 0.36, 1) }}
-              className="w-full max-w-sm rounded-[28px] border border-white/40 bg-white p-7 text-center shadow-[0_24px_70px_rgba(15,23,42,0.18)]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-700">
-                <RiDeleteBinLine className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-2xl font-semibold text-[#2A2723]">Remove listing?</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-500">
-                This listing will be permanently removed from the marketplace. This action cannot be undone.
-              </p>
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={() => setDeleteId(null)}
-                  className="flex-1 rounded-full border border-stone-200 bg-white px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-[#ca7653] hover:text-[#ca7653] disabled:opacity-60"
-                >
-                  Keep it
-                </button>
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={() => handleDelete(deleteId)}
-                  className="flex-1 rounded-full bg-rose-700 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-rose-800 disabled:opacity-60"
-                >
-                  {deleting ? 'Removing…' : 'Yes, remove'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </>
   );
 }
