@@ -3,9 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import {
+  Activity,
   ArrowRight,
+  BarChart3,
   CircleDollarSign,
   ClipboardList,
+  Clock3,
+  CreditCard,
+  FileCheck2,
+  Home,
+  LayoutDashboard,
+  ListChecks,
   RefreshCw,
   Shield,
   Settings2,
@@ -31,7 +39,6 @@ import type {
   FinanceSummaryResponseDto,
   ReservationListQueryParams,
   ReservationResponseDto,
-  SystemConfigResponseDto,
   UpdateSystemConfigDto,
   UserPropertyListQueryParams,
   UserPropertyResponseDto,
@@ -155,7 +162,9 @@ export default function AdminDashboard() {
   const [reservations, setReservations] = useState<ReservationResponseDto[]>([]);
   const [financeSummary, setFinanceSummary] = useState<FinanceSummaryResponseDto | null>(null);
   const [financePayments, setFinancePayments] = useState<FinancePaymentResponseDto[]>([]);
-  const [systemConfig, setSystemConfig] = useState<SystemConfigResponseDto | null>(null);
+  const [userPropertiesTotal, setUserPropertiesTotal] = useState(0);
+  const [reservationsTotal, setReservationsTotal] = useState(0);
+  const [financePaymentsTotal, setFinancePaymentsTotal] = useState(0);
 
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingReservations, setLoadingReservations] = useState(false);
@@ -255,6 +264,7 @@ export default function AdminDashboard() {
     try {
       const res = await userPropertiesApi.admin.findAll(params, authToken);
       setUserProperties(res.items ?? []);
+      setUserPropertiesTotal(res.pagination?.total ?? res.items?.length ?? 0);
     } catch (error) {
       setNotice({ kind: 'error', message: (error as Error).message || 'Unable to load user properties.' });
     } finally {
@@ -267,6 +277,7 @@ export default function AdminDashboard() {
     try {
       const res = await reservationsApi.findAll(params, authToken);
       setReservations(res.items ?? []);
+      setReservationsTotal(res.total ?? res.items?.length ?? 0);
     } catch (error) {
       setNotice({ kind: 'error', message: (error as Error).message || 'Unable to load reservations.' });
     } finally {
@@ -283,6 +294,7 @@ export default function AdminDashboard() {
       ]);
       setFinanceSummary(summary);
       setFinancePayments(payments.items ?? []);
+      setFinancePaymentsTotal(payments.total ?? payments.items?.length ?? 0);
     } catch (error) {
       setNotice({ kind: 'error', message: (error as Error).message || 'Unable to load finance data.' });
     } finally {
@@ -294,7 +306,6 @@ export default function AdminDashboard() {
     setLoadingConfig(true);
     try {
       const config = await systemConfigApi.get(authToken);
-      setSystemConfig(config);
       setConfigForm({
         reservationFeeAmount: config.reservationFeeAmount,
         companyName: config.companyName,
@@ -311,12 +322,12 @@ export default function AdminDashboard() {
 
   const overviewStats = useMemo(
     () => [
-      { label: 'Listings on this page', value: userProperties.length },
-      { label: 'Reservations on this page', value: reservations.length },
-      { label: 'Payments on this page', value: financePayments.length },
+      { label: 'Marketplace listings', value: userPropertiesTotal },
+      { label: 'Reservations', value: reservationsTotal },
+      { label: 'Payments', value: financePaymentsTotal },
       { label: 'Collected', value: financeSummary ? money(financeSummary.totalCollectedAmount) : 'Rs. 0' },
     ],
-    [financePayments.length, financeSummary, reservations.length, userProperties.length],
+    [financePaymentsTotal, financeSummary, reservationsTotal, userPropertiesTotal],
   );
 
   if (authLoading) {
@@ -374,7 +385,7 @@ export default function AdminDashboard() {
     setConfigSaving(true);
     setNotice(null);
     try {
-      const updated = await systemConfigApi.update(
+      await systemConfigApi.update(
         {
           reservationFeeAmount: toOptionalNumber(String(configForm.reservationFeeAmount ?? '')),
           companyName: configForm.companyName?.trim() || undefined,
@@ -384,7 +395,6 @@ export default function AdminDashboard() {
         },
         token,
       );
-      setSystemConfig(updated);
       setNotice({ kind: 'success', message: 'System configuration updated.' });
     } catch (error) {
       setNotice({ kind: 'error', message: (error as Error).message || 'Unable to update system config.' });
@@ -564,28 +574,18 @@ export default function AdminDashboard() {
 
         <div className="space-y-8">
           {activeSection === 'overview' ? (
-            <>
-              <Panel
-                title="Overview"
-                description="Review the current page of marketplace activity, or jump into your daily tasks."
-              >
-                <div className="mb-6 grid gap-3 sm:grid-cols-3">
-                  {([{ value: 'properties', label: 'Manage company properties' }, { value: 'users', label: 'Review marketplace listings' }, { value: 'agents', label: 'Create an agent account' }] as const).map(item => <button key={item.value} onClick={() => setActiveSection(item.value)} className="flex items-center justify-between rounded-2xl bg-[#e9e6dd] p-5 text-left text-sm font-semibold">{item.label}<ArrowRight size={18} /></button>)}
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <Metric label="User listings" value={String(userPropertySummary.total)} />
-                  <Metric label="Pending reviews" value={String(userPropertySummary.pending)} />
-                  <Metric label="Approved" value={String(userPropertySummary.approved)} />
-                  <Metric label="Rejected" value={String(userPropertySummary.rejected)} />
-                </div>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <Metric label="Hidden" value={String(userPropertySummary.hidden)} />
-                  <Metric label="Reservations" value={String(reservations.length)} />
-                  <Metric label="Payments" value={String(financePayments.length)} />
-                  <Metric label="Reservation fee" value={systemConfig ? money(systemConfig.reservationFeeAmount) : 'Loading…'} />
-                </div>
-              </Panel>
-            </>
+            <AdminOverview
+              stats={overviewStats}
+              summary={financeSummary}
+              userProperties={userProperties}
+              reservations={reservations}
+              payments={financePayments}
+              pendingReviews={userPropertySummary.pending}
+              onOpenProperties={() => setActiveSection('properties')}
+              onOpenMarketplace={() => setActiveSection('users')}
+              onOpenReservations={() => setActiveSection('reservations')}
+              onOpenFinance={() => setActiveSection('finance')}
+            />
           ) : null}
 
           {activeSection === 'properties' ? (
@@ -1094,14 +1094,82 @@ export default function AdminDashboard() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function AdminOverview({
+  stats,
+  summary,
+  userProperties,
+  reservations,
+  payments,
+  pendingReviews,
+  onOpenProperties,
+  onOpenMarketplace,
+  onOpenReservations,
+  onOpenFinance,
+}: {
+  stats: Array<{ label: string; value: string | number }>;
+  summary: FinanceSummaryResponseDto | null;
+  userProperties: UserPropertyResponseDto[];
+  reservations: ReservationResponseDto[];
+  payments: FinancePaymentResponseDto[];
+  pendingReviews: number;
+  onOpenProperties: () => void;
+  onOpenMarketplace: () => void;
+  onOpenReservations: () => void;
+  onOpenFinance: () => void;
+}) {
+  const reviewItems = userProperties.filter((item) => item.status === 'PENDING_REVIEW').slice(0, 4);
+  const paymentStatuses = summary?.paymentsByStatus ?? [];
+  const reservationStatuses = summary?.reservationsByStatus ?? [];
+  const totalPayments = Math.max(summary?.paymentCount ?? 0, 1);
+  const totalReservations = Math.max(summary?.reservationCount ?? 0, 1);
+
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white px-4 py-4">
-      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-[#2A2723]">{value}</p>
+    <div className="space-y-5">
+      <section className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ca7653]">Operations overview</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#2A2723]">Today&apos;s portfolio activity</h2>
+            <p className="mt-1 text-sm text-slate-500">Live marketplace, payment, and reservation data from Sunrise.</p>
+          </div>
+          <button type="button" onClick={onOpenProperties} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#3E4A3D] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#303c2f]"><Home className="h-4 w-4" />Manage properties</button>
+        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <OverviewStat icon={LayoutDashboard} label="Marketplace listings" value={stats[0].value} detail={`${pendingReviews} awaiting review`} tone="amber" />
+          <OverviewStat icon={ListChecks} label="Reservations" value={stats[1].value} detail={`${summary?.reservationCount ?? 0} total records`} tone="sky" />
+          <OverviewStat icon={CreditCard} label="Payment volume" value={stats[2].value} detail={`${summary?.successfulPaymentCount ?? 0} successful`} tone="violet" />
+          <OverviewStat icon={CircleDollarSign} label="Collected" value={stats[3].value} detail={`${summary?.refundedPaymentCount ?? 0} refunded`} tone="green" />
+        </div>
+      </section>
+
+      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        <ChartPanel title="Payments by status" subtitle="Distribution of all payment records" icon={CircleDollarSign}><DonutChart rows={paymentStatuses.map((item) => ({ label: item.status, value: item.count, tone: statusChartTone(item.status) }))} total={totalPayments} /><StatusLegend rows={paymentStatuses.map((item) => ({ label: item.status, value: item.count, amount: money(item.amount), tone: statusChartTone(item.status) }))} /></ChartPanel>
+        <ChartPanel title="Payment providers" subtitle="Successful and pending volume by provider" icon={BarChart3}><ProviderBars rows={summary?.paymentsByProvider ?? []} /></ChartPanel>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[1.18fr_0.82fr]">
+        <section className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex items-start justify-between gap-4"><div><h3 className="text-lg font-semibold text-[#2A2723]">Marketplace review queue</h3><p className="mt-1 text-xs text-slate-500">Public submissions awaiting a decision.</p></div><button type="button" onClick={onOpenMarketplace} className="text-xs font-semibold text-[#ca7653] hover:text-[#b66545]">Open marketplace</button></div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2"><QueueMetric label="Pending review" value={pendingReviews} icon={Clock3} /><QueueMetric label="Payments to verify" value={(summary?.paymentsByStatus ?? []).find((item) => item.status.toUpperCase() === 'PENDING')?.count ?? 0} icon={FileCheck2} /></div>
+          <div className="mt-4 divide-y divide-stone-100 rounded-2xl border border-stone-100">{reviewItems.length ? reviewItems.map((item) => <button key={item.id} type="button" onClick={onOpenMarketplace} className="flex w-full items-center justify-between gap-4 px-3 py-3 text-left transition hover:bg-stone-50"><span className="min-w-0"><span className="block truncate text-sm font-semibold text-[#2A2723]">{item.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{formatLocation(item) || 'Location pending'} · {money(item.price)}</span></span><ArrowRight className="h-4 w-4 shrink-0 text-[#ca7653]" /></button>) : <p className="px-3 py-8 text-center text-sm text-slate-500">No marketplace reviews are waiting.</p>}</div>
+        </section>
+        <section className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex items-start justify-between gap-4"><div><h3 className="text-lg font-semibold text-[#2A2723]">Reservation status</h3><p className="mt-1 text-xs text-slate-500">Reservation activity from finance reporting.</p></div><button type="button" onClick={onOpenReservations} className="text-xs font-semibold text-[#ca7653] hover:text-[#b66545]">View all</button></div><div className="mt-5"><ReservationBars rows={reservationStatuses} total={totalReservations} /></div></section>
+      </div>
+
+      <section className="overflow-hidden rounded-[26px] border border-stone-200 bg-white shadow-sm"><div className="flex flex-col gap-4 border-b border-stone-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"><div><h3 className="text-lg font-semibold text-[#2A2723]">Recent operations</h3><p className="mt-1 text-xs text-slate-500">Latest reservations and payments currently returned by the backend.</p></div><button type="button" onClick={onOpenFinance} className="inline-flex items-center gap-2 text-xs font-semibold text-[#ca7653]"><Activity className="h-4 w-4" />Open finance</button></div><div className="grid divide-y divide-stone-100 lg:grid-cols-2 lg:divide-x lg:divide-y-0"><RecentList title="Recent reservations" items={reservations.slice(0, 5).map((item) => ({ title: item.property.title, meta: `${item.userNameSnapshot} · ${money(item.reservationFeeAmount)}`, status: item.status }))} empty="No reservations found." /><RecentList title="Recent payments" items={payments.slice(0, 5).map((item) => ({ title: item.property.title, meta: `${item.provider} · ${money(item.amount)}`, status: item.status }))} empty="No payments found." /></div></section>
     </div>
   );
 }
+
+function OverviewStat({ icon: Icon, label, value, detail, tone }: { icon: typeof LayoutDashboard; label: string; value: string | number; detail: string; tone: 'amber' | 'sky' | 'violet' | 'green' }) { const colors = { amber: 'bg-amber-50 text-amber-700', sky: 'bg-sky-50 text-sky-700', violet: 'bg-violet-50 text-violet-700', green: 'bg-emerald-50 text-emerald-700' }; return <div className="rounded-2xl border border-stone-200 bg-[#fdfcfb] p-4"><span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl ${colors[tone]}`}><Icon className="h-4 w-4" /></span><p className="mt-4 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p><p className="mt-1 text-2xl font-semibold tracking-tight text-[#2A2723]">{value}</p><p className="mt-1 text-xs text-slate-500">{detail}</p></div>; }
+function ChartPanel({ title, subtitle, icon: Icon, children }: { title: string; subtitle: string; icon: typeof BarChart3; children: ReactNode }) { return <section className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex items-start gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#f9eee9] text-[#ca7653]"><Icon className="h-4 w-4" /></span><div><h3 className="text-lg font-semibold text-[#2A2723]">{title}</h3><p className="mt-1 text-xs text-slate-500">{subtitle}</p></div></div><div className="mt-5">{children}</div></section>; }
+function statusChartTone(status: string): string { const value = status.toUpperCase(); if (value === 'SUCCEEDED' || value === 'COMPLETED') return '#14b87a'; if (value === 'PENDING') return '#f4b740'; if (value === 'FAILED' || value === 'CANCELLED') return '#ef6d76'; return '#818cf8'; }
+function DonutChart({ rows, total }: { rows: Array<{ label: string; value: number; tone: string }>; total: number }) { const segments = rows.filter((item) => item.value > 0).reduce<{ running: number; values: string[] }>((result, item) => { const next = result.running + item.value / total * 100; return { running: next, values: [...result.values, `${item.tone} ${result.running}% ${next}%`] }; }, { running: 0, values: [] }).values; return <div className="flex flex-col items-center justify-center gap-5 sm:flex-row"><div className="grid h-36 w-36 place-items-center rounded-full" style={{ background: segments.length ? `conic-gradient(${segments.join(', ')})` : '#f1f5f9' }}><div className="grid h-24 w-24 place-items-center rounded-full bg-white text-center"><strong className="text-2xl text-[#2A2723]">{total}</strong><span className="text-[0.62rem] uppercase tracking-[0.12em] text-slate-400">payments</span></div></div><div className="w-full space-y-2"><StatusLegend rows={rows.map((item) => ({ ...item, amount: String(item.value) }))} /></div></div>; }
+function StatusLegend({ rows }: { rows: Array<{ label: string; value: number; amount: string; tone: string }> }) { return <div className="space-y-2">{rows.length ? rows.map((item) => <div key={item.label} className="flex items-center justify-between gap-3 text-xs"><span className="flex min-w-0 items-center gap-2"><i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.tone }} /><span className="truncate text-slate-600">{item.label}</span></span><span className="shrink-0 font-semibold text-[#2A2723]">{item.amount}</span></div>) : <p className="text-sm text-slate-500">No data available.</p>}</div>; }
+function ProviderBars({ rows }: { rows: FinanceSummaryResponseDto['paymentsByProvider'] }) { const max = Math.max(...rows.map((item) => item.count), 1); return <div className="flex h-44 items-end justify-around gap-4 border-b border-stone-200 px-3 pt-5">{rows.length ? rows.map((item) => <div key={item.provider} className="flex h-full flex-1 flex-col items-center justify-end gap-2"><span className="text-xs font-semibold text-[#2A2723]">{item.count}</span><div className="w-full max-w-12 rounded-t-lg bg-[#5140d8] transition-all" style={{ height: `${Math.max(item.count / max * 100, 8)}%` }} title={`${item.provider}: ${money(item.amount)}`} /><span className="max-w-full truncate text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">{item.provider.replace('_', ' ')}</span></div>) : <p className="pb-16 text-sm text-slate-500">No provider data available.</p>}</div>; }
+function QueueMetric({ label, value, icon: Icon }: { label: string; value: number; icon: typeof Clock3 }) { return <div className="flex items-center gap-3 rounded-xl bg-[#fbf7f3] px-3 py-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-[#ca7653]"><Icon className="h-4 w-4" /></span><span><strong className="block text-base text-[#2A2723]">{value}</strong><span className="text-xs text-slate-500">{label}</span></span></div>; }
+function ReservationBars({ rows, total }: { rows: FinanceSummaryResponseDto['reservationsByStatus']; total: number }) { return <div className="space-y-4">{rows.length ? rows.map((item) => <div key={item.status}><div className="mb-1.5 flex items-center justify-between text-xs"><span className="font-medium text-slate-600">{item.status}</span><span className="font-semibold text-[#2A2723]">{item.count}</span></div><div className="h-2 overflow-hidden rounded-full bg-stone-100"><div className="h-full rounded-full bg-sky-500" style={{ width: `${Math.min(item.count / total * 100, 100)}%` }} /></div></div>) : <p className="text-sm text-slate-500">No reservation data available.</p>}</div>; }
+function RecentList({ title, items, empty }: { title: string; items: Array<{ title: string; meta: string; status: string }>; empty: string }) { return <div className="p-5 sm:p-6"><h4 className="text-sm font-semibold text-[#2A2723]">{title}</h4><div className="mt-3 divide-y divide-stone-100">{items.length ? items.map((item, index) => <div key={`${item.title}-${index}`} className="flex items-center justify-between gap-3 py-3"><span className="min-w-0"><span className="block truncate text-sm font-medium text-[#2A2723]">{item.title}</span><span className="block truncate text-xs text-slate-500">{item.meta}</span></span><span className={`shrink-0 rounded-full px-2 py-1 text-[0.62rem] font-semibold ${statusTone(item.status)}`}>{item.status}</span></div>) : <p className="py-6 text-sm text-slate-500">{empty}</p>}</div></div>; }
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
