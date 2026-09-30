@@ -1,77 +1,47 @@
 'use client';
+/* eslint-disable react-hooks/set-state-in-effect */
 
-import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
-import {
-  AlertTriangle,
-  ArrowRight,
-  Bookmark,
-  Clock3,
-  LoaderCircle,
-  House,
-  LogOut,
-  MapPin,
-  PencilLine,
-  ShieldCheck,
-  Sparkles,
-  type LucideIcon,
-} from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { CalendarDays, Camera, LoaderCircle, LockKeyhole, Mail, MapPin, Phone, UserRound, type LucideIcon } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
-import {
-  toggleSavedProperty,
-  useAccountStore,
-  EMPTY_SAVED_PROPERTIES,
-} from '@/lib/account-store';
-import { normalizeUserRole } from '@/lib/auth-routing';
 import { auth, getAuthToken } from '@/lib/auth';
-import { userPropertiesApi } from '@/lib/backend';
-import type { BookedPropertySnapshot, PropertySnapshot } from '@/lib/account-store';
-import { resolveImageSrc } from '@/lib/image';
-import {
-  formatArea,
-  formatCurrency,
-  formatLocation,
-  getListingTypeLabel,
-  getPropertyCategoryLabel,
-  getPropertyStatusLabel,
-} from '@/lib/properties';
-import type { UserPropertyResponseDto } from '@/types';
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
 const AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
+type ProfileForm = { fullName: string; email: string; phone: string; dateOfBirth: string; street: string; city: string; state: string; postalCode: string; country: string };
+const EMPTY_FORM: ProfileForm = { fullName: '', email: '', phone: '', dateOfBirth: '', street: '', city: '', state: '', postalCode: '', country: 'Nepal' };
+
 export default function ProfilePage() {
-  const { user, loading, signOut, updateUser } = useAuthSession();
-  const hydrated = useAccountStore((state) => state.hydrated);
-  const saved = useAccountStore((state) =>
-    user ? state.accounts[user.id]?.saved ?? EMPTY_SAVED_PROPERTIES : EMPTY_SAVED_PROPERTIES,
-  );
-  const [mySubmissions, setMySubmissions] = useState<UserPropertyResponseDto[]>([]);
-  const [submissionsLoading, setSubmissionsLoading] = useState(false);
-  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+  const { user, loading, updateUser } = useAuthSession();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const [form, setForm] = useState<ProfileForm>(EMPTY_FORM);
+  const [savedForm, setSavedForm] = useState<ProfileForm>(EMPTY_FORM);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const clearAvatarPreview = () => {
-    setAvatarPreviewUrl((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return null;
-    });
-  };
+  useEffect(() => {
+    if (!user) return;
+    const nextForm = { ...EMPTY_FORM, fullName: user.fullName, email: user.email };
+    setForm(nextForm);
+    setSavedForm(nextForm);
+  }, [user]);
 
-  useEffect(() => () => {
-    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
-  }, [avatarPreviewUrl]);
+  useEffect(() => () => { if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl); }, [avatarPreviewUrl]);
+
+  const clearAvatarPreview = () => setAvatarPreviewUrl((current) => {
+    if (current) URL.revokeObjectURL(current);
+    return null;
+  });
 
   const handleAvatarSelection = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file || avatarUploading || !user) return;
-
     if (!AVATAR_MIME_TYPES.includes(file.type as typeof AVATAR_MIME_TYPES[number])) {
       setAvatarError('Choose a JPG, PNG, or WEBP image.');
       return;
@@ -80,30 +50,17 @@ export default function ProfilePage() {
       setAvatarError('Choose an image smaller than 5 MB.');
       return;
     }
-
     setAvatarError(null);
     clearAvatarPreview();
-    const previewUrl = URL.createObjectURL(file);
-    setAvatarPreviewUrl(previewUrl);
+    setAvatarPreviewUrl(URL.createObjectURL(file));
     setAvatarUploading(true);
-
     try {
       const token = getAuthToken();
       if (!token) throw new Error('Your session has expired. Please sign in again.');
-
       const presign = await auth.presignAvatar({ mimeType: file.type as typeof AVATAR_MIME_TYPES[number] }, token);
-      const upload = await fetch(presign.uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      });
+      const upload = await fetch(presign.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
       if (!upload.ok) throw new Error('Avatar upload failed. Please try again.');
-
-      const updatedUser = await auth.confirmAvatar(
-        { s3Key: presign.s3Key, publicUrl: presign.publicUrl },
-        token,
-      );
-      updateUser(updatedUser);
+      updateUser(await auth.confirmAvatar({ s3Key: presign.s3Key, publicUrl: presign.publicUrl }, token));
       clearAvatarPreview();
     } catch (error) {
       clearAvatarPreview();
@@ -113,569 +70,41 @@ export default function ProfilePage() {
     }
   };
 
-  useEffect(() => {
-    let active = true;
+  const handleSave = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSavedForm(form);
+    setNotice('Profile updates will be saved once the account-update endpoint is available.');
+  };
 
-    const loadMySubmissions = async () => {
-      if (!user) {
-        setMySubmissions([]);
-        setSubmissionsLoading(false);
-        setSubmissionsError(null);
-        return;
-      }
+  if (loading) return <main className="grid min-h-screen place-items-center bg-[#f8f7f3]"><p className="text-sm text-stone-500">Loading profile…</p></main>;
+  if (!user) return <main className="grid min-h-screen place-items-center bg-[#f8f7f3] px-5"><div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-[0_18px_60px_rgba(44,41,37,0.08)]"><h1 className="text-2xl font-bold text-[#2c2925]">Sign in to edit your profile</h1><Link href="/auth/login" className="mt-5 inline-flex rounded-full bg-[#3e4a3d] px-5 py-3 text-sm font-bold text-white">Sign in</Link></div></main>;
 
-      const token = getAuthToken();
-      if (!token) {
-        setMySubmissions([]);
-        setSubmissionsError('Sign in again to load your submissions.');
-        setSubmissionsLoading(false);
-        return;
-      }
-
-      setSubmissionsLoading(true);
-      setSubmissionsError(null);
-
-      try {
-        const response = await userPropertiesApi.findMine(token, { page: 1, limit: 20 });
-        if (!active) return;
-        setMySubmissions(response.items ?? []);
-      } catch (error) {
-        if (!active) return;
-        setSubmissionsError((error as Error).message || 'Unable to load your submissions.');
-      } finally {
-        if (active) setSubmissionsLoading(false);
-      }
-    };
-
-    void loadMySubmissions();
-
-    return () => {
-      active = false;
-    };
-  }, [user]);
-
-  if (loading || (user && !hydrated)) {
-    return (
-      <main className="min-h-screen bg-white">
-        <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-          <div className="rounded-[28px] border border-stone-200 bg-white px-8 py-10 text-center shadow-brand-sm">
-            <p className="text-sm font-medium text-slate-500">Loading your account…</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="min-h-screen bg-white">
-        <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-          <div className="w-full max-w-xl rounded-[32px] border border-stone-200 bg-white p-8 text-center shadow-brand-sm sm:p-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
-              My profile
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold text-midnight">Sign in to view your account</h1>
-            <p className="mt-3 text-sm leading-7 text-slate-500">
-              Save properties, track bookings, and manage your Sunrise Realestate account in one
-              place.
-            </p>
-            <Link
-              href="/auth/login"
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-midnight px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Go to login
-            </Link>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  const initials = user.fullName.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'U';
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f8f5ee_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
-        <section className="rounded-[32px] border border-stone-200 bg-white shadow-brand-sm">
-          <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="p-6 sm:p-8 lg:p-10">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
-                <Sparkles className="h-4 w-4" />
-                Account
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-4">
-                <div className="relative h-16 w-16 overflow-hidden rounded-[24px] bg-midnight text-lg font-semibold text-white">
-                  {avatarPreviewUrl || user.avatarUrl ? (
-                    // A regular image supports the presigned URL's configured S3 host.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatarPreviewUrl ?? user.avatarUrl ?? ''} alt={`${user.fullName}'s avatar`} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="flex h-full w-full items-center justify-center">
-                      {user.fullName
-                        .split(' ')
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .map((part) => part[0]?.toUpperCase())
-                        .join('')}
-                    </span>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <h1 className="text-3xl font-semibold tracking-tight text-midnight sm:text-4xl">
-                    {user.fullName}
-                  </h1>
-                  <p className="mt-1 text-sm text-slate-500">{user.email}</p>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => void handleAvatarSelection(event)}
-                  disabled={avatarUploading}
-                  className="sr-only"
-                  tabIndex={-1}
-                />
-                <button
-                  type="button"
-                  disabled={avatarUploading}
-                  onClick={() => avatarInputRef.current?.click()}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-midnight transition hover:border-gold-primary hover:text-gold-primary disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {avatarUploading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <PencilLine className="h-4 w-4" />}
-                  {avatarUploading ? 'Uploading avatar…' : user.avatarUrl ? 'Change avatar' : 'Upload avatar'}
-                </button>
-                <p className="mt-2 text-xs text-slate-500">JPG, PNG, or WEBP · up to 5 MB</p>
-                {avatarError ? <p role="alert" className="mt-2 text-sm text-rose-700">{avatarError}</p> : null}
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Pill>{user.role}</Pill>
-                <Pill>{saved.length} saved</Pill>
-                <Pill>{mySubmissions.length} submissions</Pill>
-              </div>
-
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-500">
-                A compact overview of your account, saved properties, and booking history. Reset
-                your password or jump to the dashboard from here.
-              </p>
-
-              <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <MiniStat label="Saved" value={saved.length} />
-                <MiniStat label="Submissions" value={mySubmissions.length} />
-                <MiniStat label="Role" value={user.role} />
-                <MiniStat label="Account" value={user.id.slice(0, 8)} />
-              </div>
-            </div>
-
-            <aside className="border-t border-stone-200 bg-stone-50 p-6 sm:p-8 lg:border-l lg:border-t-0 lg:p-10">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                <ShieldCheck className="h-4 w-4" />
-                Quick actions
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {user.role === 'ADMIN' || user.role === 'AGENT' ? (
-                  <ActionLink
-                    href={user.role === 'ADMIN' ? '/admin' : '/agent'}
-                    label={user.role === 'ADMIN' ? 'Open admin dashboard' : 'Open agent studio'}
-                    description="Manage listings, reservations, and account tools."
-                    icon={House}
-                  />
-                ) : null}
-
-                <ActionLink
-                  href="/auth/forgot-password"
-                  label="Reset password"
-                  description="Start the password reset flow."
-                  icon={ArrowRight}
-                />
-
-                <ActionLink
-                  href="/properties"
-                  label="Browse properties"
-                  description="Continue exploring the marketplace."
-                  icon={House}
-                />
-
-                <button
-                  type="button"
-                  onClick={signOut}
-                  className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-stone-200 bg-white px-4 py-4 text-left transition hover:border-gold-primary"
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-midnight text-white">
-                      <LogOut className="h-4 w-4" />
-                    </span>
-                    <span>
-                      <span className="block text-sm font-semibold text-midnight">Sign out</span>
-                      <span className="block text-xs text-slate-500">End this session on this device.</span>
-                    </span>
-                  </span>
-                  <ArrowRight className="h-4 w-4 text-slate-400" />
-                </button>
-              </div>
-
-              <dl className="mt-8 space-y-3">
-                <Row label="Account ID" value={user.id} />
-                <Row label="Email" value={user.email} />
-                <Row label="Role" value={user.role} />
-              </dl>
-            </aside>
+    <main className="min-h-screen bg-[#f8f7f3] px-4 py-12 text-[#2c2925] sm:px-6 sm:py-16">
+      <form onSubmit={handleSave} className="mx-auto w-full max-w-2xl">
+        <header className="mb-9 text-center">
+          <div className="relative mx-auto h-24 w-24"><div className="h-full w-full overflow-hidden rounded-full border-4 border-white bg-[#3e4a3d] text-2xl font-bold text-white shadow-[0_10px_25px_rgba(44,41,37,0.14)]">{avatarPreviewUrl || user.avatarUrl ? (
+            // The S3 host is deployment-dependent, so this cannot use Next's image allow-list.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatarPreviewUrl ?? user.avatarUrl ?? ''} alt={`${user.fullName}'s avatar`} className="h-full w-full object-cover" />
+          ) : <span className="grid h-full place-items-center">{initials}</span>}</div>
+            <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void handleAvatarSelection(event)} disabled={avatarUploading} className="sr-only" tabIndex={-1} />
+            <button type="button" onClick={() => avatarInputRef.current?.click()} disabled={avatarUploading} aria-label="Change profile photo" className="absolute -bottom-1 -right-1 grid h-9 w-9 place-items-center rounded-full border-2 border-white bg-[#ca7653] text-white shadow-sm transition hover:bg-[#b66545] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ca7653] disabled:opacity-60">{avatarUploading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}</button>
           </div>
-        </section>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight">{form.fullName || 'Your profile'}</h1><p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#528f63]">{user.role} account</p><p className="mt-3 text-xs text-stone-400">JPG, PNG, or WEBP · up to 5 MB</p>{avatarError ? <p role="alert" className="mt-2 text-sm text-rose-700">{avatarError}</p> : null}
+        </header>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-2">
-          <PropertyShelf
-            title="Saved"
-            description="Properties you bookmarked."
-            emptyText="No saved properties yet."
-            items={saved}
-            onRemove={(item) => {
-              if (!user) return;
-              toggleSavedProperty(user.id, snapshotPropertyFromStored(item));
-            }}
-            actionLabel="Remove"
-            actionIcon={Bookmark}
-          />
+        <ProfileCard title="Account details" description="Manage your account and keep your personal details current."><div className="grid gap-4 sm:grid-cols-2"><ProfileField label="Full name" icon={UserRound}><input value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} autoComplete="name" /></ProfileField><ProfileField label="Email address" icon={Mail}><input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} autoComplete="email" /></ProfileField><ProfileField label="Phone number" icon={Phone}><input type="tel" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} placeholder="+977 98 1234 5678" autoComplete="tel" /></ProfileField><ProfileField label="Date of birth" icon={CalendarDays}><input type="date" value={form.dateOfBirth} onChange={(event) => setForm((current) => ({ ...current, dateOfBirth: event.target.value }))} /></ProfileField></div><div className="mt-4 flex items-center justify-between rounded-xl bg-[#fbf7f3] px-4 py-3 text-sm"><span className="flex items-center gap-2 text-stone-500"><LockKeyhole className="h-4 w-4" />Password</span><Link href="/auth/forgot-password" className="font-semibold text-[#ca7653] hover:text-[#b66545]">Change password</Link></div></ProfileCard>
 
-          {normalizeUserRole(user.role) === 'user' && (
-            <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">
-              <h2 className="text-2xl font-semibold text-midnight">My reservations</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-500">View your active holds and reservation history, including agent assignments and completion updates.</p>
-              <Link href="/account/reservations" className="mt-6 inline-flex rounded-full bg-midnight px-5 py-3 text-sm font-semibold text-white">My reservations</Link>
-            </div>
-          )}
-        </section>
+        <ProfileCard title="Contact details" description="Share the contact information you want connected to your account."><div className="grid gap-4 sm:grid-cols-2"><div className="sm:col-span-2"><ProfileField label="Street address" icon={MapPin}><input value={form.street} onChange={(event) => setForm((current) => ({ ...current, street: event.target.value }))} placeholder="Street, neighborhood, or ward" autoComplete="street-address" /></ProfileField></div><ProfileField label="City" icon={MapPin}><input value={form.city} onChange={(event) => setForm((current) => ({ ...current, city: event.target.value }))} placeholder="Kathmandu" autoComplete="address-level2" /></ProfileField><ProfileField label="Province" icon={MapPin}><input value={form.state} onChange={(event) => setForm((current) => ({ ...current, state: event.target.value }))} placeholder="Bagmati" autoComplete="address-level1" /></ProfileField><ProfileField label="Postal code" icon={MapPin}><input value={form.postalCode} onChange={(event) => setForm((current) => ({ ...current, postalCode: event.target.value }))} placeholder="44600" autoComplete="postal-code" /></ProfileField><ProfileField label="Country" icon={MapPin}><input value={form.country} onChange={(event) => setForm((current) => ({ ...current, country: event.target.value }))} autoComplete="country-name" /></ProfileField></div></ProfileCard>
 
-        <section className="mt-8 rounded-[32px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
-                My submissions
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-midnight">Properties you added</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500">
-                These come from the `GET /v1/user-properties/mine` endpoint. New submissions wait for
-                admin review, approved listings can appear in the marketplace, and rejected items
-                show the reason here.
-              </p>
-            </div>
-            <Link
-              href="/marketplace#my-submissions"
-              className="inline-flex items-center justify-center rounded-full border border-midnight px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-midnight transition hover:bg-midnight hover:text-white"
-            >
-              Manage in marketplace
-            </Link>
-          </div>
-
-          {submissionsError ? (
-            <p className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {submissionsError}
-            </p>
-          ) : null}
-
-          {submissionsLoading ? (
-            <div className="mt-6 rounded-[28px] border border-stone-200 bg-stone-50 p-8 text-center text-slate-500">
-              Loading your submissions…
-            </div>
-          ) : mySubmissions.length === 0 ? (
-            <div className="mt-6 rounded-[28px] border border-dashed border-stone-200 bg-stone-50 p-8 text-center text-slate-500">
-              <p className="text-lg font-medium text-slate-700">You have not added any properties yet.</p>
-              <p className="mt-2 text-sm">Use the marketplace form to submit a property for admin review.</p>
-            </div>
-          ) : (
-            <div className="mt-6 grid gap-5 xl:grid-cols-2">
-              {mySubmissions.map((property) => {
-                const rejectionReason = property.rejectionReason?.trim();
-                return (
-                  <article
-                    key={property.id}
-                    className="rounded-[28px] border border-stone-200 bg-white p-5 shadow-brand-sm"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                          {getPropertyCategoryLabel(property.category)}
-                        </p>
-                        <h3 className="mt-1 truncate text-xl font-semibold text-midnight">
-                          {property.title}
-                        </h3>
-                        <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
-                          <MapPin className="h-4 w-4" />
-                          {formatLocation(property) || 'Location not specified'}
-                        </p>
-                      </div>
-                      <p className="shrink-0 text-lg font-semibold text-gold-primary">
-                        {formatCurrency(property.price)}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2 text-[0.7rem] font-medium">
-                      <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
-                        {getListingTypeLabel(property.listingType)}
-                      </span>
-                      <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
-                        {formatArea(property.areaSize, property.areaUnit)}
-                      </span>
-                      <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
-                        {getPropertyStatusLabel(property.status)}
-                      </span>
-                    </div>
-
-                    <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">
-                      Submitted {new Date(property.createdAt).toLocaleDateString()}
-                    </p>
-
-                    {rejectionReason ? (
-                      <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                        <div className="flex items-start gap-2">
-                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <p className="font-semibold">Rejection reason</p>
-                            <p className="mt-1 leading-6">{rejectionReason}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      <Link
-                        href="/marketplace#my-submissions"
-                        className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
-                      >
-                        <PencilLine className="h-4 w-4" />
-                        Manage
-                      </Link>
-                      <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                        <Clock3 className="h-4 w-4" />
-                        Admin review
-                      </span>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </div>
+        {notice ? <p role="status" className="mb-5 text-center text-sm text-[#528f63]">{notice}</p> : null}<div className="flex flex-col-reverse justify-center gap-3 sm:flex-row"><button type="button" onClick={() => { setForm(savedForm); setNotice(null); }} className="rounded-full border border-stone-200 bg-white px-6 py-3 text-sm font-semibold text-stone-600 transition hover:border-stone-300">Cancel</button><button type="submit" className="rounded-full bg-[#ca7653] px-7 py-3 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(202,118,83,0.26)] transition hover:bg-[#b66545] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ca7653]">Save changes</button></div>
+      </form>
     </main>
   );
 }
 
-function PropertyShelf({
-  title,
-  description,
-  emptyText,
-  items,
-  actionLabel,
-  actionIcon: ActionIcon,
-  onRemove,
-  readOnly = false,
-}: {
-  title: string;
-  description: string;
-  emptyText: string;
-  items: Array<PropertySnapshot | BookedPropertySnapshot>;
-  actionLabel: string;
-  actionIcon: LucideIcon;
-  onRemove?: (item: PropertySnapshot | BookedPropertySnapshot) => void;
-  readOnly?: boolean;
-}) {
-  return (
-    <section className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-brand-sm sm:p-7">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-primary">
-            {title}
-          </p>
-          <p className="mt-2 text-sm leading-7 text-slate-500">{description}</p>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-4">
-        {items.length > 0 ? (
-          items.map((item) => {
-            const imageUrl = item.imageUrl || '/images/logo/sunrise.png';
-            const isBooked = 'bookedAt' in item;
-
-            return (
-              <article
-                key={item.id}
-                className="overflow-hidden rounded-[26px] border border-stone-200 bg-white"
-              >
-                <div className="grid gap-0 sm:grid-cols-[120px_1fr]">
-                  <div className="relative min-h-[120px] bg-stone-100">
-                    <Image
-                      src={resolveImageSrc(imageUrl)}
-                      alt={item.title}
-                      fill
-                      sizes="120px"
-                      className="object-cover"
-                    />
-                  </div>
-
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                          {getPropertyCategoryLabel(item.category)}
-                        </p>
-                        <h3 className="mt-1 truncate text-base font-semibold text-midnight">
-                          {item.title}
-                        </h3>
-                        <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
-                          <MapPin className="h-4 w-4" />
-                          {item.location || 'Location not specified'}
-                        </p>
-                      </div>
-
-                      <p className="shrink-0 text-base font-semibold text-gold-primary">
-                        {formatCurrency(item.price)}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2 text-[0.7rem] font-medium">
-                      <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
-                        {getListingTypeLabel(item.listingType)}
-                      </span>
-                      <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-600">
-                        {getPropertyStatusLabel(item.status)}
-                      </span>
-                      {isBooked ? (
-                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
-                          Booked
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between gap-4">
-                      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                        {isBooked
-                          ? `Booked ${new Date(item.bookedAt).toLocaleDateString()}`
-                          : item.savedAt
-                            ? `Saved ${new Date(item.savedAt).toLocaleDateString()}`
-                            : 'Saved recently'}
-                      </p>
-
-                      {isBooked ? (
-                        <Link
-                          href={`/properties/${item.id}`}
-                          className="inline-flex items-center gap-2 rounded-full bg-midnight px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-stone-800"
-                        >
-                          <ArrowRight className="h-4 w-4" />
-                          View property
-                        </Link>
-                      ) : onRemove && !readOnly ? (
-                        <button
-                          type="button"
-                          onClick={() => onRemove(item)}
-                          className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary"
-                        >
-                          <ActionIcon className="h-4 w-4" />
-                          {actionLabel}
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          <ActionIcon className="h-4 w-4" />
-                          {actionLabel}
-                        </span>
-                      )}
-                    </div>
-
-                    {isBooked && item.paymentId ? (
-                      <p className="mt-3 border-t border-stone-100 pt-3 text-xs text-slate-400">
-                        Payment reference: <span className="font-medium text-slate-600">{item.paymentId}</span>
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <div className="rounded-[28px] border border-dashed border-stone-200 bg-stone-50 p-8 text-center">
-            <p className="text-sm font-medium text-slate-600">{emptyText}</p>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-      {children}
-    </span>
-  );
-}
-
-function MiniStat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[22px] border border-stone-200 bg-stone-50 px-4 py-4">
-      <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1 text-base font-semibold text-midnight">{value}</p>
-    </div>
-  );
-}
-
-function ActionLink({
-  href,
-  label,
-  description,
-  icon: Icon,
-}: {
-  href: string;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center justify-between gap-4 rounded-[24px] border border-stone-200 bg-white px-4 py-4 transition hover:border-gold-primary"
-    >
-      <span className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-midnight text-white">
-          <Icon className="h-4 w-4" />
-        </span>
-        <span>
-          <span className="block text-sm font-semibold text-midnight">{label}</span>
-          <span className="block text-xs text-slate-500">{description}</span>
-        </span>
-      </span>
-      <ArrowRight className="h-4 w-4 text-slate-400" />
-    </Link>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-2xl border border-stone-200 bg-white px-4 py-3">
-      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
-        {label}
-      </span>
-      <span className="max-w-[60%] text-right text-sm font-medium text-midnight">{value}</span>
-    </div>
-  );
-}
-
-function snapshotPropertyFromStored(item: PropertySnapshot | BookedPropertySnapshot): PropertySnapshot {
-  return {
-    id: item.id,
-    title: item.title,
-    price: item.price,
-    listingType: item.listingType,
-    category: item.category,
-    status: item.status,
-    areaSize: item.areaSize,
-    areaUnit: item.areaUnit,
-    location: item.location,
-    imageUrl: item.imageUrl,
-  };
-}
+function ProfileCard({ title, description, children }: { title: string; description: string; children: ReactNode }) { return <section className="mb-5 rounded-2xl border border-stone-200 bg-white p-5 shadow-[0_12px_35px_rgba(44,41,37,0.07)] sm:p-6"><h2 className="text-base font-bold">{title}</h2><p className="mt-1 text-xs leading-5 text-stone-500">{description}</p><div className="mt-5">{children}</div></section>; }
+function ProfileField({ label, icon: Icon, children }: { label: string; icon: LucideIcon; children: ReactNode }) { return <label className="block"><span className="mb-1.5 block text-[0.65rem] font-bold uppercase tracking-[0.14em] text-stone-500">{label}</span><span className="flex items-center gap-2 rounded-xl border border-stone-200 bg-[#fcfbf9] px-3 text-stone-400 transition focus-within:border-[#ca7653] focus-within:ring-2 focus-within:ring-[#ca7653]/10"><Icon className="h-4 w-4 shrink-0" /><span className="min-w-0 flex-1 [&>input]:h-11 [&>input]:w-full [&>input]:bg-transparent [&>input]:text-sm [&>input]:text-stone-800 [&>input]:outline-none [&>input::placeholder]:text-stone-400">{children}</span></span></label>; }
