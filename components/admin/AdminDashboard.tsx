@@ -2,24 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import {
-  Activity,
-  ArrowRight,
-  BarChart3,
-  CircleDollarSign,
-  ClipboardList,
-  Clock3,
-  CreditCard,
-  FileCheck2,
-  Home,
-  LayoutDashboard,
-  ListChecks,
-  RefreshCw,
-  Shield,
-  Settings2,
-  Ticket,
-  Users,
-} from 'lucide-react';
+import { ArrowRight, BarChart3, CircleDollarSign, ClipboardList, Shield, Settings2, Ticket, Users } from 'lucide-react';
 
 import WorkspaceShell from '@/components/admin/WorkspaceShell';
 import AdminPropertyStudio from '@/components/admin/AdminPropertyStudio';
@@ -513,52 +496,7 @@ export default function AdminDashboard() {
 
   return (
     <WorkspaceShell title="Admin workspace" active={activeSection} items={sectionTabs} onSelect={(value) => setActiveSection(value as AdminSection)}>
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 rounded-[28px] border border-stone-200/80 bg-white/85 p-6 shadow-sm backdrop-blur sm:p-8">
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-            <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#ca7653]">
-                Sunrise Realestate Admin
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#2A2723] sm:text-4xl">
-                A clear view of your business.
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
-                Manage your listings, support your agents, and keep every reservation moving.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/properties"
-                className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#ca7653] hover:text-[#ca7653]"
-              >
-                Preview site
-              </Link>
-              <button
-                type="button"
-                onClick={handleFinanceRefresh}
-                className="inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#303c2f]"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh data
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {overviewStats.map((item) => (
-              <div key={item.label} className="rounded-2xl border border-stone-200 bg-[#f8f6f1] px-4 py-3">
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  {item.label}
-                </p>
-                <p className="mt-1 text-xl font-semibold text-[#2A2723]">{item.value}</p>
-              </div>
-            ))}
-          </div>
-
-
-        </div>
+      <div className="mx-auto max-w-[1180px]">
 
         {notice ? (
           <div
@@ -585,6 +523,7 @@ export default function AdminDashboard() {
               onOpenMarketplace={() => setActiveSection('users')}
               onOpenReservations={() => setActiveSection('reservations')}
               onOpenFinance={() => setActiveSection('finance')}
+              onOpenAgents={() => setActiveSection('agents')}
             />
           ) : null}
 
@@ -1105,6 +1044,7 @@ function AdminOverview({
   onOpenMarketplace,
   onOpenReservations,
   onOpenFinance,
+  onOpenAgents,
 }: {
   stats: Array<{ label: string; value: string | number }>;
   summary: FinanceSummaryResponseDto | null;
@@ -1116,60 +1056,41 @@ function AdminOverview({
   onOpenMarketplace: () => void;
   onOpenReservations: () => void;
   onOpenFinance: () => void;
+  onOpenAgents: () => void;
 }) {
   const reviewItems = userProperties.filter((item) => item.status === 'PENDING_REVIEW').slice(0, 4);
   const paymentStatuses = summary?.paymentsByStatus ?? [];
-  const reservationStatuses = summary?.reservationsByStatus ?? [];
   const totalPayments = Math.max(summary?.paymentCount ?? 0, 1);
-  const totalReservations = Math.max(summary?.reservationCount ?? 0, 1);
+  const paymentChartRows = [
+    { status: 'SUCCEEDED', label: 'Succeeded', tone: '#10c58b' },
+    { status: 'PENDING', label: 'Pending', tone: '#f8b81c' },
+    { status: 'FAILED', label: 'Failed', tone: '#fb5d78' },
+    { status: 'REFUNDED', label: 'Refunded', tone: '#202020' },
+  ].map((chartStatus) => ({
+    ...chartStatus,
+    value: paymentStatuses.find((item) => item.status.toUpperCase() === chartStatus.status)?.count ?? 0,
+  }));
 
-  return (
-    <div className="space-y-5">
-      <section className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ca7653]">Operations overview</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#2A2723]">Today&apos;s portfolio activity</h2>
-            <p className="mt-1 text-sm text-slate-500">Live marketplace, payment, and reservation data from Sunrise.</p>
-          </div>
-          <button type="button" onClick={onOpenProperties} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#3E4A3D] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#303c2f]"><Home className="h-4 w-4" />Manage properties</button>
-        </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <OverviewStat icon={LayoutDashboard} label="Marketplace listings" value={stats[0].value} detail={`${pendingReviews} awaiting review`} tone="amber" />
-          <OverviewStat icon={ListChecks} label="Reservations" value={stats[1].value} detail={`${summary?.reservationCount ?? 0} total records`} tone="sky" />
-          <OverviewStat icon={CreditCard} label="Payment volume" value={stats[2].value} detail={`${summary?.successfulPaymentCount ?? 0} successful`} tone="violet" />
-          <OverviewStat icon={CircleDollarSign} label="Collected" value={stats[3].value} detail={`${summary?.refundedPaymentCount ?? 0} refunded`} tone="green" />
-        </div>
-      </section>
-
-      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-        <ChartPanel title="Payments by status" subtitle="Distribution of all payment records" icon={CircleDollarSign}><DonutChart rows={paymentStatuses.map((item) => ({ label: item.status, value: item.count, tone: statusChartTone(item.status) }))} total={totalPayments} /><StatusLegend rows={paymentStatuses.map((item) => ({ label: item.status, value: item.count, amount: money(item.amount), tone: statusChartTone(item.status) }))} /></ChartPanel>
-        <ChartPanel title="Payment providers" subtitle="Successful and pending volume by provider" icon={BarChart3}><ProviderBars rows={summary?.paymentsByProvider ?? []} /></ChartPanel>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[1.18fr_0.82fr]">
-        <section className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex items-start justify-between gap-4"><div><h3 className="text-lg font-semibold text-[#2A2723]">Marketplace review queue</h3><p className="mt-1 text-xs text-slate-500">Public submissions awaiting a decision.</p></div><button type="button" onClick={onOpenMarketplace} className="text-xs font-semibold text-[#ca7653] hover:text-[#b66545]">Open marketplace</button></div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2"><QueueMetric label="Pending review" value={pendingReviews} icon={Clock3} /><QueueMetric label="Payments to verify" value={(summary?.paymentsByStatus ?? []).find((item) => item.status.toUpperCase() === 'PENDING')?.count ?? 0} icon={FileCheck2} /></div>
-          <div className="mt-4 divide-y divide-stone-100 rounded-2xl border border-stone-100">{reviewItems.length ? reviewItems.map((item) => <button key={item.id} type="button" onClick={onOpenMarketplace} className="flex w-full items-center justify-between gap-4 px-3 py-3 text-left transition hover:bg-stone-50"><span className="min-w-0"><span className="block truncate text-sm font-semibold text-[#2A2723]">{item.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{formatLocation(item) || 'Location pending'} · {money(item.price)}</span></span><ArrowRight className="h-4 w-4 shrink-0 text-[#ca7653]" /></button>) : <p className="px-3 py-8 text-center text-sm text-slate-500">No marketplace reviews are waiting.</p>}</div>
-        </section>
-        <section className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex items-start justify-between gap-4"><div><h3 className="text-lg font-semibold text-[#2A2723]">Reservation status</h3><p className="mt-1 text-xs text-slate-500">Reservation activity from finance reporting.</p></div><button type="button" onClick={onOpenReservations} className="text-xs font-semibold text-[#ca7653] hover:text-[#b66545]">View all</button></div><div className="mt-5"><ReservationBars rows={reservationStatuses} total={totalReservations} /></div></section>
-      </div>
-
-      <section className="overflow-hidden rounded-[26px] border border-stone-200 bg-white shadow-sm"><div className="flex flex-col gap-4 border-b border-stone-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"><div><h3 className="text-lg font-semibold text-[#2A2723]">Recent operations</h3><p className="mt-1 text-xs text-slate-500">Latest reservations and payments currently returned by the backend.</p></div><button type="button" onClick={onOpenFinance} className="inline-flex items-center gap-2 text-xs font-semibold text-[#ca7653]"><Activity className="h-4 w-4" />Open finance</button></div><div className="grid divide-y divide-stone-100 lg:grid-cols-2 lg:divide-x lg:divide-y-0"><RecentList title="Recent reservations" items={reservations.slice(0, 5).map((item) => ({ title: item.property.title, meta: `${item.userNameSnapshot} · ${money(item.reservationFeeAmount)}`, status: item.status }))} empty="No reservations found." /><RecentList title="Recent payments" items={payments.slice(0, 5).map((item) => ({ title: item.property.title, meta: `${item.provider} · ${money(item.amount)}`, status: item.status }))} empty="No payments found." /></div></section>
-    </div>
-  );
+  const dashboardStats = [
+    { label: 'Live listings', value: stats[0].value, detail: `${userProperties.length} visible` },
+    { label: 'Reservations', value: stats[1].value, detail: `${summary?.reservationCount ?? 0} this week` },
+    { label: 'Awaiting review', value: pendingReviews, detail: 'Action required' },
+    { label: 'Marketplace', value: userProperties.length, detail: `${pendingReviews} submissions to verify` },
+    { label: 'Revenue · 30 days', value: stats[3].value, detail: `${summary?.successfulPaymentCount ?? 0} payments received` },
+  ];
+  return <div className="space-y-5">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-xl font-bold tracking-tight text-[#292826]">Operations overview</h1><p className="mt-1 text-xs text-stone-500">Property, payment, and reservation activity across Nepal.</p></div><div className="flex gap-2"><button type="button" onClick={onOpenFinance} className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-600">Export report</button><button type="button" onClick={onOpenProperties} className="rounded-lg bg-[#cd7654] px-3 py-2 text-xs font-semibold text-white">+ Add Property</button></div></div>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{dashboardStats.map((item) => <div key={item.label} className="rounded-xl border border-stone-200 bg-white px-4 py-3"><p className="text-[10px] font-semibold text-stone-500">{item.label}</p><p className="mt-1 text-2xl font-bold tracking-tight text-[#292826]">{item.value}</p><p className="mt-1 text-[10px] text-stone-400">{item.detail}</p></div>)}</div>
+    <div className="grid gap-5 xl:grid-cols-[1fr_1.05fr_.9fr]"><ChartPanel title="Payments by status" subtitle="Count of payments in the selected period." icon={CircleDollarSign}><DonutChart rows={paymentChartRows} total={totalPayments} /></ChartPanel><section className="rounded-xl border border-stone-200 bg-white p-5"><SectionHeading title="Recent reservations" subtitle="Latest buyer commitments" action="View all" onClick={onOpenReservations} /><div className="mt-4 divide-y divide-stone-100">{reservations.slice(0, 3).map((item) => <button key={item.id} type="button" onClick={onOpenReservations} className="flex w-full items-center justify-between gap-3 py-3 text-left"><span className="min-w-0"><strong className="block truncate text-xs text-[#292826]">{item.userNameSnapshot}</strong><span className="block truncate text-[10px] text-stone-400">{item.property.title}</span><span className={`mt-1 inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold ${statusTone(item.status)}`}>{item.status}</span></span><strong className="shrink-0 text-[10px]">{money(item.reservationFeeAmount)}</strong></button>)}{!reservations.length && <p className="py-8 text-center text-xs text-stone-400">No reservations found.</p>}</div></section><section className="rounded-xl border border-stone-200 bg-white p-5"><SectionHeading title="Quick actions" subtitle="Common administrative tasks" /><div className="mt-4 grid grid-cols-2 gap-2"><button onClick={onOpenAgents} className="rounded-lg bg-[#cd7654] px-3 py-2 text-xs font-semibold text-white">+ Create agent</button><button onClick={onOpenAgents} className="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold">Manage agents</button><button onClick={onOpenMarketplace} className="rounded-lg bg-[#292826] px-3 py-2 text-xs font-semibold text-white">+ Review queue</button><button onClick={onOpenProperties} className="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold">Properties</button></div></section></div>
+    <section className="overflow-hidden rounded-xl border border-stone-200 bg-white"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 px-5 py-4"><div><h2 className="text-sm font-bold">Sunrise properties</h2><p className="mt-0.5 text-[10px] text-stone-400">Listings, assignment, availability and reservation controls.</p></div><button type="button" onClick={onOpenProperties} className="text-xs font-semibold text-[#c56847]">View all {stats[0].value}</button></div><div className="overflow-x-auto"><table className="min-w-full text-left"><thead className="bg-[#faf9f7] text-[9px] uppercase tracking-wide text-stone-400"><tr><th className="px-5 py-3">Property / Location</th><th className="px-4 py-3">Submitted by</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Reservation</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-stone-100">{userProperties.slice(0, 4).map((property) => <tr key={property.id}><td className="px-5 py-3"><div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-md bg-[#e9e3d6] text-[10px] font-bold text-[#796c5c]">{property.title.charAt(0)}</span><span><strong className="block text-xs">{property.title}</strong><span className="block text-[10px] text-stone-400">{formatLocation(property) || 'Location pending'}</span></span></div></td><td className="px-4 py-3 text-[10px] text-stone-600">{property.submittedBy.fullName}</td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-[9px] font-semibold ${statusTone(property.status)}`}>{getPropertyStatusLabel(property.status)}</span></td><td className="px-4 py-3 text-[10px] text-stone-500">{property.status === 'APPROVED' ? 'Available' : 'Review pending'}</td><td className="px-5 py-3 text-right"><button onClick={onOpenMarketplace} className="rounded-md border border-stone-200 px-2 py-1 text-[10px] font-semibold">Review</button></td></tr>)}{!userProperties.length && <tr><td colSpan={5} className="px-5 py-10 text-center text-xs text-stone-400">No submitted properties yet.</td></tr>}</tbody></table></div></section>
+    <div className="grid gap-5 xl:grid-cols-[1.35fr_.85fr]"><section className="rounded-xl border border-stone-200 bg-white p-5"><SectionHeading title="Marketplace review queue" subtitle="Public submissions awaiting payment or listing review" action="Open marketplace" onClick={onOpenMarketplace} /><div className="mt-4 divide-y divide-stone-100">{reviewItems.map((item) => <button key={item.id} onClick={onOpenMarketplace} className="flex w-full items-center justify-between gap-3 py-3 text-left"><span><strong className="block text-xs">{item.title}</strong><span className="text-[10px] text-stone-400">{formatLocation(item) || 'Location pending'}</span></span><strong className="text-[10px]">{money(item.price)}</strong></button>)}{!reviewItems.length && <p className="py-8 text-center text-xs text-stone-400">No listings are waiting for review.</p>}</div></section><section className="rounded-xl border border-stone-200 bg-white p-5"><SectionHeading title="Operational activity" subtitle="Latest platform and team updates" action="Audit log" onClick={onOpenFinance} /><div className="mt-4 space-y-3">{payments.slice(0, 3).map((payment) => <div key={payment.id} className="flex gap-3"><span className="grid h-7 w-7 place-items-center rounded-full bg-[#edf6ef] text-[10px] text-emerald-700">✓</span><span><strong className="block text-xs">Payment {payment.status.toLowerCase()}</strong><span className="block text-[10px] text-stone-400">{payment.property.title} · {money(payment.amount)}</span></span></div>)}{!payments.length && <p className="py-8 text-center text-xs text-stone-400">No activity yet.</p>}</div></section></div>
+  </div>;
 }
 
-function OverviewStat({ icon: Icon, label, value, detail, tone }: { icon: typeof LayoutDashboard; label: string; value: string | number; detail: string; tone: 'amber' | 'sky' | 'violet' | 'green' }) { const colors = { amber: 'bg-amber-50 text-amber-700', sky: 'bg-sky-50 text-sky-700', violet: 'bg-violet-50 text-violet-700', green: 'bg-emerald-50 text-emerald-700' }; return <div className="rounded-2xl border border-stone-200 bg-[#fdfcfb] p-4"><span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl ${colors[tone]}`}><Icon className="h-4 w-4" /></span><p className="mt-4 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p><p className="mt-1 text-2xl font-semibold tracking-tight text-[#2A2723]">{value}</p><p className="mt-1 text-xs text-slate-500">{detail}</p></div>; }
+function SectionHeading({ title, subtitle, action, onClick }: { title: string; subtitle: string; action?: string; onClick?: () => void }) { return <div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-bold text-[#292826]">{title}</h2><p className="mt-0.5 text-[10px] text-stone-400">{subtitle}</p></div>{action && <button type="button" onClick={onClick} className="text-[10px] font-semibold text-[#c56847]">{action}</button>}</div>; }
+
 function ChartPanel({ title, subtitle, icon: Icon, children }: { title: string; subtitle: string; icon: typeof BarChart3; children: ReactNode }) { return <section className="rounded-[26px] border border-stone-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex items-start gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#f9eee9] text-[#ca7653]"><Icon className="h-4 w-4" /></span><div><h3 className="text-lg font-semibold text-[#2A2723]">{title}</h3><p className="mt-1 text-xs text-slate-500">{subtitle}</p></div></div><div className="mt-5">{children}</div></section>; }
-function statusChartTone(status: string): string { const value = status.toUpperCase(); if (value === 'SUCCEEDED' || value === 'COMPLETED') return '#14b87a'; if (value === 'PENDING') return '#f4b740'; if (value === 'FAILED' || value === 'CANCELLED') return '#ef6d76'; return '#818cf8'; }
-function DonutChart({ rows, total }: { rows: Array<{ label: string; value: number; tone: string }>; total: number }) { const segments = rows.filter((item) => item.value > 0).reduce<{ running: number; values: string[] }>((result, item) => { const next = result.running + item.value / total * 100; return { running: next, values: [...result.values, `${item.tone} ${result.running}% ${next}%`] }; }, { running: 0, values: [] }).values; return <div className="flex flex-col items-center justify-center gap-5 sm:flex-row"><div className="grid h-36 w-36 place-items-center rounded-full" style={{ background: segments.length ? `conic-gradient(${segments.join(', ')})` : '#f1f5f9' }}><div className="grid h-24 w-24 place-items-center rounded-full bg-white text-center"><strong className="text-2xl text-[#2A2723]">{total}</strong><span className="text-[0.62rem] uppercase tracking-[0.12em] text-slate-400">payments</span></div></div><div className="w-full space-y-2"><StatusLegend rows={rows.map((item) => ({ ...item, amount: String(item.value) }))} /></div></div>; }
-function StatusLegend({ rows }: { rows: Array<{ label: string; value: number; amount: string; tone: string }> }) { return <div className="space-y-2">{rows.length ? rows.map((item) => <div key={item.label} className="flex items-center justify-between gap-3 text-xs"><span className="flex min-w-0 items-center gap-2"><i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.tone }} /><span className="truncate text-slate-600">{item.label}</span></span><span className="shrink-0 font-semibold text-[#2A2723]">{item.amount}</span></div>) : <p className="text-sm text-slate-500">No data available.</p>}</div>; }
-function ProviderBars({ rows }: { rows: FinanceSummaryResponseDto['paymentsByProvider'] }) { const max = Math.max(...rows.map((item) => item.count), 1); return <div className="flex h-44 items-end justify-around gap-4 border-b border-stone-200 px-3 pt-5">{rows.length ? rows.map((item) => <div key={item.provider} className="flex h-full flex-1 flex-col items-center justify-end gap-2"><span className="text-xs font-semibold text-[#2A2723]">{item.count}</span><div className="w-full max-w-12 rounded-t-lg bg-[#5140d8] transition-all" style={{ height: `${Math.max(item.count / max * 100, 8)}%` }} title={`${item.provider}: ${money(item.amount)}`} /><span className="max-w-full truncate text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">{item.provider.replace('_', ' ')}</span></div>) : <p className="pb-16 text-sm text-slate-500">No provider data available.</p>}</div>; }
-function QueueMetric({ label, value, icon: Icon }: { label: string; value: number; icon: typeof Clock3 }) { return <div className="flex items-center gap-3 rounded-xl bg-[#fbf7f3] px-3 py-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-[#ca7653]"><Icon className="h-4 w-4" /></span><span><strong className="block text-base text-[#2A2723]">{value}</strong><span className="text-xs text-slate-500">{label}</span></span></div>; }
-function ReservationBars({ rows, total }: { rows: FinanceSummaryResponseDto['reservationsByStatus']; total: number }) { return <div className="space-y-4">{rows.length ? rows.map((item) => <div key={item.status}><div className="mb-1.5 flex items-center justify-between text-xs"><span className="font-medium text-slate-600">{item.status}</span><span className="font-semibold text-[#2A2723]">{item.count}</span></div><div className="h-2 overflow-hidden rounded-full bg-stone-100"><div className="h-full rounded-full bg-sky-500" style={{ width: `${Math.min(item.count / total * 100, 100)}%` }} /></div></div>) : <p className="text-sm text-slate-500">No reservation data available.</p>}</div>; }
-function RecentList({ title, items, empty }: { title: string; items: Array<{ title: string; meta: string; status: string }>; empty: string }) { return <div className="p-5 sm:p-6"><h4 className="text-sm font-semibold text-[#2A2723]">{title}</h4><div className="mt-3 divide-y divide-stone-100">{items.length ? items.map((item, index) => <div key={`${item.title}-${index}`} className="flex items-center justify-between gap-3 py-3"><span className="min-w-0"><span className="block truncate text-sm font-medium text-[#2A2723]">{item.title}</span><span className="block truncate text-xs text-slate-500">{item.meta}</span></span><span className={`shrink-0 rounded-full px-2 py-1 text-[0.62rem] font-semibold ${statusTone(item.status)}`}>{item.status}</span></div>) : <p className="py-6 text-sm text-slate-500">{empty}</p>}</div></div>; }
+function DonutChart({ rows, total }: { rows: Array<{ label: string; value: number; tone: string }>; total: number }) { const segments = rows.filter((item) => item.value > 0).reduce<{ running: number; values: string[] }>((result, item) => { const next = result.running + item.value / total * 100; return { running: next, values: [...result.values, `${item.tone} ${result.running}% ${next}%`] }; }, { running: 0, values: [] }).values; return <div className="flex min-h-[142px] items-center justify-center gap-6"><div className="grid h-[108px] w-[108px] shrink-0 place-items-center rounded-full" style={{ background: segments.length ? `conic-gradient(${segments.join(', ')})` : '#ece9e5' }}><div className="h-[72px] w-[72px] rounded-full bg-white" /></div><div className="min-w-0 space-y-2">{rows.map((item) => <div key={item.label} className="flex items-center justify-between gap-4 text-[10px]"><span className="flex items-center gap-2 text-stone-500"><i className="h-2 w-2 rounded-full" style={{ backgroundColor: item.tone }} />{item.label}</span><strong className="text-[#292826]">{item.value}</strong></div>)}</div></div>; }
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
