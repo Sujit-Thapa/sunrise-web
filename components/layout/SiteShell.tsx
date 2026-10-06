@@ -16,7 +16,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     <AuthSessionProvider>
       {!hideLayout && <Navbar />}
       <main className={`flex-1 bg-[#f8f6f1] ${contentOffset}`}>{children}</main>
-      {!hideLayout && <Footer />}
+      {!hideLayout && !isProperties && <Footer />}
     </AuthSessionProvider>
   );
 }
