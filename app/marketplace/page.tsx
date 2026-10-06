@@ -331,7 +331,7 @@ export default function Marketplace() {
             <aside className="rounded-2xl bg-white p-7 text-center shadow-[0_3px_20px_rgba(42,39,35,0.08)]">
               <h2 className="text-lg font-bold">Selling your home?</h2>
               <p className="mt-3 text-sm leading-7 text-stone-500">Share your property with the Sunrise community. Add your details and submit it for review.</p>
-              {user ? <button type="button" onClick={() => setShowForm(true)} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Post Your Property<RiAddLine /></button> : <Link href="/auth/login" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Sign in to list<RiArrowRightLine /></Link>}
+              {user ? <button type="button" onClick={() => setShowForm(true)} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Post Your Property<RiAddLine /></button> : <Link href="/auth/login?next=/marketplace" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#3E4A3D] px-6 py-3 text-sm font-bold text-white hover:bg-[#303c2f]">Sign in to list<RiArrowRightLine /></Link>}
               {user ? <Link href="/marketplace/manage" className="mt-4 block text-xs text-stone-600 underline underline-offset-4">Manage my submissions</Link> : null}
             </aside>
           </section>
@@ -390,14 +390,24 @@ export default function Marketplace() {
                   ))}
                 </select>
 
-                <button
-                  type="button"
-                  onClick={() => setShowForm(true)}
-                  className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#3E4A3D] bg-[#3E4A3D] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#303c2f]"
-                >
-                  <RiAddLine className="h-4 w-4" />
-                  List property
-                </button>
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(true)}
+                    className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#3E4A3D] bg-[#3E4A3D] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#303c2f]"
+                  >
+                    <RiAddLine className="h-4 w-4" />
+                    List property
+                  </button>
+                ) : (
+                  <Link
+                    href="/auth/login?next=/marketplace"
+                    className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#3E4A3D] bg-[#3E4A3D] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#303c2f]"
+                  >
+                    <RiAddLine className="h-4 w-4" />
+                    List property
+                  </Link>
+                )}
               </div>
             </div>
           </motion.div>
