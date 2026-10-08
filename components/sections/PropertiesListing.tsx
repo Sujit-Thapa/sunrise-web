@@ -486,8 +486,8 @@ function PropertyResult({
       </div>
 
       <div className="flex min-w-0 flex-col px-4 py-3 sm:px-5">
-        <p className="text-lg font-medium leading-tight text-[#ca7653]">{price}</p>
-          <h2 className="mt-1 truncate text-base font-bold text-[#2A2723]">
+        <p className="text-lg font-bold leading-tight text-[#ca7653]">{price}</p>
+          <h2 className="mt-1 truncate text-[22px] font-bold leading-tight tracking-tight text-[#2A2723] capitalize">
             {property.title || 'Untitled property'}
           </h2>
         <p className="mt-1 truncate text-xs text-stone-400">{location}</p>
