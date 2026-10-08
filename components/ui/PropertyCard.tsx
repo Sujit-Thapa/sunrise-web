@@ -32,8 +32,8 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         </div>
 
         <div className="px-7 pb-6 pt-5 sm:px-7">
-          <p className="text-[1.65rem] font-bold leading-tight tracking-tight text-[#cf7654]">{price}</p>
-          <h3 className="mt-2 text-xl font-bold leading-tight tracking-tight text-[#2a2927]">
+          <p className="text-[1.75rem] font-bold leading-tight tracking-tight text-[#cf7654]">{price}</p>
+          <h3 className="mt-2 truncate text-[1.75rem] font-bold leading-tight tracking-tight text-[#2a2927] capitalize">
             {property.title || 'Untitled property'}
           </h3>
           <p className="mt-1 text-sm font-medium text-stone-400">
