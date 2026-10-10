@@ -21,11 +21,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children, modal }: { children: React.ReactNode; modal?: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={plusJakartaSans.variable}>
       <body className="min-h-full flex flex-col bg-white font-sans antialiased text-stone-900">
-        <SiteShell>{children}</SiteShell>
+        <SiteShell>{children}{modal}</SiteShell>
       </body>
     </html>
   );

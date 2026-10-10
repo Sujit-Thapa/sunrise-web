@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Filter } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import mapboxgl from 'mapbox-gl';
 import type { PropertyResponseDto } from '@/types';
@@ -51,22 +52,20 @@ export default function PropertiesListing({
   }), [items, sort]);
 
   return (
-    <div className="grid grid-cols-1 bg-[#f8f6f1] text-[#2A2723] lg:h-svh lg:min-h-[724px] lg:grid-cols-[minmax(0,64fr)_minmax(390px,36fr)]">
+    <div className="grid grid-cols-1 bg-[#f7f5f1] text-[#2a2723] pt-[var(--site-header)] lg:h-svh lg:min-h-[724px] lg:grid-cols-[minmax(0,64fr)_minmax(390px,36fr)]">
       <section aria-label="Property map" className="relative min-h-[430px] overflow-hidden bg-[#a9d8e9] lg:min-h-0">
         <PropertiesMap properties={items} hoveredId={hoveredId} onHoverChange={setHoveredId} />
         <SearchPanel />
       </section>
 
-      <section aria-label="Property results" className="min-w-0 px-5 py-6 sm:px-7 lg:overflow-y-auto lg:pt-[148px]">
+      <section aria-label="Property results" className="min-w-0 bg-[#f7f5f0] px-5 py-5 sm:px-[30px] lg:overflow-y-auto">
         <div className="mb-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h1 className="text-xl font-bold">{searchQuery ? `${searchQuery} Properties` : 'Explore Properties'}{searchParams.get('listingType') === 'SALE' ? ' for Sale' : searchParams.get('listingType') === 'RENT' ? ' for Rent' : ''}</h1>
-            <p className="text-sm text-stone-500">{resultCount.toLocaleString()} results</p>
+            <h1 className="text-xl font-semibold leading-6 tracking-[0.01em]">{searchQuery ? `${searchQuery} Properties` : 'Explore Properties'}{searchParams.get('listingType') === 'SALE' ? ' for Sale' : searchParams.get('listingType') === 'RENT' ? ' for Rent' : ''}</h1>
+            <p className="text-base tracking-[0.01em] text-[#7e7e7e]">{resultCount.toLocaleString('en-IN')} results</p>
           </div>
           <div className="mt-3 flex justify-end">
-            <select aria-label="Sort properties on this page" value={sort} onChange={event => setSort(event.target.value)} className="rounded-full border-0 bg-white px-4 py-2 text-xs outline-offset-2 focus-visible:outline-[#ca7653]">
-              <option value="newest">Newest</option><option value="oldest">Oldest</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option>
-            </select>
+            <SortMenu value={sort} onChange={setSort} />
           </div>
           {loadError ? (
             <div className="mt-4 rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -75,7 +74,7 @@ export default function PropertiesListing({
           ) : null}
         </div>
 
-        <div className="space-y-6">
+        <div className="mt-4 space-y-[31px]">
           {items.length > 0 ? (
             sortedItems.map((property) => (
               <PropertyResult
@@ -98,7 +97,7 @@ export default function PropertiesListing({
           <nav aria-label="Results pages" className="mt-6 flex items-center justify-between text-sm">
             {currentPage > 1 ? <Link href={pageHref(currentPage - 1)} className="rounded-full bg-white px-4 py-2">Previous</Link> : <span />}
             <span className="text-stone-500">Page {currentPage} of {Math.ceil(resultCount / 50)}</span>
-            {currentPage * 50 < resultCount ? <Link href={pageHref(currentPage + 1)} className="rounded-full bg-[#3E4A3D] px-4 py-2 text-white">Next</Link> : <span />}
+            {currentPage * 50 < resultCount ? <Link href={pageHref(currentPage + 1)} className="rounded-full bg-[#3e4a3d] px-4 py-2 text-white">Next</Link> : <span />}
           </nav>
         ) : null}
       </section>
@@ -333,7 +332,7 @@ function SearchPanel() {
         event.preventDefault();
         pushSearch(event.currentTarget);
       }}
-      className="absolute left-4 right-4 top-28 z-30 mx-auto max-w-[660px] rounded-[24px] bg-white p-2 shadow-lg sm:top-[148px] sm:rounded-full"
+      className="absolute left-4 right-4 top-[37px] z-30 mx-auto max-w-[557px] rounded-[16px] bg-white p-2 shadow-lg sm:py-[9px]"
     >
       <div className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
         <div className="min-w-0 px-3">
@@ -342,7 +341,7 @@ function SearchPanel() {
             aria-label="Location"
             defaultValue={currentLocation}
             placeholder="City or location"
-            className="w-full border-none bg-transparent py-2 text-xs text-stone-600 outline-offset-2 placeholder:text-stone-400"
+            className="w-full border-none bg-transparent py-1 text-xs font-medium text-[#73706c] outline-offset-2 placeholder:text-[#73706c]"
           />
         </div>
 
@@ -364,11 +363,11 @@ function SearchPanel() {
         <button
           type="submit"
           aria-label="Search properties"
-          className="flex items-center justify-center gap-1.5 rounded-full bg-[#3E4A3D] px-5 py-2.5 text-xs text-white transition hover:bg-[#303c2f]"
+          className="flex h-6 items-center justify-center gap-1.5 rounded-[17.5px] bg-[#3e4a3d] px-4 text-xs font-semibold tracking-[0.01em] text-[#f7f5f0] transition hover:bg-[#303c2f]"
         >
           <svg
-            width="13"
-            height="13"
+            width="9"
+            height="9"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -400,13 +399,13 @@ function SearchField({
   showChevron?: boolean;
 }) {
   return (
-    <div className="min-w-0 border-l border-stone-100 px-3 py-2">
+    <div className="min-w-0 border-l border-stone-200 px-3 py-1">
       <div className="flex items-center justify-between gap-1">
         <select
           name={name}
           aria-label={label}
           defaultValue={defaultValue}
-          className={`w-full min-w-0 border-none bg-transparent text-xs text-stone-600 outline-offset-2 ${showChevron ? 'appearance-none' : ''}`}
+          className={`w-full min-w-0 border-none bg-transparent text-xs font-medium text-[#7e7e7e] outline-offset-2 ${showChevron ? 'appearance-none' : ''}`}
         >
           {options.map((option) => (
             <option key={option} value={option}>
@@ -468,14 +467,14 @@ function PropertyResult({
       onMouseLeave={() => onHoverChange(null)}
       onFocus={() => onHoverChange(property.id)}
       onBlur={() => onHoverChange(null)}
-      className={`relative grid min-h-[164px] grid-cols-[43%_minmax(0,1fr)] overflow-hidden rounded-[26px] border bg-white transition-colors ${
+      className={`relative grid min-h-[180px] grid-cols-[47%_minmax(0,1fr)] overflow-hidden rounded-[26px] border-2 bg-white transition-colors ${
         isHovered
-          ? 'border-[#ca7653]'
-          : 'border-transparent hover:border-[#ca7653]'
+          ? 'border-[#cf7d5c]'
+          : 'border-transparent hover:border-[#cf7d5c]'
       }`}
     >
-      <Link href={`/properties/${property.id}`} aria-label={`View ${property.title}`} className="absolute inset-0 z-10 rounded-[26px] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#ca7653]" />
-      <div className="relative min-h-[164px] overflow-hidden bg-stone-200">
+      <Link href={`/properties/${property.id}`} aria-label={`View ${property.title}`} className="absolute inset-0 z-10 rounded-[26px] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#cc7654]" />
+      <div className="relative min-h-[180px] overflow-hidden bg-stone-200">
         <Image
           src={resolveImageSrcFromProperty(property)}
           alt={property.title || 'Property'}
@@ -485,18 +484,63 @@ function PropertyResult({
         />
       </div>
 
-      <div className="flex min-w-0 flex-col px-4 py-3 sm:px-5">
-        <p className="text-lg font-bold leading-tight text-[#ca7653]">{price}</p>
-          <h2 className="mt-1 truncate text-[22px] font-bold leading-tight tracking-tight text-[#2A2723] capitalize">
+      <div className="flex min-w-0 flex-col py-2.5 pl-[23px] pr-[30px]">
+        <p className="truncate text-lg font-semibold text-[#cc7654]">{price}</p>
+          <h2 className="truncate text-lg font-bold text-[#2a2723] first-letter:uppercase">
             {property.title || 'Untitled property'}
           </h2>
-        <p className="mt-1 truncate text-xs text-stone-400">{location}</p>
-        <div className="relative z-20 my-1 w-fit"><SavePropertyButton property={property} compact /></div>
-        <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 border-t border-stone-200 pt-2 text-xs text-stone-400">
+        <p className="mt-1 truncate text-xs font-medium tracking-[0.01em] text-[#989898]">{location}</p>
+        <div className="relative z-20 mt-1.5 w-fit -ml-1.5"><SavePropertyButton property={property} compact /></div>
+        <div className="mt-auto flex flex-wrap gap-x-[15px] gap-y-1 border-t border-[#e8e4db] pt-2 text-xs tracking-[0.01em] text-[#7e7e7e]">
           <span>{areaSize}</span>
           <span>{category} · {listingType}</span>
         </div>
       </div>
     </article>
+  );
+}
+
+const SORT_OPTIONS = [
+  { value: 'price-asc', label: 'Low to High' },
+  { value: 'price-desc', label: 'High to Low' },
+  { value: 'oldest', label: 'Oldest' },
+  { value: 'newest', label: 'Newest' },
+];
+
+function SortMenu({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent ? event.key === 'Escape' : !menuRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', close);
+    };
+  }, [open]);
+
+  return (
+    <div ref={menuRef} className="relative">
+      <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((current) => !current)} className="flex h-6 items-center gap-0.5 rounded-[15px] bg-white px-3 text-sm tracking-[0.01em] text-[#2a2723] outline-offset-2 focus-visible:outline-[#cc7654]">
+        Sort<Filter aria-hidden="true" size={12} />
+      </button>
+      {open ? (
+        <div role="menu" className="absolute right-0 top-8 z-40 flex w-[153px] flex-col gap-0.5 rounded-[16px] bg-white px-1.5 py-2 shadow-[0_0_25px_rgba(0,0,0,0.15)]">
+          {SORT_OPTIONS.map((option) => {
+            const selected = option.value === value;
+            return (
+              <button key={option.value} type="button" role="menuitemradio" aria-checked={selected} onClick={() => { onChange(option.value); setOpen(false); }} className={`rounded-[8px] px-2.5 py-1.5 text-left text-sm ${selected ? 'bg-[#f2f2f2] font-medium text-[#212121]' : 'text-[#333] hover:bg-[#f7f7f7]'}`}>
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }

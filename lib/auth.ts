@@ -42,6 +42,8 @@ export const auth = {
   login: (data: LoginDto) => api.post<AuthResponseDto>('/v1/auth/login', data),
   register: (data: RegisterUserDto) => api.post<AuthResponseDto>('/v1/auth/register', data),
   me: (token: string) => api.get<AuthUserDto>('/v1/auth/me', token),
+  forgotPassword: (email: string) => api.post<{ message: string }>('/v1/auth/forgot-password', { email }),
+  resetPassword: (token: string, newPassword: string) => api.post<{ message: string }>('/v1/auth/reset-password', { token, newPassword }),
   presignAvatar: (data: AvatarPresignDto, token: string) =>
     api.post<AvatarPresignResponseDto>('/v1/auth/avatar/presign', data, token),
   confirmAvatar: (data: AvatarConfirmDto, token: string) =>

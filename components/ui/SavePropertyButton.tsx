@@ -23,7 +23,7 @@ export default function SavePropertyButton({ property, compact = false }: { prop
       <Link
         href="/auth/login"
         aria-label="Sign in to save property"
-        className={compact ? 'inline-flex rounded-full p-1.5 text-stone-600 hover:text-[#ca7653]' : 'inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary'}
+        className={compact ? 'inline-flex rounded-full p-1.5 text-stone-600 hover:text-[#cc7654]' : 'inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 transition hover:border-gold-primary hover:text-gold-primary'}
       >
         {compact ? <RiHeartLine className="h-4 w-4" /> : <><Bookmark className="h-4 w-4" />Save</>}
       </Link>
@@ -39,7 +39,7 @@ export default function SavePropertyButton({ property, compact = false }: { prop
       type="button"
       onClick={handleToggle}
       disabled={!hydrated}
-      className={compact ? `inline-flex rounded-full p-1.5 ${saved ? 'text-[#d74d49]' : 'text-stone-600 hover:text-[#ca7653]'}` : `inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${
+      className={compact ? `inline-flex rounded-full p-1.5 ${saved ? 'text-[#d74d49]' : 'text-stone-600 hover:text-[#cc7654]'}` : `inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${
         saved
           ? 'border border-gold-primary bg-gold-primary/10 text-gold-deep'
           : 'border border-stone-200 bg-white text-slate-600 hover:border-gold-primary hover:text-gold-primary'

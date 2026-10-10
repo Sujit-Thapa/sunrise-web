@@ -293,13 +293,13 @@ export default function HeroSection({
       ) : null}
 
       <div className={overlayClasses}>
-        <p className="mb-3 text-center text-sm font-normal text-[#ce7c57]">
+        <p className="mb-3 text-center text-sm font-bold tracking-[0.01em] text-[#cc7654]">
           Real Estate for the Next Era
         </p>
-        <h1 className="mb-7 text-center text-3xl sm:text-5xl xl:text-7xl font-bold leading-[1.08] tracking-[-0.045em] text-[#20241f]">
-          Find Your <span className="text-[#ce7c57]">Sanctuary.</span>
+        <h1 className="mb-7 text-center text-3xl sm:text-5xl xl:text-7xl font-bold leading-[1.08] tracking-[0.01em] text-[#2a2723]">
+          Find Your <span className="text-[#cc7654]">Sanctuary.</span>
         </h1>
-        <div className="pointer-events-auto w-full max-w-[900px]">
+        <div className="pointer-events-auto w-full max-w-[1048px]">
           <SearchBar />
         </div>
       </div>
