@@ -19,7 +19,7 @@ export function formatCurrency(value: number | string | null | undefined): strin
     return 'Rs. 0';
   }
 
-  return `Rs. ${amount.toLocaleString('en-US')}`;
+  return `Rs. ${amount.toLocaleString('en-IN')}`;
 }
 
 export function formatArea(

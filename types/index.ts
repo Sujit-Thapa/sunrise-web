@@ -104,7 +104,17 @@ export interface Property {
 // ============================================
 // Properties (agency-owned) — REAL API SHAPE
 // ============================================
-export type PropertyStatus = 'DRAFT' | 'ACTIVE' | 'HIDDEN' | 'RESERVED' | 'COMPLETED';
+export type PropertyStatus = 'DRAFT' | 'ACTIVE' | 'HIDDEN' | 'RESERVED' | 'COMPLETED' | 'SUSPENDED';
+
+export interface PropertyModerationLogDto {
+  id: string;
+  propertyId: string;
+  adminId: string;
+  action: string;
+  reason: string | null;
+  createdAt: string;
+  admin: { id: string; fullName: string; email: string };
+}
 
 export interface CreatePropertyDto {
   title: string;

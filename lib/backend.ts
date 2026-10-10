@@ -21,6 +21,7 @@ import type {
   ConfirmUserPropertyImageDto,
   PropertiesListResponseDto,
   PropertyListQueryParams,
+  PropertyModerationLogDto,
   PropertyResponseDto,
   RejectUserPropertyDto,
   ReservationResponseDto,
@@ -78,6 +79,16 @@ export const propertiesApi = {
 
   confirmImage: (id: string, data: ConfirmPropertyImageDto, token: string) =>
     api.post<PropertyResponseDto>(`/v1/properties/${id}/images/confirm`, data, token),
+
+  // Admin moderation: suspension is separate from an agent hiding their own listing.
+  suspend: (id: string, reason: string, token: string) =>
+    api.post<PropertyResponseDto>(`/v1/admin/properties/${id}/suspend`, { reason }, token),
+
+  reactivate: (id: string, reason: string, token: string) =>
+    api.post<PropertyResponseDto>(`/v1/admin/properties/${id}/reactivate`, { reason }, token),
+
+  moderationLog: (id: string, token: string) =>
+    api.get<PropertyModerationLogDto[]>(`/v1/admin/properties/${id}/moderation-log`, token),
 };
 
 // ============================================
