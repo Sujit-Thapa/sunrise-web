@@ -1,7 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { EmiSlider, EmiStepper } from '@/components/home/EmiControls';
 import { calculateEmi } from '@/lib/emi';
+
+const labelClass = 'text-sm font-bold uppercase tracking-[0.01em] text-[#73706c]';
+const fieldClass = 'rounded-[11px] bg-[#f7f7f7] font-bold leading-[40px] tracking-[0.01em] text-[#2a2723] outline-none [appearance:textfield] focus-visible:ring-2 focus-visible:ring-[#cc7654] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
+
 
 export default function EmiCalculator() {
   const [amount, setAmount] = useState('12500000');
@@ -11,47 +16,56 @@ export default function EmiCalculator() {
   const payment = valid ? calculateEmi(Number(amount), Number(rate), Number(months)) : null;
   const formatted = payment === null ? '—' : `Rs. ${payment.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+  const stepAmount = (direction: 1 | -1) => setAmount(String(Math.max(0, (Number(amount) || 0) + direction * 100000)));
+  const stepMonths = (direction: 1 | -1) => setMonths(String(Math.min(600, Math.max(1, (Number(months) || 0) + direction))));
+
   return (
-    <section aria-labelledby="emi-heading" className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
-      <div className="grid items-center overflow-hidden rounded-[36px] bg-[#e9e6dd] md:grid-cols-2 md:rounded-[48px]">
-        <div className="px-7 py-10 sm:p-12 lg:p-16">
-          <p className="mb-3 text-xs uppercase text-[#ca7653]">Precision tool</p>
-          <h2 id="emi-heading" className="text-2xl font-bold leading-tight text-[#2c2925]">Know Your EMI.<br />Plan Your Property.</h2>
-          <p className="mt-5 max-w-xs text-sm leading-6 text-stone-600">Estimate your monthly home loan payment and understand what your property budget could look like.</p>
-          <p className="mt-4 text-sm text-stone-700">Financial clarity for your next move.</p>
+    <section aria-labelledby="emi-heading" className="mx-auto max-w-[1320px] px-5 py-12 sm:px-8 sm:py-16 xl:px-0">
+      <div className="grid items-stretch overflow-hidden rounded-[40px] bg-[#e8e4db] md:grid-cols-[minmax(0,1fr)_640px] md:rounded-[65px]">
+        <div className="px-7 py-12 sm:px-12 md:self-center lg:pl-[94px]">
+          <p className="text-sm font-bold uppercase tracking-[0.01em] text-[#cc7654]">Precision tool</p>
+          <h2 id="emi-heading" className="mt-4 text-xl font-bold tracking-[0.01em] text-[#2a2723]">Know Your EMI.<br />Plan Your Property.</h2>
+          <p className="mt-5 max-w-[367px] text-lg font-light leading-[22px] text-[#2a2723]">Estimate your monthly home loan payment and understand what your property budget could look like.</p>
+          <p className="mt-6 text-lg leading-[22px] text-[#2a2723]">Financial Clarity for Your Next Move.</p>
         </div>
-        <div className="rounded-[32px] bg-white p-7 shadow-[0_8px_24px_rgba(0,0,0,0.06)] sm:p-10 lg:p-12">
-          <h3 className="text-2xl font-bold text-[#2c2925]">EMI Calculator</h3>
-          <label className="mt-6 block">
-            <span className="text-xs uppercase text-stone-500">Loan amount (Rs.)</span>
-            <span className="mt-3 flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-              <span aria-hidden="true">Rs.</span>
-              <input type="number" min="0" step="1000" value={amount} onChange={(e) => setAmount(e.target.value)} className="min-w-0 w-full rounded-xl bg-stone-50 px-3 py-2 text-[#3E4A3D] outline-none focus-visible:ring-2 focus-visible:ring-[#ca7653]" />
+
+        <div className="rounded-[41px] bg-white px-7 py-10 shadow-[8px_8px_25px_rgba(0,0,0,0.1)] sm:px-[66px] sm:pb-12 sm:pt-12">
+          <h3 className="text-2xl font-bold tracking-[0.01em] text-[#2a2723]">Emi Calculator</h3>
+
+          <label className="mt-5 block">
+            <span className={labelClass}>Loan amount</span>
+            <span className="mt-6 flex items-center gap-3">
+              <span aria-hidden="true" className="text-[32px] font-bold tracking-[0.01em] text-[#2a2723] sm:text-[40px]">Rs.</span>
+              <input type="text" inputMode="numeric" value={amount ? Number(amount).toLocaleString('en-IN') : ''} onChange={(e) => setAmount(e.target.value.replace(/\D/g, '').slice(0, 12))} className={`${fieldClass} h-[59px] min-w-0 flex-1 px-[27px] text-[28px] sm:max-w-[336px] sm:text-[40px]`} />
+              <EmiStepper label="loan amount" onStep={stepAmount} />
             </span>
           </label>
+
           <div className="mt-6">
-            <div className="flex items-center justify-between gap-4">
-              <label htmlFor="emi-rate" className="text-xs uppercase text-stone-500">Annual interest rate</label>
-              <label className="flex items-center gap-1 text-sm">
-                <span className="sr-only">Annual interest rate percentage</span>
-                <input type="number" min="0" max="25" step="0.05" value={rate} onChange={(e) => setRate(e.target.value)} className="w-20 rounded-lg bg-stone-50 px-2 py-1 text-right outline-none focus-visible:ring-2 focus-visible:ring-[#ca7653]" />%
-              </label>
+            <p className={labelClass}>Interest rate</p>
+            <div className="mt-2 flex items-center gap-3">
+              <span className="w-10 shrink-0 text-lg font-semibold leading-[22px] text-[#aeb3ad]">0%</span>
+              <div className="flex-1">
+                <EmiSlider label="Interest rate" value={Number(rate) || 0} min={0} max={25} step={0.05} onChange={(next) => setRate(String(next))} format={(next) => `${next}%`} />
+              </div>
+              <span className="w-10 shrink-0 text-right text-lg font-semibold leading-[22px] text-[#aeb3ad]">25%</span>
             </div>
-            <input id="emi-rate" type="range" min="0" max="25" step="0.05" value={Number(rate) || 0} onChange={(e) => setRate(e.target.value)} className="mt-4 w-full cursor-pointer accent-[#3E4A3D]" />
-            <div className="flex justify-between text-xs text-stone-400"><span>0%</span><span>25%</span></div>
           </div>
-          <div className="mt-6 grid grid-cols-[100px_1fr] items-center gap-4">
-            <label>
-              <span className="text-xs uppercase text-stone-500">Term (months)</span>
-              <input type="number" min="1" max="600" step="1" value={months} onChange={(e) => setMonths(e.target.value)} className="mt-2 w-full rounded-lg bg-stone-50 px-2 py-1 text-3xl font-bold outline-none focus-visible:ring-2 focus-visible:ring-[#ca7653]" />
+
+          <div className="mt-8 grid items-end gap-6 sm:grid-cols-[auto_1fr] sm:gap-[121px]">
+            <label className="block">
+              <span className={`${labelClass} whitespace-nowrap`}>Terms(months)</span>
+              <span className="mt-3 flex items-center gap-2.5">
+                <input type="number" min="1" max="600" step="1" value={months} onChange={(e) => setMonths(e.target.value)} className={`${fieldClass} h-[59px] w-[86px] px-2 text-center text-[40px]`} />
+                <EmiStepper label="term" onStep={stepMonths} />
+              </span>
             </label>
-            <div className="rounded-xl bg-stone-50 p-4">
-              <p className="text-xs uppercase text-stone-500">Monthly payment (EMI)</p>
-              <output aria-live="polite" className="mt-2 block break-words text-base font-bold text-[#2c2925]">{formatted}</output>
+            <div className="min-h-[111px] rounded-[11px] bg-[#f7f7f7] px-[29px] py-5">
+              <p className={labelClass}>Monthly payment (EMI)</p>
+              <output aria-live="polite" className="mt-4 block break-words text-[22px] font-bold leading-[24px] tracking-[0.01em] text-[#2a2723]">{formatted}</output>
             </div>
           </div>
           {payment === null && <p role="alert" className="mt-3 text-xs text-rose-700">Enter a non-negative amount, a rate from 0–25%, and a whole term from 1–600 months.</p>}
-          <p className="mt-5 text-xs leading-5 text-stone-400">Illustrative estimate. Rates are editable; lender fees and other charges are not included.</p>
         </div>
       </div>
     </section>
