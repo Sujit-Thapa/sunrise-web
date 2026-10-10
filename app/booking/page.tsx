@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ReservationDialog from '@/components/payment/ReservationDialog';
+import { CardSkeleton, Skeleton, SkeletonStatus } from '@/components/ui/Skeleton';
 import { propertiesApi } from '@/lib/backend';
 import type { PropertyResponseDto } from '@/types';
 
@@ -22,14 +23,14 @@ function Booking() {
     }).catch(() => { if (active) setError('This property is no longer available. Please browse current listings.'); });
     return () => { active = false; };
   }, [propertyId]);
-  return <div className="min-h-[60vh] bg-[#f8f6f1] px-5 py-16 text-center text-[#2A2723]">
+  return <div className="min-h-[60vh] bg-[#f7f5f1] px-5 py-16 text-center text-[#2a2723]">
     <h1 className="text-3xl font-bold">Reserve a property</h1>
-    <p className="mt-4 text-sm text-stone-500">{error || (property ? property.title : propertyId ? 'Loading property…' : 'Choose an available property to start your reservation.')}</p>
-    {property ? <button onClick={() => setOpen(true)} className="mt-6 rounded-xl bg-[#ca7653] px-5 py-3 text-white">Reserve Property</button> : null}
-    <Link href="/properties" className="mx-auto mt-5 block w-fit text-sm text-[#ca7653] underline">Browse Properties</Link>
+    {!error && !property && propertyId ? <SkeletonStatus label="Loading property" className="mx-auto mt-4 flex flex-col items-center"><Skeleton className="h-4 w-64" /><Skeleton className="mt-6 h-12 w-44 rounded-xl" /></SkeletonStatus> : <p className="mt-4 text-sm text-stone-500">{error || (property ? property.title : 'Choose an available property to start your reservation.')}</p>}
+    {property ? <button onClick={() => setOpen(true)} className="mt-6 rounded-xl bg-[#cc7654] px-5 py-3 text-white">Reserve Property</button> : null}
+    <Link href="/properties" className="mx-auto mt-5 block w-fit text-sm text-[#cc7654] underline">Browse Properties</Link>
     {property && open ? <ReservationDialog property={property} onClose={() => setOpen(false)} /> : null}
   </div>;
 }
 export default function BookingPage() {
-  return <Suspense fallback={<p className="p-10 text-center">Loading booking…</p>}><Booking /></Suspense>;
+  return <Suspense fallback={<div className="bg-[#f7f5f1] px-5 py-16"><CardSkeleton label="Loading booking" /></div>}><Booking /></Suspense>;
 }

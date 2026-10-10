@@ -26,3 +26,8 @@ input[data-custom-password-toggle]::-ms-reveal {
 input[data-custom-password-toggle]::-ms-clear {
   display: none !important;
 }
+
+@keyframes auth-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
