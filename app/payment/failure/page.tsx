@@ -2,11 +2,12 @@
 
 import { Suspense } from 'react';
 import PaymentResultPage from '@/components/payment/PaymentResultPage';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function PaymentFailurePage() {
   return <Suspense fallback={<PaymentLoading />}><PaymentResultPage success={false} /></Suspense>;
 }
 
 function PaymentLoading() {
-  return <main className="flex min-h-screen items-center justify-center bg-[#f5f1e8] text-sm text-slate-500">Checking your payment...</main>;
+  return <div className="bg-[#f7f5f1] px-5 py-10 sm:py-14"><CardSkeleton label="Checking your payment" /></div>;
 }

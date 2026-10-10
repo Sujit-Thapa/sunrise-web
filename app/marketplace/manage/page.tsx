@@ -18,6 +18,7 @@ import {
   getPropertyStatusLabel,
 } from '@/lib/properties';
 import type { UserPropertyResponseDto } from '@/types';
+import { RowsSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
 function statusTone(status: UserPropertyResponseDto['status']): string {
   if (status === 'APPROVED') return 'bg-emerald-50 text-emerald-700';
@@ -92,7 +93,7 @@ export default function ManageMarketplacePage() {
   };
 
   if (authLoading) {
-    return <PageShell><p className="py-20 text-center text-sm text-slate-500">Checking your account...</p></PageShell>;
+    return <PageShell><Skeleton className="h-3 w-32" /><Skeleton className="mt-4 h-12 w-full max-w-md" /><Skeleton className="mt-4 h-4 w-full max-w-xl" /><div className="mt-10"><RowsSkeleton label="Checking your account" /></div></PageShell>;
   }
 
   if (!user) {
@@ -124,7 +125,7 @@ export default function ManageMarketplacePage() {
       {error ? <p className="mt-6 border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
 
       {loading ? (
-        <p className="py-20 text-center text-sm text-slate-500">Loading your listings...</p>
+        <div className="mt-10"><RowsSkeleton label="Loading your listings" /></div>
       ) : listings.length === 0 ? (
         <div className="mt-10 border border-dashed border-stone-300 bg-white/70 px-8 py-16 text-center">
           <h2 className="text-2xl font-semibold text-midnight">No listings yet</h2>
