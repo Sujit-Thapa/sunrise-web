@@ -75,7 +75,7 @@ export default async function Properties({ searchParams }: PropertiesPageProps) 
   }
 
   return (
-    <div className="bg-[#f8f6f1]">
+    <div className="bg-[#f7f5f1]">
       <PropertiesListing
         properties={properties}
         total={total}

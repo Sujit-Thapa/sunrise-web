@@ -37,14 +37,14 @@ export default function MapLocationPicker({
     const placeMarker = (event: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = event.lngLat.wrap();
       markerRef.current?.remove();
-      markerRef.current = new mapboxgl.Marker({ color: '#ca7653' }).setLngLat([lng, lat]).addTo(map);
+      markerRef.current = new mapboxgl.Marker({ color: '#cc7654' }).setLngLat([lng, lat]).addTo(map);
       onChange({ latitude: lat.toFixed(6), longitude: lng.toFixed(6) });
     };
     map.on('click', placeMarker);
     map.on('error', () => setMapError('Map could not load. Check the Mapbox token and try again.'));
     map.once('load', () => {
       if (coordinates && !markerRef.current) {
-        markerRef.current = new mapboxgl.Marker({ color: '#ca7653' }).setLngLat(center).addTo(map);
+        markerRef.current = new mapboxgl.Marker({ color: '#cc7654' }).setLngLat(center).addTo(map);
       }
       map.resize();
     });
@@ -68,10 +68,10 @@ export default function MapLocationPicker({
 
   return (
     <div className="space-y-3">
-      <div ref={containerRef} className="h-72 overflow-hidden rounded-3xl border border-stone-200 bg-[#e9e6dd]" />
+      <div ref={containerRef} className="h-72 overflow-hidden rounded-3xl border border-stone-200 bg-[#e8e4db]" />
       <p className="text-xs leading-5 text-stone-500">Click the map to place the property pin. You can click again to move it.</p>
       {mapError ? <p className="text-xs text-rose-600">{mapError}</p> : null}
-      {latitude && longitude ? <p className="text-xs font-medium text-stone-600">Pinned at {latitude}, {longitude}</p> : <p className="text-xs font-medium text-[#ca7653]">No location pinned yet</p>}
+      {latitude && longitude ? <p className="text-xs font-medium text-stone-600">Pinned at {latitude}, {longitude}</p> : <p className="text-xs font-medium text-[#cc7654]">No location pinned yet</p>}
     </div>
   );
 }
