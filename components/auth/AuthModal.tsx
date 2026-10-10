@@ -1,11 +1,18 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 // Pop-up frame for the intercepted /auth/* routes; closing returns to the page underneath.
+// Next keeps a parallel-route slot's last content after navigating elsewhere, so the pop-up
+// only renders while the URL is still an /auth/* address.
 export default function AuthModal({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  return pathname?.startsWith('/auth/') ? <AuthDialog>{children}</AuthDialog> : null;
+}
+
+function AuthDialog({ children }: { children: ReactNode }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
