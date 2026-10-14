@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
+import { initials } from '@/lib/utils';
 import { AlertCircle, ArrowUpRight, CheckCircle2, X as XIcon } from 'lucide-react';
 
 // Shared building blocks for the admin and agent workspaces (Figma "Sunrise operations").
@@ -37,12 +38,10 @@ export function formatDay(value?: string | null, withTime = false): string {
   return new Intl.DateTimeFormat('en-GB', withTime ? { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false } : { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
 }
 
-export function initialsOf(name?: string | null): string {
-  return (name ?? '').split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '—';
-}
+
 
 export function Avatar({ name, size = 'md' }: { name?: string | null; size?: 'sm' | 'md' }) {
-  return <span aria-hidden="true" className={`grid shrink-0 place-items-center rounded-full bg-[#efece7] font-semibold text-[#2a2723] ${size === 'sm' ? 'size-7 text-[10px]' : 'size-9 text-xs'}`}>{initialsOf(name)}</span>;
+  return <span aria-hidden="true" className={`grid shrink-0 place-items-center rounded-full bg-[#efece7] font-semibold text-[#2a2723] ${size === 'sm' ? 'size-7 text-[10px]' : 'size-9 text-xs'}`}>{initials(name, '—')}</span>;
 }
 
 export type Tone = 'green' | 'amber' | 'red' | 'gray' | 'orange' | 'dark';

@@ -5,6 +5,7 @@ import { use, useEffect, useState } from 'react';
 import { BadgeCheck, LandPlot, MapPin, Phone, Square, Tag } from 'lucide-react';
 
 import OwnerContactDialog from '@/components/marketplace/OwnerContactDialog';
+import { initials } from '@/lib/utils';
 import { PropertyDetailSkeleton } from '@/components/ui/Skeleton';
 import { DescriptionSection, DetailGrid, DetailSection, DetailTile, LocationMapSection, PropertyGallery } from '@/components/property/PropertyDetailParts';
 import { parseCoordinates } from '@/lib/coordinates';
@@ -71,7 +72,7 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
   const coordinates = parseCoordinates(listing.latitude, listing.longitude);
   const mapQuery = coordinates ? `${coordinates[1]},${coordinates[0]}` : location;
   const owner = listing.submittedBy;
-  const initials = owner.fullName.split(' ').filter(Boolean).slice(0, 2).map(part => part[0]).join('');
+  const ownerInitials = initials(owner.fullName);
 
   return (
     <div className="bg-[#f7f5f1] text-[#2a2723]">
@@ -88,7 +89,7 @@ export default function MarketplacePropertyPage({ params }: MarketplacePropertyP
               <h1 className="mt-1 text-[28px] font-bold leading-tight first-letter:uppercase">{listing.title}</h1>
               {location ? <p className="mt-2 text-xs font-medium capitalize tracking-[0.01em] text-[#989898]">{location}</p> : null}
               <button type="button" onClick={() => setContactOpen(true)} className="mt-4 inline-flex items-center gap-[5px] rounded-full py-1 pr-2 text-left focus-visible:outline-2 focus-visible:outline-[#cc7654]" aria-label={`Contact ${owner.fullName}`}>
-                <span aria-hidden="true" className="flex size-[41px] shrink-0 items-center justify-center rounded-full bg-[#e8e4db] text-sm font-semibold uppercase text-[#3e4a3d]">{initials}</span>
+                <span aria-hidden="true" className="flex size-[41px] shrink-0 items-center justify-center rounded-full bg-[#e8e4db] text-sm font-semibold uppercase text-[#3e4a3d]">{ownerInitials}</span>
                 <span className="text-[22px] font-bold">{owner.fullName}</span>
                 <span aria-hidden="true" className="ml-2 flex size-[25px] items-center justify-center rounded-full bg-[#e8c1b2] text-[#cc7654]"><Phone size={14} /></span>
               </button>

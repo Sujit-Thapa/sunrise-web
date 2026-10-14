@@ -29,6 +29,8 @@ import type {
   UserPropertyStatus,
 } from '@/types';
 
+const inputClass = 'w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]';
+
 type CategoryFilter = 'all' | 'house' | 'land' | 'apartment' | 'commercial';
 type SortOption = 'newest' | 'price-asc' | 'price-desc';
 type ImageUploadStatus = 'pending' | 'uploading' | 'confirming' | 'done' | 'error';
@@ -439,7 +441,7 @@ export default function Marketplace() {
                     value={form.title}
                     onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                     required
-                    className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="e.g. Corner Plot, Riverside District"
                   />
                 </Field>
@@ -509,7 +511,7 @@ export default function Marketplace() {
                     <select
                       value={form.category}
                       onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as typeof prev.category }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                      className={inputClass}
                     >
                       <option value="HOUSE">House</option>
                       <option value="APARTMENT">Apartment</option>
@@ -521,7 +523,7 @@ export default function Marketplace() {
                     <select
                       value={form.listingType}
                       onChange={(e) => setForm((prev) => ({ ...prev, listingType: e.target.value as ListingType }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                      className={inputClass}
                     >
                       <option value="SALE">For Sale</option>
                       <option value="RENT">For Rent</option>
@@ -535,7 +537,7 @@ export default function Marketplace() {
                     value={form.price}
                     onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
                     required
-                    className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="e.g. 25000000"
                   />
                 </Field>
@@ -546,7 +548,7 @@ export default function Marketplace() {
                       value={form.city}
                       onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))}
                       required
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                      className={inputClass}
                       placeholder="Kathmandu"
                     />
                   </Field>
@@ -555,7 +557,7 @@ export default function Marketplace() {
                       value={form.state}
                       onChange={(e) => setForm((prev) => ({ ...prev, state: e.target.value }))}
                       required
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                      className={inputClass}
                       placeholder="Bagmati"
                     />
                   </Field>
@@ -564,7 +566,7 @@ export default function Marketplace() {
                       value={form.country}
                       onChange={(e) => setForm((prev) => ({ ...prev, country: e.target.value }))}
                       required
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                      className={inputClass}
                       placeholder="Nepal"
                     />
                   </Field>
@@ -575,7 +577,7 @@ export default function Marketplace() {
                     <input
                       value={form.street}
                       onChange={(e) => setForm((prev) => ({ ...prev, street: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                      className={inputClass}
                       placeholder="Boudha Road"
                     />
                   </Field>
@@ -583,7 +585,7 @@ export default function Marketplace() {
                     <input
                       value={form.postalCode}
                       onChange={(e) => setForm((prev) => ({ ...prev, postalCode: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                      className={inputClass}
                       placeholder="44600"
                     />
                   </Field>
@@ -608,7 +610,7 @@ export default function Marketplace() {
                       step="any"
                       value={form.latitude}
                       onChange={(e) => setForm((prev) => ({ ...prev, latitude: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                      className={inputClass}
                       placeholder="27.7172"
                     />
                   </Field>
@@ -618,7 +620,7 @@ export default function Marketplace() {
                       step="any"
                       value={form.longitude}
                       onChange={(e) => setForm((prev) => ({ ...prev, longitude: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                      className={inputClass}
                       placeholder="85.324"
                     />
                   </Field>
@@ -630,7 +632,7 @@ export default function Marketplace() {
                       type="number"
                       value={form.areaSize}
                       onChange={(e) => setForm((prev) => ({ ...prev, areaSize: e.target.value }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                      className={inputClass}
                       placeholder="e.g. 1500"
                     />
                   </Field>
@@ -638,7 +640,7 @@ export default function Marketplace() {
                     <select
                       value={form.areaUnit}
                       onChange={(e) => setForm((prev) => ({ ...prev, areaUnit: e.target.value as AreaUnit }))}
-                      className="w-full rounded-[18px] border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                      className={inputClass}
                     >
                       <option value="sqft">sq ft</option>
                       <option value="sqm">sq m</option>
