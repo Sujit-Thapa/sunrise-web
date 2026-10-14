@@ -1,7 +1,8 @@
 'use client';
 
+import { useModalDialog } from '@/lib/useModalDialog';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 // Pop-up frame for the intercepted /auth/* routes; closing returns to the page underneath.
@@ -14,15 +15,7 @@ export default function AuthModal({ children }: { children: ReactNode }) {
 
 function AuthDialog({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    const overflow = document.body.style.overflow;
-    if (dialog && !dialog.open) dialog.showModal();
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = overflow; };
-  }, []);
+  const dialogRef = useModalDialog();
 
   return (
     <dialog

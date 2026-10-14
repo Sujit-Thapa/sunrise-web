@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePagePath } from '@/components/layout/usePagePath';
+import { initials, ROLE_LABELS } from '@/lib/utils';
 import { Menu, X } from 'lucide-react';
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
@@ -18,7 +19,6 @@ const PUBLIC_NAV_LINKS = [
   { label: 'Contact', href: '/contact' },
 ];
 
-const ROLE_LABELS: Record<string, string> = { ADMIN: 'Administrator', AGENT: 'Agent', USER: 'Customer' };
 
 export default function Navbar() {
   const { user, loading, signOut } = useAuthSession();
@@ -73,14 +73,7 @@ export default function Navbar() {
   // The properties page sits under a solid 91px white header bar in the design.
   const solidHeader = pathname === '/properties';
   const isActiveLink = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const initials = user
-    ? user.fullName
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase())
-        .join('')
-    : 'U';
+  const userInitials = initials(user?.fullName, 'U');
   return (
     <>
       <nav aria-label="Main navigation" className={`absolute left-0 right-0 top-0 z-50 pb-4 pt-4 sm:pt-7 ${solidHeader ? 'bg-[#f7f5f1]' : ''}`}>
@@ -133,7 +126,7 @@ export default function Navbar() {
                         // A regular image keeps the avatar compatible with any configured S3 host.
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-                      ) : initials}
+                      ) : userInitials}
                     </button>
                     {accountOpen ? (
                       <div role="menu" className="absolute right-0 top-[calc(100%+10px)] z-[60] flex w-[170px] flex-col gap-0.5 rounded-2xl bg-white px-1.5 py-2 shadow-[0_0_25px_rgba(0,0,0,0.15)]">

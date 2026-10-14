@@ -1,7 +1,8 @@
 'use client';
 
+import { useModalDialog } from '@/lib/useModalDialog';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { XCircle } from 'lucide-react';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { getAuthToken } from '@/lib/auth';
@@ -11,18 +12,11 @@ import { formatCurrency } from '@/lib/properties';
 import type { PropertyResponseDto } from '@/types';
 
 export default function ReservationDialog({ property, onClose }: { property: PropertyResponseDto; onClose: () => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogRef = useModalDialog();
   const { user } = useAuthSession();
   const [provider, setProvider] = useState('esewa');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    const previousOverflow = document.body.style.overflow;
-    dialog?.showModal();
-    document.body.style.overflow = 'hidden';
-    return () => { dialog?.close(); document.body.style.overflow = previousOverflow; };
-  }, []);
 
   async function pay() {
     if (busy) return;
