@@ -1,5 +1,6 @@
 'use client';
 
+import { useModalDialog } from '@/lib/useModalDialog';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, Images, X, type LucideIcon } from 'lucide-react';
@@ -41,19 +42,12 @@ export function PropertyGallery({ images, fallback, title }: { images: GalleryIm
 
 // Full-screen photo viewer over a blurred backdrop: arrows, keyboard (← → Esc), swipe and thumbnails.
 function PhotoViewer({ images, title, index, onIndexChange, onClose }: { images: GalleryImage[]; title: string; index: number; onIndexChange: (index: number) => void; onClose: () => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogRef = useModalDialog();
   const stripRef = useRef<HTMLDivElement>(null);
   const swipeStart = useRef<number | null>(null);
   const count = images.length;
   const go = useCallback((step: number) => onIndexChange((index + step + count) % count), [count, index, onIndexChange]);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    const overflow = document.body.style.overflow;
-    if (dialog && !dialog.open) dialog.showModal();
-    document.body.style.overflow = 'hidden';
-    return () => { dialog?.close(); document.body.style.overflow = overflow; };
-  }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

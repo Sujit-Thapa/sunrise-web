@@ -16,10 +16,9 @@ import {
 } from '@/lib/properties';
 import { resolveImageSrcFromProperty } from '@/lib/image';
 import SavePropertyButton from '@/components/ui/SavePropertyButton';
+import { applySearch, categoryFromParams, PRICE_RANGES, priceRangeFromParams, PROPERTY_TYPES } from '@/lib/search';
 
-const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
 const EMPTY_PROPERTIES: PropertyResponseDto[] = [];
-const PRICE_RANGES = ['Any Price', 'Under Rs 50 L', 'Rs 50 L – 1 Cr', 'Rs 1 Cr – 2 Cr', 'Rs 2 Cr+'];
 
 interface PropertiesListingProps {
   properties?: PropertyResponseDto[];
@@ -278,19 +277,8 @@ function SearchPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentLocation = searchParams.get('city') ?? '';
-  const currentCategory = PROPERTY_TYPES.find(
-    (type) => type.toUpperCase() === searchParams.get('category')?.toUpperCase(),
-  ) ?? 'All Types';
-  const currentMinPrice = searchParams.get('minPrice');
-  const currentMaxPrice = searchParams.get('maxPrice');
-
-  const currentPriceRange = useMemo(() => {
-    if (currentMinPrice === '20000000') return 'Rs 2 Cr+';
-    if (currentMinPrice === '10000000' && currentMaxPrice === '20000000') return 'Rs 1 Cr – 2 Cr';
-    if (currentMinPrice === '5000000' && currentMaxPrice === '10000000') return 'Rs 50 L – 1 Cr';
-    if (currentMaxPrice === '5000000') return 'Under Rs 50 L';
-    return 'Any Price';
-  }, [currentMaxPrice, currentMinPrice]);
+  const currentCategory = categoryFromParams(searchParams.get('category'));
+  const currentPriceRange = priceRangeFromParams(searchParams.get('minPrice'), searchParams.get('maxPrice'));
 
   const pushSearch = (form: HTMLFormElement) => {
     const formData = new FormData(form);
@@ -298,28 +286,7 @@ function SearchPanel() {
     const category = String(formData.get('category') ?? 'All Types');
     const priceRange = String(formData.get('priceRange') ?? 'Any Price');
 
-    const params = new URLSearchParams(searchParams.toString());
-    ['city', 'category', 'minPrice', 'maxPrice', 'page'].forEach(key => params.delete(key));
-
-    if (location) {
-      params.set('city', location);
-    }
-
-    if (category !== 'All Types') {
-      params.set('category', category.toUpperCase());
-    }
-
-    if (priceRange === 'Under Rs 50 L') {
-      params.set('maxPrice', '5000000');
-    } else if (priceRange === 'Rs 50 L – 1 Cr') {
-      params.set('minPrice', '5000000');
-      params.set('maxPrice', '10000000');
-    } else if (priceRange === 'Rs 1 Cr – 2 Cr') {
-      params.set('minPrice', '10000000');
-      params.set('maxPrice', '20000000');
-    } else if (priceRange === 'Rs 2 Cr+') {
-      params.set('minPrice', '20000000');
-    }
+    const params = applySearch(new URLSearchParams(searchParams.toString()), { location, category, priceRange });
 
     const query = params.toString();
     router.push(query ? `/properties?${query}` : '/properties');
