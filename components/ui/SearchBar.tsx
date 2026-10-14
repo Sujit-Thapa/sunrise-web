@@ -2,36 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-const PROPERTY_TYPES = ['All Types', 'Apartment', 'House', 'Land', 'Commercial'];
-const PRICE_RANGES = ['Any Price', 'Under Rs 50 L', 'Rs 50 L – 1 Cr', 'Rs 1 Cr – 2 Cr', 'Rs 2 Cr+'];
-
-function buildSearchUrl(location: string, propertyType: string, priceRange: string): string {
-  const params = new URLSearchParams();
-
-  if (location.trim()) {
-    params.set('city', location.trim());
-  }
-
-  if (propertyType !== 'All Types') {
-    params.set('category', propertyType.toUpperCase());
-  }
-
-  if (priceRange === 'Under Rs 50 L') {
-    params.set('maxPrice', '5000000');
-  } else if (priceRange === 'Rs 50 L – 1 Cr') {
-    params.set('minPrice', '5000000');
-    params.set('maxPrice', '10000000');
-  } else if (priceRange === 'Rs 1 Cr – 2 Cr') {
-    params.set('minPrice', '10000000');
-    params.set('maxPrice', '20000000');
-  } else if (priceRange === 'Rs 2 Cr+') {
-    params.set('minPrice', '20000000');
-  }
-
-  const query = params.toString();
-  return query ? `/properties?${query}` : '/properties';
-}
+import { applySearch, PRICE_RANGES, PROPERTY_TYPES } from '@/lib/search';
 
 export default function SearchBar() {
   const router = useRouter();
@@ -40,7 +11,8 @@ export default function SearchBar() {
   const [priceRange, setPriceRange] = useState('Any Price');
 
   const handleSearch = () => {
-    router.push(buildSearchUrl(location, propertyType, priceRange));
+    const query = applySearch(new URLSearchParams(), { location, category: propertyType, priceRange }).toString();
+    router.push(query ? `/properties?${query}` : '/properties');
   };
 
   return (

@@ -31,6 +31,8 @@ import type {
   UpdatePropertyDto,
 } from '@/types';
 
+const inputClass = 'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]';
+
 type AdminMode = 'create' | 'edit';
 
 interface PropertyFormState {
@@ -589,7 +591,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                 <input
                   value={form.title}
                   onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                  className={inputClass}
                   placeholder="Lakeside villa with mountain views"
                   required
                 />
@@ -619,7 +621,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                         listingType: event.target.value as ListingType,
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   >
                     {LISTING_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -638,7 +640,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                         category: event.target.value as PropertyCategory,
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   >
                     {CATEGORY_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -658,7 +660,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, price: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="25000000"
                     required
                   />
@@ -675,7 +677,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                         reservationFeeOverride: event.target.value,
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="Optional"
                   />
                 </Field>
@@ -691,7 +693,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, street: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="Boudha Road"
                   />
                 </Field>
@@ -702,7 +704,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, postalCode: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="44600"
                   />
                 </Field>
@@ -715,7 +717,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, city: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="Kathmandu"
                     required
                   />
@@ -726,7 +728,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, state: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="Bagmati"
                     required
                   />
@@ -737,7 +739,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, country: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="Nepal"
                     required
                   />
@@ -753,7 +755,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, areaSize: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#cc7654]"
+                    className={inputClass}
                     placeholder="1500"
                   />
                 </Field>
@@ -763,7 +765,7 @@ export default function AdminPropertyStudio({ embedded = false, initialView }: {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, areaUnit: event.target.value as AreaUnit }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   >
                     {AREA_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>

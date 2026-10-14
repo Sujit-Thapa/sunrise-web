@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, BadgeDollarSign, ClipboardList, Info, KeyRound, LineChart, Megaphone, MessagesSquare, Warehouse, type LucideIcon } from 'lucide-react';
 
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import TextLink from '@/components/ui/TextLink';
 
 const services: Array<{ title: string; body: string; icon: LucideIcon }> = [
   { title: 'Property consultation', body: 'Discuss your needs, preferred location and budget to find a suitable direction.', icon: MessagesSquare },
@@ -36,9 +37,6 @@ const container = 'mx-auto max-w-[1320px] px-5 sm:px-8 xl:px-0';
 const eyebrow = 'text-xs font-bold tracking-[0.02em] text-[#cc7654]';
 const sectionTitle = 'text-3xl font-bold tracking-[0.01em] sm:text-[34px]';
 
-function TextLink({ href, children }: { href: string; children: string }) {
-  return <Link href={href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#cc7654] hover:underline">{children}<ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>;
-}
 
 export default function AboutSection() {
   return (

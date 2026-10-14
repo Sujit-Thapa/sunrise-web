@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, KeyRound, LogOut, Mail, ShieldCheck, UserRound, X } from 'lucide-react';
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { auth } from '@/lib/auth';
-
-const ROLE_LABELS: Record<string, string> = { ADMIN: 'Administrator', AGENT: 'Agent', USER: 'Customer' };
+import { initials, ROLE_LABELS } from '@/lib/utils';
 
 // Profile chip for the staff top bars. Opens an account menu instead of leaving the workspace.
 export default function StaffAccountMenu() {
@@ -26,7 +25,7 @@ export default function StaffAccountMenu() {
     return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', close); };
   }, [open]);
 
-  const initials = user?.fullName.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'S';
+  const userInitials = initials(user?.fullName, 'S');
   const role = ROLE_LABELS[user?.role ?? ''] ?? 'Staff';
 
   return (
@@ -36,7 +35,7 @@ export default function StaffAccountMenu() {
           // The avatar host is deployment-dependent, so this cannot use Next's image allow-list.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatarUrl} alt="" className="size-8 rounded-full object-cover" />
-        ) : <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-[#2a2723] text-[11px] font-bold text-white">{initials}</span>}
+        ) : <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-[#2a2723] text-[11px] font-bold text-white">{userInitials}</span>}
         <span className="hidden sm:block"><strong className="block text-[13px] font-semibold leading-tight text-[#2a2723]">{user?.fullName ?? 'Staff'}</strong><span className="block text-[11px] text-stone-500">{role}</span></span>
         <ChevronDown aria-hidden="true" className={`h-3.5 w-3.5 text-stone-500 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -48,7 +47,7 @@ export default function StaffAccountMenu() {
           <button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); router.push('/'); }} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-[#e5484d] hover:bg-[#fdf1f0]"><LogOut aria-hidden="true" className="h-4 w-4" />Sign out</button>
         </div>
       ) : null}
-      {detailsOpen && user ? <AccountDetailsDialog name={user.fullName} email={user.email} role={role} initials={initials} onClose={() => setDetailsOpen(false)} /> : null}
+      {detailsOpen && user ? <AccountDetailsDialog name={user.fullName} email={user.email} role={role} initials={userInitials} onClose={() => setDetailsOpen(false)} /> : null}
     </div>
   );
 }
