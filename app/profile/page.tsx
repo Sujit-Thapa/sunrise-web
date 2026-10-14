@@ -6,9 +6,9 @@ import { Camera, KeyRound, Mail, Pencil, ShieldCheck, UserRound, type LucideIcon
 
 import { useAuthSession } from '@/components/auth/AuthSessionProvider';
 import { auth } from '@/lib/auth';
+import { initials, ROLE_LABELS } from '@/lib/utils';
 import { Skeleton, SkeletonStatus } from '@/components/ui/Skeleton';
 
-const ROLE_LABELS: Record<string, string> = { USER: 'Customer', AGENT: 'Agent', ADMIN: 'Administrator' };
 const inputClass = 'h-12 w-full rounded-xl border border-transparent bg-[#f4f1ec] px-4 text-sm text-[#2a2723] outline-none transition placeholder:text-[#a19c95] focus:border-[#cc7654] focus:bg-white';
 
 export default function ProfilePage() {
@@ -30,7 +30,7 @@ export default function ProfilePage() {
     );
   }
 
-  const initials = user.fullName.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'U';
+  const userInitials = initials(user.fullName, 'U');
 
   const startEditing = () => {
     setForm({ fullName: user.fullName, email: user.email });
@@ -63,7 +63,7 @@ export default function ProfilePage() {
         <section className="rounded-[28px] bg-white p-6 shadow-[0_24px_60px_rgba(42,39,35,0.06)] sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             <div className="relative w-fit">
-              <span aria-hidden="true" className="grid size-20 place-items-center rounded-full bg-[#2a2723] text-2xl font-bold text-white">{initials}</span>
+              <span aria-hidden="true" className="grid size-20 place-items-center rounded-full bg-[#2a2723] text-2xl font-bold text-white">{userInitials}</span>
               <span title="Profile photos can’t be uploaded yet" className="absolute -bottom-1 -right-1 grid size-8 cursor-not-allowed place-items-center rounded-full border-2 border-white bg-[#d9d3c9] text-white"><Camera aria-hidden="true" className="h-3.5 w-3.5" /></span>
             </div>
             <div className="min-w-0 flex-1">

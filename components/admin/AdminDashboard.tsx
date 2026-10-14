@@ -28,6 +28,8 @@ import type {
   UserPropertyResponseDto,
 } from '@/types';
 
+const inputClass = 'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]';
+
 type AdminSection = 'overview' | 'properties' | 'users' | 'reservations' | 'finance' | 'agents' | 'settings';
 type ReservationStatusFilter = 'all' | 'ACTIVE' | 'CLAIMED' | 'COMPLETED' | 'CANCELLED';
 
@@ -490,7 +492,7 @@ export default function AdminDashboard() {
                         status: event.target.value === 'all' ? undefined : (event.target.value as ReservationStatusFilter),
                       }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   >
                     {['all', 'ACTIVE', 'CLAIMED', 'COMPLETED', 'CANCELLED'].map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -503,7 +505,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setReservationFilters((current) => ({ ...current, propertyId: event.target.value || undefined }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   />
                 </Field>
                 <Field label="User ID">
@@ -512,7 +514,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setReservationFilters((current) => ({ ...current, userId: event.target.value || undefined }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   />
                 </Field>
                 <div />
@@ -612,7 +614,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setPaymentFilters((current) => ({ ...current, status: event.target.value === 'all' ? undefined : event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   >
                     {['all', 'PENDING', 'SUCCEEDED', 'FAILED', 'REFUNDED'].map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -625,7 +627,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setPaymentFilters((current) => ({ ...current, provider: event.target.value === 'all' ? undefined : event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   >
                     {['all', 'ESEWA', 'KHALTI', 'CONNECT_IPS'].map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -639,7 +641,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setPaymentFilters((current) => ({ ...current, dateFrom: event.target.value || undefined }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   />
                 </Field>
                 <Field label="Date to">
@@ -649,7 +651,7 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setPaymentFilters((current) => ({ ...current, dateTo: event.target.value || undefined }))
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]"
+                    className={inputClass}
                   />
                 </Field>
               </div>
@@ -713,16 +715,16 @@ export default function AdminDashboard() {
                   <h3 className="text-lg font-semibold text-[#2a2723]">Create agent</h3>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Full name">
-                      <input value={agentForm.fullName} onChange={(e) => setAgentForm((current) => ({ ...current, fullName: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" required />
+                      <input value={agentForm.fullName} onChange={(e) => setAgentForm((current) => ({ ...current, fullName: e.target.value }))} className={inputClass} required />
                     </Field>
                     <Field label="Email">
-                      <input value={agentForm.email} type="email" onChange={(e) => setAgentForm((current) => ({ ...current, email: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" required />
+                      <input value={agentForm.email} type="email" onChange={(e) => setAgentForm((current) => ({ ...current, email: e.target.value }))} className={inputClass} required />
                     </Field>
                     <Field label="Phone">
-                      <input value={agentForm.phoneNumber} onChange={(e) => setAgentForm((current) => ({ ...current, phoneNumber: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" required />
+                      <input value={agentForm.phoneNumber} onChange={(e) => setAgentForm((current) => ({ ...current, phoneNumber: e.target.value }))} className={inputClass} required />
                     </Field>
                     <Field label="Password">
-                      <input value={agentForm.password} type="password" onChange={(e) => setAgentForm((current) => ({ ...current, password: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" required />
+                      <input value={agentForm.password} type="password" onChange={(e) => setAgentForm((current) => ({ ...current, password: e.target.value }))} className={inputClass} required />
                     </Field>
                   </div>
                   <div className="flex justify-end">
@@ -736,14 +738,14 @@ export default function AdminDashboard() {
                 <div className="space-y-4 rounded-[24px] border border-stone-200 bg-white p-5">
                   <h3 className="text-lg font-semibold text-[#2a2723]">Suspend / reactivate</h3>
                   <Field label="Agent ID to suspend">
-                    <input value={suspendAgentId} onChange={(e) => setSuspendAgentId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" />
+                    <input value={suspendAgentId} onChange={(e) => setSuspendAgentId(e.target.value)} className={inputClass} />
                   </Field>
                   <button disabled={agentBusy} type="button" onClick={handleSuspendAgent} className="w-full rounded-full bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60">
                     Suspend
                   </button>
 
                   <Field label="Agent ID to reactivate">
-                    <input value={reactivateAgentId} onChange={(e) => setReactivateAgentId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" />
+                    <input value={reactivateAgentId} onChange={(e) => setReactivateAgentId(e.target.value)} className={inputClass} />
                   </Field>
                   <button disabled={agentBusy} type="button" onClick={handleReactivateAgent} className="w-full rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
                     Reactivate
@@ -767,16 +769,16 @@ export default function AdminDashboard() {
                 <form onSubmit={handleConfigSubmit} className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Company name">
-                      <input value={configForm.companyName ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyName: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" />
+                      <input value={configForm.companyName ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyName: e.target.value }))} className={inputClass} />
                     </Field>
                     <Field label="Company email">
-                      <input value={configForm.companyEmail ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyEmail: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" />
+                      <input value={configForm.companyEmail ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyEmail: e.target.value }))} className={inputClass} />
                     </Field>
                     <Field label="Company phone">
-                      <input value={configForm.companyPhone ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyPhone: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" />
+                      <input value={configForm.companyPhone ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, companyPhone: e.target.value }))} className={inputClass} />
                     </Field>
                     <Field label="Reservation fee amount">
-                      <input type="number" value={configForm.reservationFeeAmount ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, reservationFeeAmount: toOptionalNumber(e.target.value) }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#cc7654]" />
+                      <input type="number" value={configForm.reservationFeeAmount ?? ''} onChange={(e) => setConfigForm((current) => ({ ...current, reservationFeeAmount: toOptionalNumber(e.target.value) }))} className={inputClass} />
                     </Field>
                   </div>
                   <Field label="Company address">

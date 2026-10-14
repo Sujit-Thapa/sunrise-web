@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { ArrowRight, Bookmark, Check, CheckCircle2, MessagesSquare } from 'lucide-react';
 
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import TextLink from '@/components/ui/TextLink';
 import { INQUIRY_TYPES, type InquiryType } from '@/lib/contact';
 
 const EMPTY = { name: '', email: '', phone: '', propertyReference: '', message: '' };
@@ -18,9 +19,6 @@ const FAQS = [
   { q: 'Can you help with investment or rental questions?', a: 'Yes. Choose Investment / valuation or Rental / management and describe your goals. For account questions, choose General support; never include your password.' },
 ];
 
-function TextLink({ href, children }: { href: string; children: ReactNode }) {
-  return <Link href={href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#cc7654] hover:underline">{children}<ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>;
-}
 
 export default function Contact() {
   const [form, setForm] = useState(EMPTY);
