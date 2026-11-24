@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Contact — Sunrise Multiple Businesses & Housing',
+  title: 'Contact Us',
   description: 'Talk to Sunrise about buying, selling, renting or listing property in Nepal.',
 };
 
