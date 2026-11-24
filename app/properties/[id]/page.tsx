@@ -102,7 +102,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
 
   if (state.kind === 'error') {
     return (
-      <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
+      <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
           <div className="w-full rounded-[32px] border border-stone-200 bg-white p-8 text-center shadow-brand-sm sm:p-10">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
@@ -136,7 +136,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
             </div>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -152,13 +152,13 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
     <div className="bg-[#f7f5f1] text-[#2a2723]">
       <div className="mx-auto max-w-[1320px] px-5 pb-16 pt-6 sm:px-8 xl:px-0">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,660fr)_minmax(0,614fr)] lg:gap-[46px]">
-          <div className="min-w-0 space-y-[46px]">
-            <PropertyGallery images={gallery.flatMap(image => image.id ? [{ id: image.id, url: image.url }] : [])} fallback={property} title={property.title} />
-            {property.description ? <DescriptionSection category={property.category} description={property.description} /> : null}
-            <LocationMapSection title={property.title} query={mapQuery} exact={Boolean(coordinates)} />
+          <div className="contents lg:block lg:min-w-0 lg:space-y-[46px]">
+            <div className="order-1 min-w-0"><PropertyGallery images={gallery.flatMap(image => image.id ? [{ id: image.id, url: image.url }] : [])} fallback={property} title={property.title} /></div>
+            {property.description ? <div className="order-5 min-w-0"><DescriptionSection category={property.category} description={property.description} /></div> : null}
+            <div className="order-6 min-w-0"><LocationMapSection title={property.title} query={mapQuery} exact={Boolean(coordinates)} /></div>
           </div>
-          <div className="min-w-0 space-y-[46px]">
-            <header>
+          <div className="contents lg:block lg:min-w-0 lg:space-y-[46px]">
+            <header className="order-2 min-w-0">
               <span className="inline-flex rounded-[7px] bg-[#f2e7e0] px-2 py-px text-xs font-medium capitalize tracking-[0.01em] text-[#cc7654]">{getListingTypeLabel(property.listingType)}</span>
               <p className="mt-1 text-[28px] font-semibold text-[#cc7654]">{formatCurrency(property.price)}</p>
               <h1 className="mt-1 text-[28px] font-bold leading-tight first-letter:uppercase">{property.title}</h1>
@@ -168,7 +168,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
                 <SavePropertyButton property={property} compact />
               </div>
             </header>
-            <DetailSection id="property-facts" title="Property Detail">
+            <div className="order-3 min-w-0"><DetailSection id="property-facts" title="Property Detail">
               <DetailGrid>
                 <DetailTile icon={LandPlot} label="Property type" value={getPropertyCategoryLabel(property.category)} />
                 {property.areaSize != null && property.areaUnit ? <DetailTile icon={Square} label="Area" value={sizeLabel(property)} /> : null}
@@ -176,11 +176,11 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
                 <DetailTile icon={BadgeCheck} label="Status" value={getPropertyStatusLabel(property.status)} />
                 {property.reservationFeeOverride != null ? <DetailTile icon={KeyRound} label="Reservation fee" value={formatCurrency(property.reservationFeeOverride)} /> : null}
               </DetailGrid>
-            </DetailSection>
+            </DetailSection></div>
             {location ? (
-              <DetailSection id="property-overview" title="Overview">
+              <div className="order-4 min-w-0"><DetailSection id="property-overview" title="Overview">
                 <DetailGrid><DetailTile icon={MapPin} label="City & Area" value={location} /></DetailGrid>
-              </DetailSection>
+              </DetailSection></div>
             ) : null}
           </div>
         </div>

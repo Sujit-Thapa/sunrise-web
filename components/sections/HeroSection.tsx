@@ -71,6 +71,11 @@ export default function HeroSection({
 
       mapRef.current = map;
 
+      // Thin, page-coloured atmosphere: keeps the globe crisp while blending its edge into the page.
+      map.on('style.load', () => {
+        map.setFog({ color: 'rgba(255,255,255,0.4)', 'high-color': '#f7f5f1', 'space-color': '#f7f5f1', 'horizon-blend': 0.03, 'star-intensity': 0 });
+      });
+
       onWheelRef.current = (event: WheelEvent) => {
         if (event.ctrlKey || event.metaKey) {
           event.preventDefault();
@@ -292,6 +297,7 @@ export default function HeroSection({
         </div>
       ) : null}
 
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_42%_28%_at_50%_50%,rgba(247,245,241,0.6)_0%,rgba(247,245,241,0.3)_55%,rgba(247,245,241,0)_100%)]" />
       <div className={overlayClasses}>
         <p className="mb-3 text-center text-sm font-bold tracking-[0.01em] text-[#cc7654]">
           Real Estate for the Next Era

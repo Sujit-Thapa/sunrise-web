@@ -21,12 +21,12 @@ export default function ProfilePage() {
   if (loading) return <ProfileSkeleton />;
   if (!user) {
     return (
-      <main className="grid min-h-[70vh] place-items-center px-5 py-16">
+      <div className="grid min-h-[70vh] place-items-center px-5 py-16">
         <div className="max-w-md rounded-[28px] bg-white p-8 text-center shadow-[0_24px_60px_rgba(42,39,35,0.08)]">
           <h1 className="text-2xl font-bold text-[#2a2723]">Sign in to view your profile</h1>
           <Link href="/auth/login" className="mt-5 inline-flex h-11 items-center rounded-full bg-[#2a2723] px-6 text-sm font-semibold text-white hover:bg-black">Sign in</Link>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -58,7 +58,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <main className="px-4 pb-20 pt-4 text-[#2a2723] sm:px-6 sm:pt-8">
+    <div className="px-4 pb-20 pt-4 text-[#2a2723] sm:px-6 sm:pt-8">
       <div className="mx-auto w-full max-w-[720px]">
         <section className="rounded-[28px] bg-white p-6 shadow-[0_24px_60px_rgba(42,39,35,0.06)] sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -100,7 +100,7 @@ export default function ProfilePage() {
           <button type="button" onClick={() => void sendReset()} disabled={resetSending} className="inline-flex h-10 items-center self-start rounded-full border border-[#e3ded6] px-5 text-sm font-semibold hover:border-[#cc7654] disabled:opacity-60 sm:self-center">{resetSending ? 'Sending…' : 'Send reset link'}</button>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -116,7 +116,7 @@ function Detail({ icon: Icon, label, value }: { icon: LucideIcon; label: string;
 
 function ProfileSkeleton() {
   return (
-    <main className="px-4 pb-20 pt-4 sm:px-6 sm:pt-8">
+    <div className="px-4 pb-20 pt-4 sm:px-6 sm:pt-8">
       <SkeletonStatus label="Loading profile" className="mx-auto w-full max-w-[720px] rounded-[28px] bg-white p-6 sm:p-8">
         <div className="flex items-center gap-5">
           <Skeleton className="size-20 rounded-full" />
@@ -124,6 +124,6 @@ function ProfileSkeleton() {
         </div>
         <div className="mt-7 space-y-5 border-t border-[#ebe7e0] pt-6">{Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-5 w-full" />)}</div>
       </SkeletonStatus>
-    </main>
+    </div>
   );
 }

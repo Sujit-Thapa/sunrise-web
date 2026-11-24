@@ -39,7 +39,7 @@ export default function MyReservationsPage() {
   const [refreshIndex, setRefreshIndex] = useState(0);
 
   return (
-    <main className="bg-[#f7f5f1] px-4 pb-16 pt-2 sm:px-8 sm:pt-6">
+    <div className="bg-[#f7f5f1] px-4 pb-16 pt-2 sm:px-8 sm:pt-6">
       <div className="mx-auto max-w-[1300px]">
         <section className="flex flex-col gap-5 rounded-[20px] border-[1.5px] border-[#e2a083] bg-white px-6 py-7 sm:flex-row sm:items-center sm:px-8" aria-labelledby="reservations-intro">
           <span aria-hidden="true" className="grid size-[62px] shrink-0 place-items-center rounded-[14px] bg-[#fdf1ec] text-[#cc7654]"><CircleX className="h-7 w-7" strokeWidth={1.5} /></span>
@@ -67,7 +67,7 @@ export default function MyReservationsPage() {
           <Link href="/contact" className="mt-4 inline-flex h-11 items-center rounded-lg bg-[#3e4a3d] px-10 text-sm font-semibold text-white hover:bg-[#303c2f]">Contact Support Desk</Link>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 

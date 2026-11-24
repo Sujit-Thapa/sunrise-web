@@ -170,5 +170,5 @@ export default function ManageMarketplacePage() {
 }
 
 function PageShell({ children }: { children: React.ReactNode }) {
-  return <main className="min-h-screen bg-[linear-gradient(180deg,#fcfbf7_0%,#f5f1e8_100%)] px-4 py-10 text-stone-900 sm:px-6 lg:px-8 lg:py-14"><div className="mx-auto max-w-7xl">{children}</div></main>;
+  return <div className="min-h-screen bg-[linear-gradient(180deg,#fcfbf7_0%,#f5f1e8_100%)] px-4 py-10 text-stone-900 sm:px-6 lg:px-8 lg:py-14"><div className="mx-auto max-w-7xl">{children}</div></div>;
 }

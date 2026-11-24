@@ -95,6 +95,7 @@ export default function Navbar() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
+                        aria-current={isActive ? 'page' : undefined}
                         className={`group relative text-sm font-normal tracking-[0.01em] transition-colors ${
                           isActive ? 'text-[#cc7654]' : 'text-[#2a2723] hover:text-[#cc7654]'
                         }`}
@@ -174,11 +175,12 @@ export default function Navbar() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
+                        aria-current={isActive ? 'page' : undefined}
                         onClick={handleNavClick}
-                        className={`block px-5 py-4 text-base font-medium ${
+                        className={`block px-5 py-4 text-base ${
                           isActive
-                            ? 'bg-white/60 text-midnight'
-                            : 'text-slate-700 hover:bg-white/40 hover:text-midnight'
+                            ? 'font-semibold text-[#cc7654]'
+                            : 'text-[#2a2723] hover:text-[#cc7654]'
                         }`}
                       >
                         {link.label}

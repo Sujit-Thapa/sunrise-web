@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import AboutSection from '@/components/sections/AboutSection';
 
 export const metadata: Metadata = {
-  title: 'About — Sunrise Multiple Businesses & Housing',
+  title: 'About Us',
   description: 'Learn about Sunrise and our vision.',
 };
 

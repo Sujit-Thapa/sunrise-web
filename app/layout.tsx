@@ -12,7 +12,7 @@ const plusJakartaSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Sunrise Realestate',
+  title: { default: 'Sunrise Realestate', template: '%s | Sunrise Realestate' },
   description: 'Discover the perfect property with Sunrise Realestate',
   icons: {
     icon: '/images/logo/sunrise1.png',

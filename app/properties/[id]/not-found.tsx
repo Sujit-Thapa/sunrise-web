@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function PropertyNotFound() {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)]">
       <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
         <div className="w-full rounded-[32px] border border-stone-200 bg-white p-8 text-center shadow-brand-sm sm:p-10">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gold-primary">
@@ -20,6 +20,6 @@ export default function PropertyNotFound() {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

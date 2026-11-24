@@ -61,7 +61,7 @@ export default function PropertiesListing({
         <div className="mb-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h1 className="text-xl font-semibold leading-6 tracking-[0.01em]">{searchQuery ? `${searchQuery} Properties` : 'Explore Properties'}{searchParams.get('listingType') === 'SALE' ? ' for Sale' : searchParams.get('listingType') === 'RENT' ? ' for Rent' : ''}</h1>
-            <p className="text-base tracking-[0.01em] text-[#7e7e7e]">{resultCount.toLocaleString('en-IN')} results</p>
+            <p className="text-base tracking-[0.01em] text-[#7e7e7e]">{resultCount.toLocaleString('en-IN')} {resultCount === 1 ? 'result' : 'results'}</p>
           </div>
           <div className="mt-3 flex justify-end">
             <SortMenu value={sort} onChange={setSort} />

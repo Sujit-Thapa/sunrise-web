@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import PropertiesListing from '@/components/sections/PropertiesListing';
 import { propertiesApi } from '@/lib/backend';
 
@@ -26,6 +27,11 @@ function parseNumber(
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
+
+export const metadata: Metadata = {
+  title: 'Properties',
+  description: 'Browse Sunrise properties for sale and rent across Nepal on an interactive map.',
+};
 
 export default async function Properties({ searchParams }: PropertiesPageProps) {
   const resolvedSearchParams = await searchParams;

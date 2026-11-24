@@ -141,7 +141,7 @@ export default function AdminOverview({
 
       <section className={`${card} mt-6 overflow-hidden`}>
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-5">
-          <div><h2 className="text-[22px] font-semibold">Sunrise properties</h2><p className="mt-1 text-[13px] text-[#6b665f]">{properties.length} listings · availability and reservation controls</p></div>
+          <div><h2 className="text-[22px] font-semibold">Sunrise properties</h2><p className="mt-1 text-[13px] text-[#6b665f]">{properties.length} listing{properties.length === 1 ? '' : 's'} · availability and reservation controls</p></div>
           <div className="flex items-center gap-3">
             <label className="relative"><span className="sr-only">Filter by status</span>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-[34px] appearance-none rounded-full border border-[#e3ded6] bg-white px-4 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#cc7654]">
