@@ -312,7 +312,7 @@ export default function Marketplace() {
 
   return (
     <>
-      <main className="min-h-screen bg-[#f7f5f1] text-[#2a2723]">
+      <div className="min-h-screen bg-[#f7f5f1] text-[#2a2723]">
         <div className="mx-auto max-w-[1320px] px-5 pb-14 sm:px-8 xl:px-0">
           <section className="grid items-center gap-8 pb-[42px] pt-[54px] lg:grid-cols-[minmax(0,1fr)_408px] lg:gap-[68px]">
             <div>
@@ -388,7 +388,7 @@ export default function Marketplace() {
             </>
           )}
         </div>
-      </main>
+      </div>
 
       <AnimatePresence>
         {showForm ? (
